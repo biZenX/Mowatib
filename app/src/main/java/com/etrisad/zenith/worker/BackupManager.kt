@@ -1,0 +1,59 @@
+package com.etrisad.zenith.worker
+
+import android.content.Context
+import androidx.work.Data
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
+import java.util.concurrent.TimeUnit
+
+class BackupManager(private val context: Context) {
+
+    private val workManager = WorkManager.getInstance(context)
+
+    fun runBackupNow(directoryUri: String) {
+        val backupData = Data.Builder()
+            .putString("directory_uri", directoryUri)
+            .build()
+
+        val backupRequest = OneTimeWorkRequestBuilder<DatabaseBackupWorker>()
+            .setInputData(backupData)
+            .addTag("${BACKUP_WORK_TAG}_now")
+            .build()
+
+        workManager.enqueueUniqueWork(
+            "${BACKUP_WORK_TAG}_now",
+            ExistingWorkPolicy.REPLACE,
+            backupRequest
+        )
+    }
+
+    fun scheduleBackup(intervalHours: Int, directoryUri: String) {
+        val backupData = Data.Builder()
+            .putString("directory_uri", directoryUri)
+            .build()
+
+        val backupRequest = PeriodicWorkRequestBuilder<DatabaseBackupWorker>(
+            intervalHours.toLong(), TimeUnit.HOURS
+        )
+            .setInputData(backupData)
+            .addTag(BACKUP_WORK_TAG)
+            .build()
+
+        workManager.enqueueUniquePeriodicWork(
+            BACKUP_WORK_TAG,
+            ExistingPeriodicWorkPolicy.UPDATE,
+            backupRequest
+        )
+    }
+
+    fun cancelBackup() {
+        workManager.cancelUniqueWork(BACKUP_WORK_TAG)
+    }
+
+    companion object {
+        private const val BACKUP_WORK_TAG = "zenith_database_backup"
+    }
+}

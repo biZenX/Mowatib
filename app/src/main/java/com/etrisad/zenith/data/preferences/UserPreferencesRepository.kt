@@ -1,0 +1,2155 @@
+package com.etrisad.zenith.data.preferences
+
+import android.app.usage.UsageStatsManager
+import android.content.Context
+import android.content.Intent
+import android.content.pm.ApplicationInfo
+import android.content.pm.PackageManager
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.emptyPreferences
+import androidx.datastore.preferences.core.floatPreferencesKey
+import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.preferencesDataStoreFile
+import com.etrisad.zenith.data.local.entity.FocusType
+import com.etrisad.zenith.data.local.entity.LimitPeriod
+import com.etrisad.zenith.data.model.AlarmItem
+import com.etrisad.zenith.ui.components.pausepoint.PausePointConfig
+import com.etrisad.zenith.ui.components.pausepoint.PausePointDefaults
+import com.etrisad.zenith.ui.components.pausepoint.PausePointTaskType
+import com.etrisad.zenith.ui.components.pausepoint.PausePointVariant
+import com.etrisad.zenith.data.repository.ShieldRepository
+import com.etrisad.zenith.crash.SafeMode
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.Types
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
+import com.etrisad.zenith.util.DateTimeUtils
+import com.etrisad.zenith.ui.theme.FontAxes
+import com.etrisad.zenith.ui.theme.GSFlexSettings
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
+import java.io.IOException
+import java.text.SimpleDateFormat
+import java.util.*
+private class SafeAwarePreferencesDelegate(
+    private val normalFileName: String,
+    private val safeFileName: String
+) {
+    @Volatile
+    private var normal: DataStore<Preferences>? = null
+
+    @Volatile
+    private var safe: DataStore<Preferences>? = null
+
+    fun get(context: Context): DataStore<Preferences> {
+        val useSafe = SafeMode.isEnabled(context)
+        val cached = if (useSafe) safe else normal
+        if (cached != null) return cached
+        return synchronized(this) {
+            val current = if (useSafe) safe else normal
+            if (current != null) {
+                current
+            } else {
+                val created = PreferenceDataStoreFactory.create(
+                    scope = CoroutineScope(Dispatchers.IO + SupervisorJob()),
+                    produceFile = {
+                        context.applicationContext.preferencesDataStoreFile(
+                            if (useSafe) safeFileName else normalFileName
+                        )
+                    }
+                )
+                if (useSafe) safe = created else normal = created
+                created
+            }
+        }
+    }
+}
+
+private val settingsStoreDelegate = SafeAwarePreferencesDelegate("settings", "settings_safe_mode")
+private val runtimeStoreDelegate = SafeAwarePreferencesDelegate("runtime_state", "runtime_state_safe_mode")
+
+val Context.dataStore: DataStore<Preferences> get() = settingsStoreDelegate.get(this)
+val Context.runtimeDataStore: DataStore<Preferences> get() = runtimeStoreDelegate.get(this)
+
+enum class ThemeConfig {
+    FOLLOW_SYSTEM, LIGHT, DARK
+}
+
+enum class FontOption {
+    SYSTEM, GOOGLE_SANS_FLEX, NUNITO
+}
+
+enum class GSFlexPreset {
+    ZENITH, NEO, COMPACT, AIRY, CUSTOM
+}
+
+enum class PerformanceLevel(val labelRes: String, val descriptionRes: String) {
+    MAX_RESPONSIVENESS("Max Responsiveness", "Maximum speed for gaming and time-sensitive moments."),
+    RESPONSIVE("Responsive", "A snappier experience than the default profile."),
+    BALANCED("Balanced", "Tuned for everyday use."),
+    BATTERY_SAVER("Battery Saver", "Gentler on battery with reduced background checks."),
+    MAX_BATTERY("Max Battery", "Maximum battery savings with minimal background activity."),
+    CUSTOM("Custom", "Your personalized configuration.")
+}
+
+fun PerformanceLevel.isPreset() = this != PerformanceLevel.CUSTOM
+
+data class PerformanceConfig(
+    val a11yActiveDelay: Long = 120_000L,
+    val a11yInactiveDelay: Long = 3_000L,
+    val screenOffDelay: Long = 300_000L,
+    val powerSaveDelay: Long = 300_000L,
+    val usageStatsCacheMs: Long = 600_000L,
+    val shieldDbWriteMs: Long = 300_000L,
+    val shieldDbWriteNearMs: Long = 120_000L,
+    val launcherCacheMs: Long = 3_600_000L,
+    val goalReminderTick: Long = 2L,
+    val dayChangeTick: Long = 2L,
+    val monPowerSave: Long = 5000L,
+    val monOverlayShowing: Long = 8000L,
+    val monGoalNear: Long = 600L,
+    val monGoalMid: Long = 1200L,
+    val monGoalFar: Long = 1800L,
+    val monShieldNear: Long = 600L,
+    val monShieldMid: Long = 1500L,
+    val monShieldFar: Long = 3000L,
+    val monShieldVeryFar: Long = 5000L,
+    val monDefault: Long = 1200L,
+)
+
+fun PerformanceLevel.toConfig(): PerformanceConfig = when (this) {
+    PerformanceLevel.MAX_RESPONSIVENESS -> PerformanceConfig(
+        a11yActiveDelay = 30_000L,
+        a11yInactiveDelay = 1_000L,
+        screenOffDelay = 60_000L,
+        powerSaveDelay = 60_000L,
+        usageStatsCacheMs = 10_000L,
+        shieldDbWriteMs = 60_000L,
+        shieldDbWriteNearMs = 30_000L,
+        launcherCacheMs = 1_800_000L,
+        goalReminderTick = 1L,
+        dayChangeTick = 1L,
+        monPowerSave = 2000L,
+        monOverlayShowing = 3000L,
+        monGoalNear = 300L,
+        monGoalMid = 600L,
+        monGoalFar = 900L,
+        monShieldNear = 300L,
+        monShieldMid = 800L,
+        monShieldFar = 1500L,
+        monShieldVeryFar = 2500L,
+        monDefault = 600L,
+    )
+    PerformanceLevel.RESPONSIVE -> PerformanceConfig(
+        a11yActiveDelay = 60_000L,
+        a11yInactiveDelay = 2_000L,
+        screenOffDelay = 120_000L,
+        powerSaveDelay = 120_000L,
+        usageStatsCacheMs = 30_000L,
+        shieldDbWriteMs = 120_000L,
+        shieldDbWriteNearMs = 60_000L,
+        launcherCacheMs = 3_600_000L,
+        goalReminderTick = 1L,
+        dayChangeTick = 1L,
+        monPowerSave = 3000L,
+        monOverlayShowing = 5000L,
+        monGoalNear = 400L,
+        monGoalMid = 800L,
+        monGoalFar = 1200L,
+        monShieldNear = 400L,
+        monShieldMid = 1000L,
+        monShieldFar = 2000L,
+        monShieldVeryFar = 3000L,
+        monDefault = 800L,
+    )
+    PerformanceLevel.BALANCED -> PerformanceConfig(
+        a11yActiveDelay = 120_000L,
+        a11yInactiveDelay = 5_000L,
+        screenOffDelay = 600_000L,
+        powerSaveDelay = 600_000L,
+        usageStatsCacheMs = 900_000L,
+        shieldDbWriteMs = 600_000L,
+        shieldDbWriteNearMs = 300_000L,
+        launcherCacheMs = 3_600_000L,
+        goalReminderTick = 3L,
+        dayChangeTick = 3L,
+        monPowerSave = 7000L,
+        monOverlayShowing = 10000L,
+        monGoalNear = 1000L,
+        monGoalMid = 2000L,
+        monGoalFar = 3000L,
+        monShieldNear = 1000L,
+        monShieldMid = 2500L,
+        monShieldFar = 5000L,
+        monShieldVeryFar = 10000L,
+        monDefault = 2000L,
+    )
+    PerformanceLevel.BATTERY_SAVER -> PerformanceConfig(
+        a11yActiveDelay = 300_000L,
+        a11yInactiveDelay = 15_000L,
+        screenOffDelay = 900_000L,
+        powerSaveDelay = 900_000L,
+        usageStatsCacheMs = 1_800_000L,
+        shieldDbWriteMs = 900_000L,
+        shieldDbWriteNearMs = 450_000L,
+        launcherCacheMs = 7_200_000L,
+        goalReminderTick = 10L,
+        dayChangeTick = 10L,
+        monPowerSave = 15000L,
+        monOverlayShowing = 15000L,
+        monGoalNear = 2000L,
+        monGoalMid = 5000L,
+        monGoalFar = 10000L,
+        monShieldNear = 2000L,
+        monShieldMid = 5000L,
+        monShieldFar = 10000L,
+        monShieldVeryFar = 20000L,
+        monDefault = 15000L,
+    )
+    PerformanceLevel.MAX_BATTERY -> PerformanceConfig(
+        a11yActiveDelay = 900_000L,
+        a11yInactiveDelay = 60_000L,
+        screenOffDelay = 3_600_000L,
+        powerSaveDelay = 3_600_000L,
+        usageStatsCacheMs = 7_200_000L,
+        shieldDbWriteMs = 3_600_000L,
+        shieldDbWriteNearMs = 1_800_000L,
+        launcherCacheMs = 28_800_000L,
+        goalReminderTick = 30L,
+        dayChangeTick = 30L,
+        monPowerSave = 30000L,
+        monOverlayShowing = 45000L,
+        monGoalNear = 5000L,
+        monGoalMid = 15000L,
+        monGoalFar = 30000L,
+        monShieldNear = 5000L,
+        monShieldMid = 15000L,
+        monShieldFar = 30000L,
+        monShieldVeryFar = 60000L,
+        monDefault = 30000L,
+    )
+    PerformanceLevel.CUSTOM -> PerformanceConfig()
+}
+
+enum class ForegroundNotificationStatusMode {
+    DAILY_USAGE, ACTIVE_FOCUS, DEFAULT
+}
+
+class UserPreferencesRepository(private val context: Context) {
+
+    private object PreferencesKeys {
+        val THEME_CONFIG = stringPreferencesKey("theme_config")
+        val FONT_OPTION = stringPreferencesKey("font_option")
+        val DYNAMIC_COLOR = booleanPreferencesKey("dynamic_color")
+        val ACCESSIBILITY_DISABLED = booleanPreferencesKey("accessibility_disabled")
+        val ACCESSIBILITY_REQUIRED = booleanPreferencesKey("accessibility_required")
+        val SCREEN_TIME_TARGET = intPreferencesKey("screen_time_target")
+        val EMERGENCY_RECHARGE_DURATION_MINUTES = intPreferencesKey("emergency_recharge_duration_minutes")
+        val DELAY_APP_DURATION_SECONDS = intPreferencesKey("delay_app_duration_seconds")
+        val SESSION_USAGE_OVERLAY_ENABLED = booleanPreferencesKey("session_usage_overlay_enabled")
+        val SESSION_USAGE_OVERLAY_SIZE = intPreferencesKey("session_usage_overlay_size")
+        val SESSION_USAGE_OVERLAY_OPACITY = intPreferencesKey("session_usage_overlay_opacity")
+        val WHITELISTED_PACKAGES = stringPreferencesKey("whitelisted_packages")
+        val AUTO_BACKUP_ENABLED = booleanPreferencesKey("auto_backup_enabled")
+        val BACKUP_DIRECTORY_URI = stringPreferencesKey("backup_directory_uri")
+        val BACKUP_INTERVAL_HOURS = intPreferencesKey("backup_interval_hours")
+        val FLOATING_TAB_BAR_ENABLED = booleanPreferencesKey("floating_tab_bar_enabled")
+        val HEADER_INFO_BUTTON_ENABLED = booleanPreferencesKey("header_info_button_enabled")
+        val EXPRESSIVE_COLORS = booleanPreferencesKey("expressive_colors")
+        val TOTAL_USAGE_PILL_ENABLED = booleanPreferencesKey("total_usage_pill_enabled")
+        val FOREGROUND_NOTIFICATION_STATUS_MODE = stringPreferencesKey("foreground_notification_status_mode")
+
+        val BEDTIME_ENABLED = booleanPreferencesKey("bedtime_enabled")
+        val BEDTIME_START_TIME = stringPreferencesKey("bedtime_start_time")
+        val BEDTIME_END_TIME = stringPreferencesKey("bedtime_end_time")
+        val BEDTIME_DAYS = stringPreferencesKey("bedtime_days")
+        val BEDTIME_DND_ENABLED = booleanPreferencesKey("bedtime_dnd_enabled")
+        val BEDTIME_WIND_DOWN_ENABLED = booleanPreferencesKey("bedtime_wind_down_enabled")
+        val BEDTIME_NOTIFICATION_ENABLED = booleanPreferencesKey("bedtime_notification_enabled")
+        val BEDTIME_WHITELISTED_PACKAGES = stringPreferencesKey("bedtime_whitelisted_packages")
+        val GRACE_PERIOD_ENABLED = booleanPreferencesKey("grace_period_enabled")
+        val GRACE_PERIOD_START_TIME = stringPreferencesKey("grace_period_start_time")
+        val GRACE_PERIOD_END_TIME = stringPreferencesKey("grace_period_end_time")
+        val GRACE_PERIOD_DAYS = stringPreferencesKey("grace_period_days")
+        val GRACE_PERIOD_LAST_EDIT_TIMESTAMP = longPreferencesKey("grace_period_last_edit_timestamp")
+        val GRACE_PERIOD_EDIT_LOCK_ENABLED = booleanPreferencesKey("grace_period_edit_lock_enabled")
+        val USER_NAME = stringPreferencesKey("user_name")
+        val USER_BIO = stringPreferencesKey("user_bio")
+        val USER_AVATAR_URI = stringPreferencesKey("user_avatar_uri")
+        val USER_BANNER_URI = stringPreferencesKey("user_banner_uri")
+val USER_TITLE = stringPreferencesKey("user_title")
+val USER_AVATAR_BORDER = stringPreferencesKey("user_avatar_border")
+        val PROFILE_BANNER_ON_HOME = booleanPreferencesKey("profile_banner_on_home")
+        val USER_SHARED_PROFILE = booleanPreferencesKey("user_shared_profile")
+        val INFO_VISITED_ROUTES = stringPreferencesKey("info_visited_routes")
+        val LIFETIME_SNAPSHOT = stringPreferencesKey("lifetime_snapshot")
+        val LIFETIME_LAST_SYNC_DATE = stringPreferencesKey("lifetime_last_sync_date")
+        val ACHIEVEMENT_HISTORY = stringPreferencesKey("achievement_history")
+        val USER_XP_HISTORY = stringPreferencesKey("user_xp_history")
+        val ACHIEVEMENT_LAST_VALUES = stringPreferencesKey("achievement_last_values")
+        val ACHIEVEMENT_DAILY_COUNTS = stringPreferencesKey("achievement_daily_counts")
+val ACHIEVEMENT_BANNERS_SEEN = stringPreferencesKey("achievement_banners_seen")
+        val EARLY_KICK_ENABLED = booleanPreferencesKey("early_kick_enabled")
+        val INTERCEPT_AUDIO_FOCUS_ENABLED = booleanPreferencesKey("intercept_audio_focus_enabled")
+        val SHOW_DATABASE_INDICATOR = booleanPreferencesKey("show_database_indicator")
+        val DEVELOPER_MODE_ENABLED = booleanPreferencesKey("developer_mode_enabled")
+        val PREFER_SYSTEM_USAGE_HISTORY = booleanPreferencesKey("prefer_system_usage_history")
+        val ONBOARDING_STATS_COMPLETED = booleanPreferencesKey("onboarding_stats_completed")
+        val ONBOARDING_UPDATE_COMPLETED = booleanPreferencesKey("onboarding_update_completed")
+        val HUD_HIDE_FEATURE_LEARNED = booleanPreferencesKey("hud_hide_feature_learned")
+        val SMART_REPAIR_ON_REFRESH = booleanPreferencesKey("smart_repair_on_refresh")
+        val ALLOW_REPAIR_NON_UNAVAILABLE = booleanPreferencesKey("allow_repair_non_unavailable")
+        val MINDFUL_GATEWAY_ENABLED = booleanPreferencesKey("mindful_gateway_enabled")
+        val REFRESH_ON_OPEN_USAGE_STATS = booleanPreferencesKey("refresh_on_open_usage_stats")
+        val CHECK_UPDATE_ON_START = booleanPreferencesKey("check_update_on_start")
+        val BATTERY_STATS_RESET_ENABLED = booleanPreferencesKey("battery_stats_reset_enabled")
+        val BANKING_WARNING_DISMISSED = booleanPreferencesKey("banking_warning_dismissed")
+        val SHOW_CURRENT_EVENT = booleanPreferencesKey("show_current_event")
+        val DAILY_RECAP_ENABLED = booleanPreferencesKey("daily_recap_enabled")
+        val WEEKLY_INSIGHT_ENABLED = booleanPreferencesKey("weekly_insight_enabled")
+        val TREND_MILESTONE_ENABLED = booleanPreferencesKey("trend_milestone_enabled")
+        val INCENTIVE_LOCK_ENABLED = booleanPreferencesKey("incentive_lock_enabled")
+        val EYE_CARE_ENABLED = booleanPreferencesKey("eye_care_enabled")
+        val EYE_CARE_WORK_MINUTES = intPreferencesKey("eye_care_work_minutes")
+        val EYE_CARE_REST_SECONDS = intPreferencesKey("eye_care_rest_seconds")
+        val USAGE_GLIMPSE_ENABLED = booleanPreferencesKey("usage_glimpse_enabled")
+        val WEBSITE_AUTO_TRACKING = booleanPreferencesKey("website_auto_tracking")
+        val LAST_BANKING_APPS_COUNT = intPreferencesKey("last_banking_apps_count")
+
+        val OVERLAY_PALETTE_ID = stringPreferencesKey("overlay_palette_id")
+        val OVERLAY_SHEET_OPACITY = floatPreferencesKey("overlay_sheet_opacity")
+        val OVERLAY_FULL_SCREEN = booleanPreferencesKey("overlay_full_screen")
+        val OVERLAY_CUSTOM_HUE = floatPreferencesKey("overlay_custom_hue")
+
+        val PERFORMANCE_LEVEL = stringPreferencesKey("performance_level")
+        val PERF_A11Y_ACTIVE_DELAY = longPreferencesKey("perf_a11y_active_delay")
+        val PERF_A11Y_INACTIVE_DELAY = longPreferencesKey("perf_a11y_inactive_delay")
+        val PERF_SCREEN_OFF_DELAY = longPreferencesKey("perf_screen_off_delay")
+        val PERF_POWER_SAVE_DELAY = longPreferencesKey("perf_power_save_delay")
+        val PERF_USAGE_STATS_CACHE = longPreferencesKey("perf_usage_stats_cache")
+        val PERF_SHIELD_DB_WRITE = longPreferencesKey("perf_shield_db_write")
+        val PERF_SHIELD_DB_WRITE_NEAR = longPreferencesKey("perf_shield_db_write_near")
+        val PERF_LAUNCHER_CACHE = longPreferencesKey("perf_launcher_cache")
+        val PERF_GOAL_REMINDER_TICK = longPreferencesKey("perf_goal_reminder_tick")
+        val PERF_DAY_CHANGE_TICK = longPreferencesKey("perf_day_change_tick")
+        val PERF_MON_POWER_SAVE = longPreferencesKey("perf_mon_power_save")
+        val PERF_MON_OVERLAY_SHOWING = longPreferencesKey("perf_mon_overlay_showing")
+        val PERF_MON_GOAL_NEAR = longPreferencesKey("perf_mon_goal_near")
+        val PERF_MON_GOAL_MID = longPreferencesKey("perf_mon_goal_mid")
+        val PERF_MON_GOAL_FAR = longPreferencesKey("perf_mon_goal_far")
+        val PERF_MON_SHIELD_NEAR = longPreferencesKey("perf_mon_shield_near")
+        val PERF_MON_SHIELD_MID = longPreferencesKey("perf_mon_shield_mid")
+        val PERF_MON_SHIELD_FAR = longPreferencesKey("perf_mon_shield_far")
+        val PERF_MON_SHIELD_VERY_FAR = longPreferencesKey("perf_mon_shield_very_far")
+        val PERF_MON_DEFAULT = longPreferencesKey("perf_mon_default")
+
+        val DAY_START_HOUR = intPreferencesKey("day_start_hour")
+        val DAY_START_MINUTE = intPreferencesKey("day_start_minute")
+
+        val GS_FLEX_PRESET = stringPreferencesKey("gs_flex_preset")
+        val GS_D_WGHT = floatPreferencesKey("gs_d_wght")
+        val GS_D_WDTH = floatPreferencesKey("gs_d_wdth")
+        val GS_D_OPSZ = floatPreferencesKey("gs_d_opsz")
+        val GS_D_GRAD = floatPreferencesKey("gs_d_grad")
+        val GS_D_SLNT = floatPreferencesKey("gs_d_slnt")
+        val GS_D_ROND = floatPreferencesKey("gs_d_rond")
+        val GS_H_WGHT = floatPreferencesKey("gs_h_wght")
+        val GS_H_WDTH = floatPreferencesKey("gs_h_wdth")
+        val GS_H_OPSZ = floatPreferencesKey("gs_h_opsz")
+        val GS_H_GRAD = floatPreferencesKey("gs_h_grad")
+        val GS_H_SLNT = floatPreferencesKey("gs_h_slnt")
+        val GS_H_ROND = floatPreferencesKey("gs_h_rond")
+        val GS_B_WGHT = floatPreferencesKey("gs_b_wght")
+        val GS_B_WDTH = floatPreferencesKey("gs_b_wdth")
+        val GS_B_OPSZ = floatPreferencesKey("gs_b_opsz")
+        val GS_B_GRAD = floatPreferencesKey("gs_b_grad")
+        val GS_B_SLNT = floatPreferencesKey("gs_b_slnt")
+        val GS_B_ROND = floatPreferencesKey("gs_b_rond")
+
+        val DISABLE_TRACKING_AT_UNUSED_HOURS = booleanPreferencesKey("disable_tracking_at_unused_hours")
+        val DISABLE_TRACKING_START_HOUR = intPreferencesKey("disable_tracking_start_hour")
+        val DISABLE_TRACKING_END_HOUR = intPreferencesKey("disable_tracking_end_hour")
+        val EXCLUDED_FROM_TRACKING_PACKAGES = stringPreferencesKey("excluded_from_tracking_packages")
+
+        val ALARM_ENABLED = booleanPreferencesKey("alarm_enabled")
+        val ALARM_TIME = stringPreferencesKey("alarm_time")
+        val ALARM_SOUND_URI = stringPreferencesKey("alarm_sound_uri")
+        val ALARM_SOUND_ENABLED = booleanPreferencesKey("alarm_sound_enabled")
+        val ALARM_AUTO_REPEAT_ENABLED = booleanPreferencesKey("alarm_auto_repeat_enabled")
+        val ALARM_MASTER_ENABLED = booleanPreferencesKey("alarm_master_enabled")
+        val ALARMS_JSON = stringPreferencesKey("alarms_json")
+
+
+        val LOCKDOWN_ENABLED = booleanPreferencesKey("lockdown_enabled")
+        val LOCKDOWN_START_TIME = stringPreferencesKey("lockdown_start_time")
+        val LOCKDOWN_END_TIME = stringPreferencesKey("lockdown_end_time")
+        val LOCKDOWN_DAYS = stringPreferencesKey("lockdown_days")
+
+        val POMODORO_ENABLED = booleanPreferencesKey("pomodoro_enabled")
+        val POMODORO_ALLOWED_PACKAGES = stringPreferencesKey("pomodoro_allowed_packages")
+        val POMODORO_BREAK_DURATION_MINUTES = intPreferencesKey("pomodoro_break_duration_minutes")
+        val POMODORO_BLOCK_ALLOWED_APPS = booleanPreferencesKey("pomodoro_block_allowed_apps")
+        val POMODORO_SESSION_DURATION_MINUTES = intPreferencesKey("pomodoro_session_duration_minutes")
+        val POMODORO_MAX_ALLOWED_APPS = intPreferencesKey("pomodoro_max_allowed_apps")
+        val POMODORO_PAUSEABLE = booleanPreferencesKey("pomodoro_pauseable")
+        val POMODORO_LONG_BREAK_DURATION_MINUTES = intPreferencesKey("pomodoro_long_break_duration_minutes")
+        val POMODORO_SESSION_COUNT = intPreferencesKey("pomodoro_session_count")
+        val POMODORO_SESSIONS_BEFORE_LONG_BREAK = intPreferencesKey("pomodoro_sessions_before_long_break")
+        val POMODORO_PRESETS = stringPreferencesKey("pomodoro_presets")
+
+        val PAUSE_POINT_ENABLED = booleanPreferencesKey("pause_point_enabled")
+        val PAUSE_POINT_TASK_TYPES = stringPreferencesKey("pause_point_task_types")
+        val PAUSE_POINT_QR_CODES = stringPreferencesKey("pause_point_qr_codes")
+        val PAUSE_POINT_NFC_TAG_IDS = stringPreferencesKey("pause_point_nfc_tag_ids")
+        val PAUSE_POINT_WAITING_VARIANTS = stringPreferencesKey("pause_point_waiting_variants")
+        val PAUSE_POINT_BREATHING_VARIANTS = stringPreferencesKey("pause_point_breathing_variants")
+        val PAUSE_POINT_WALK_VARIANTS = stringPreferencesKey("pause_point_walk_variants")
+        val PAUSE_POINT_NUMBER_SLIDE_VARIANTS = stringPreferencesKey("pause_point_number_slide_variants")
+        val PAUSE_POINT_SWITCH_VARIANTS = stringPreferencesKey("pause_point_switch_variants")
+        val PAUSE_POINT_MATH_VARIANTS = stringPreferencesKey("pause_point_math_variants")
+        val PAUSE_POINT_COUNTING_VARIANTS = stringPreferencesKey("pause_point_counting_variants")
+        val PAUSE_POINT_TYPING_VARIANTS = stringPreferencesKey("pause_point_typing_variants")
+    }
+
+    private object RuntimeKeys {
+        val LAST_RESET_DATE = stringPreferencesKey("last_reset_date")
+        val LAST_STREAK_CHECK_DATE = stringPreferencesKey("last_streak_check_date")
+        val GLOBAL_CURRENT_STREAK = intPreferencesKey("global_current_streak")
+        val GLOBAL_BEST_STREAK = intPreferencesKey("global_best_streak")
+        val GLOBAL_LAST_STREAK_UPDATE_TIMESTAMP = longPreferencesKey("global_last_streak_update_timestamp")
+        val LAST_BACKUP_TIMESTAMP = longPreferencesKey("last_backup_timestamp")
+        val LAST_KNOWN_DAILY_USAGE = longPreferencesKey("last_known_daily_usage")
+        val LAST_KNOWN_DAILY_USAGE_DATE = stringPreferencesKey("last_known_daily_usage_date")
+        val BEDTIME_CURRENT_STREAK = intPreferencesKey("bedtime_mode_streak_current")
+        val BEDTIME_BEST_STREAK = intPreferencesKey("bedtime_mode_streak_best")
+        val BEDTIME_STREAK_RESET_DATE = stringPreferencesKey("bedtime_streak_reset_date")
+        val LAST_SYNC_TIMESTAMP = longPreferencesKey("last_sync_timestamp")
+        val WHITELIST_INITIALIZED = booleanPreferencesKey("whitelist_initialized")
+        val SHORTS_SCREEN_TIME_MS = longPreferencesKey("shorts_screen_time_ms")
+        val LAST_CHARGE_TIMESTAMP = longPreferencesKey("last_charge_timestamp")
+        val MANUAL_RESET_TIMESTAMPS = stringPreferencesKey("manual_reset_timestamps")
+        val STREAK_RECOVERY_PERFORMED = booleanPreferencesKey("streak_recovery_performed")
+        val INCENTIVE_LOCK_DISABLE_REQUEST_TIMESTAMP = longPreferencesKey("incentive_lock_disable_request_timestamp")
+        val INCENTIVE_LOCK_GOALS_MET_TODAY = booleanPreferencesKey("incentive_lock_goals_met_today")
+        val INCENTIVE_LOCK_GOALS_MET_DATE = stringPreferencesKey("incentive_lock_goals_met_date")
+        val INCENTIVE_BONUS_USES_USED = intPreferencesKey("incentive_bonus_uses_used")
+        val INCENTIVE_BONUS_USES_DATE = stringPreferencesKey("incentive_bonus_uses_date")
+        val LAST_WEEKLY_RESET_DATE = longPreferencesKey("last_weekly_reset_date")
+        val DISMISSED_UNINSTALLED_APPS = stringPreferencesKey("dismissed_uninstalled_apps")
+        val POMODORO_SESSION_END_TIMESTAMP = longPreferencesKey("pomodoro_session_end_timestamp")
+        val POMODORO_BREAK_END_TIMESTAMP = longPreferencesKey("pomodoro_break_end_timestamp")
+        val POMODORO_NEXT_BREAK_ALLOWED_TIMESTAMP = longPreferencesKey("pomodoro_next_break_allowed_timestamp")
+        val POMODORO_CURRENT_SESSION_NUMBER = intPreferencesKey("pomodoro_current_session_number")
+        val USER_XP_TOTAL = longPreferencesKey("user_xp_total")
+        val USER_XP_DEBUG_BASE = longPreferencesKey("user_xp_debug_base")
+        val USER_XP_LAST_AWARD_DATE = stringPreferencesKey("user_xp_last_award_date")
+        val USER_TOTAL_SAVED_MILLIS = longPreferencesKey("user_total_saved_millis")
+    }
+
+    val userPreferencesFlow: Flow<UserPreferences> = combine(
+        context.dataStore.data.catch { exception -> if (exception is IOException) emit(emptyPreferences()) else throw exception },
+        context.runtimeDataStore.data.catch { exception -> if (exception is IOException) emit(emptyPreferences()) else throw exception }
+    ) { settings, runtime ->
+        UserPreferences(
+            themeConfig = ThemeConfig.valueOf(settings[PreferencesKeys.THEME_CONFIG] ?: ThemeConfig.FOLLOW_SYSTEM.name),
+            fontOption = FontOption.valueOf(settings[PreferencesKeys.FONT_OPTION] ?: FontOption.GOOGLE_SANS_FLEX.name),
+            dynamicColor = settings[PreferencesKeys.DYNAMIC_COLOR] ?: true,
+            accessibilityDisabled = settings[PreferencesKeys.ACCESSIBILITY_DISABLED] ?: false,
+            accessibilityRequired = settings[PreferencesKeys.ACCESSIBILITY_REQUIRED] ?: false,
+            screenTimeTargetMinutes = settings[PreferencesKeys.SCREEN_TIME_TARGET] ?: 0,
+            emergencyRechargeDurationMinutes = settings[PreferencesKeys.EMERGENCY_RECHARGE_DURATION_MINUTES] ?: 60,
+            delayAppDurationSeconds = settings[PreferencesKeys.DELAY_APP_DURATION_SECONDS] ?: 30,
+            sessionUsageOverlayEnabled = settings[PreferencesKeys.SESSION_USAGE_OVERLAY_ENABLED] ?: false,
+            sessionUsageOverlaySize = settings[PreferencesKeys.SESSION_USAGE_OVERLAY_SIZE] ?: 100,
+            sessionUsageOverlayOpacity = settings[PreferencesKeys.SESSION_USAGE_OVERLAY_OPACITY] ?: 90,
+            whitelistedPackages = settings[PreferencesKeys.WHITELISTED_PACKAGES]?.split(",")?.filter { it.isNotEmpty() }?.toSet() ?: emptySet(),
+            excludedFromTrackingPackages = settings[PreferencesKeys.EXCLUDED_FROM_TRACKING_PACKAGES]?.split(",")?.filter { it.isNotEmpty() }?.toSet() ?: emptySet(),
+            lastResetDate = runtime[RuntimeKeys.LAST_RESET_DATE] ?: "",
+            lastWeeklyResetDate = runtime[RuntimeKeys.LAST_WEEKLY_RESET_DATE] ?: 0L,
+            lastStreakCheckDate = runtime[RuntimeKeys.LAST_STREAK_CHECK_DATE] ?: "",
+            globalCurrentStreak = runtime[RuntimeKeys.GLOBAL_CURRENT_STREAK] ?: 0,
+            globalBestStreak = runtime[RuntimeKeys.GLOBAL_BEST_STREAK] ?: 0,
+            globalLastStreakUpdateTimestamp = runtime[RuntimeKeys.GLOBAL_LAST_STREAK_UPDATE_TIMESTAMP] ?: 0L,
+            autoBackupEnabled = settings[PreferencesKeys.AUTO_BACKUP_ENABLED] ?: false,
+            backupDirectoryUri = settings[PreferencesKeys.BACKUP_DIRECTORY_URI] ?: "",
+            backupIntervalHours = settings[PreferencesKeys.BACKUP_INTERVAL_HOURS] ?: 3,
+            lastBackupTimestamp = runtime[RuntimeKeys.LAST_BACKUP_TIMESTAMP] ?: 0L,
+            floatingTabBarEnabled = settings[PreferencesKeys.FLOATING_TAB_BAR_ENABLED] ?: false,
+            headerInfoButtonEnabled = settings[PreferencesKeys.HEADER_INFO_BUTTON_ENABLED] ?: true,
+            expressiveColors = settings[PreferencesKeys.EXPRESSIVE_COLORS] ?: false,
+            totalUsagePillEnabled = settings[PreferencesKeys.TOTAL_USAGE_PILL_ENABLED] ?: false,
+            foregroundNotificationStatusMode = settings[PreferencesKeys.FOREGROUND_NOTIFICATION_STATUS_MODE]
+                ?.let { runCatching { ForegroundNotificationStatusMode.valueOf(it) }.getOrNull() }
+                ?: ForegroundNotificationStatusMode.DEFAULT,
+            lastKnownDailyUsage = runtime[RuntimeKeys.LAST_KNOWN_DAILY_USAGE] ?: 0L,
+            lastKnownDailyUsageDate = runtime[RuntimeKeys.LAST_KNOWN_DAILY_USAGE_DATE] ?: "",
+            bedtimeEnabled = settings[PreferencesKeys.BEDTIME_ENABLED] ?: false,
+            bedtimeStartTime = settings[PreferencesKeys.BEDTIME_START_TIME] ?: "22:00",
+            bedtimeEndTime = settings[PreferencesKeys.BEDTIME_END_TIME] ?: "07:00",
+            bedtimeDays = settings[PreferencesKeys.BEDTIME_DAYS]?.split(",")?.filter { it.isNotEmpty() }?.map { it.toInt() }?.toSet() ?: setOf(1, 2, 3, 4, 5, 6, 7),
+            gracePeriodEnabled = settings[PreferencesKeys.GRACE_PERIOD_ENABLED] ?: false,
+            gracePeriodStartTime = settings[PreferencesKeys.GRACE_PERIOD_START_TIME] ?: "12:00",
+            gracePeriodEndTime = settings[PreferencesKeys.GRACE_PERIOD_END_TIME] ?: "13:00",
+            gracePeriodDays = settings[PreferencesKeys.GRACE_PERIOD_DAYS]?.split(",")?.filter { it.isNotEmpty() }?.map { it.toInt() }?.toSet() ?: setOf(1, 2, 3, 4, 5, 6, 7),
+            gracePeriodLastEditTimestamp = settings[PreferencesKeys.GRACE_PERIOD_LAST_EDIT_TIMESTAMP] ?: 0L,
+            gracePeriodEditLockEnabled = settings[PreferencesKeys.GRACE_PERIOD_EDIT_LOCK_ENABLED] ?: false,
+            bedtimeDndEnabled = settings[PreferencesKeys.BEDTIME_DND_ENABLED] ?: false,
+            bedtimeWindDownEnabled = settings[PreferencesKeys.BEDTIME_WIND_DOWN_ENABLED] ?: false,
+            bedtimeNotificationEnabled = settings[PreferencesKeys.BEDTIME_NOTIFICATION_ENABLED] ?: true,
+            bedtimeWhitelistedPackages = settings[PreferencesKeys.BEDTIME_WHITELISTED_PACKAGES]?.split(",")?.filter { it.isNotEmpty() }?.toSet() ?: emptySet(),
+            bedtimeCurrentStreak = runtime[RuntimeKeys.BEDTIME_CURRENT_STREAK] ?: 0,
+            bedtimeBestStreak = runtime[RuntimeKeys.BEDTIME_BEST_STREAK] ?: 0,
+            bedtimeStreakResetDate = runtime[RuntimeKeys.BEDTIME_STREAK_RESET_DATE] ?: "",
+            userName = settings[PreferencesKeys.USER_NAME] ?: "User",
+            userBio = settings[PreferencesKeys.USER_BIO] ?: "",
+            userAvatarUri = settings[PreferencesKeys.USER_AVATAR_URI] ?: "",
+            userBannerUri = settings[PreferencesKeys.USER_BANNER_URI] ?: "",
+userTitle = settings[PreferencesKeys.USER_TITLE] ?: "",
+userAvatarBorder = settings[PreferencesKeys.USER_AVATAR_BORDER] ?: "",
+            profileBannerOnHome = settings[PreferencesKeys.PROFILE_BANNER_ON_HOME] ?: false,
+            userSharedProfile = settings[PreferencesKeys.USER_SHARED_PROFILE] ?: false,
+            infoVisitedRoutes = settings[PreferencesKeys.INFO_VISITED_ROUTES]
+                ?.split(",")?.filter { it.isNotEmpty() }?.toSet() ?: emptySet(),
+            lifetimeSnapshot = settings[PreferencesKeys.LIFETIME_SNAPSHOT] ?: "",
+            lifetimeLastSyncDate = settings[PreferencesKeys.LIFETIME_LAST_SYNC_DATE] ?: "",
+            achievementHistory = settings[PreferencesKeys.ACHIEVEMENT_HISTORY] ?: "",
+            achievementLastValues = settings[PreferencesKeys.ACHIEVEMENT_LAST_VALUES] ?: "",
+            achievementDailyCounts = settings[PreferencesKeys.ACHIEVEMENT_DAILY_COUNTS] ?: "",
+achievementBannersSeen = settings[PreferencesKeys.ACHIEVEMENT_BANNERS_SEEN] ?: "",
+            userXpTotal = runtime[RuntimeKeys.USER_XP_TOTAL] ?: 0L,
+            userXpDebugBase = runtime[RuntimeKeys.USER_XP_DEBUG_BASE] ?: -1L,
+            userXpLastAwardDate = runtime[RuntimeKeys.USER_XP_LAST_AWARD_DATE] ?: "",
+            userTotalSavedMillis = runtime[RuntimeKeys.USER_TOTAL_SAVED_MILLIS] ?: 0L,
+            userXpHistory = settings[PreferencesKeys.USER_XP_HISTORY] ?: "",
+            earlyKickEnabled = settings[PreferencesKeys.EARLY_KICK_ENABLED] ?: false,
+            interceptAudioFocusEnabled = settings[PreferencesKeys.INTERCEPT_AUDIO_FOCUS_ENABLED] ?: true,
+            showDatabaseIndicator = settings[PreferencesKeys.SHOW_DATABASE_INDICATOR] ?: false,
+            developerModeEnabled = settings[PreferencesKeys.DEVELOPER_MODE_ENABLED] ?: false,
+            lastSyncTimestamp = runtime[RuntimeKeys.LAST_SYNC_TIMESTAMP] ?: 0L,
+            preferSystemUsageHistory = settings[PreferencesKeys.PREFER_SYSTEM_USAGE_HISTORY] ?: true,
+            onboardingStatsCompleted = settings[PreferencesKeys.ONBOARDING_STATS_COMPLETED] ?: false,
+            onboardingUpdateCompleted = settings[PreferencesKeys.ONBOARDING_UPDATE_COMPLETED] ?: false,
+            whitelistInitialized = runtime[RuntimeKeys.WHITELIST_INITIALIZED] ?: false,
+            hudHideFeatureLearned = settings[PreferencesKeys.HUD_HIDE_FEATURE_LEARNED] ?: false,
+            smartRepairOnRefresh = settings[PreferencesKeys.SMART_REPAIR_ON_REFRESH] ?: false,
+            allowRepairNonUnavailable = settings[PreferencesKeys.ALLOW_REPAIR_NON_UNAVAILABLE] ?: false,
+            shortsScreenTimeMs = runtime[RuntimeKeys.SHORTS_SCREEN_TIME_MS] ?: 0L,
+            mindfulGatewayEnabled = settings[PreferencesKeys.MINDFUL_GATEWAY_ENABLED] ?: false,
+            refreshOnOpenUsageStats = settings[PreferencesKeys.REFRESH_ON_OPEN_USAGE_STATS] ?: false,
+            checkUpdateOnStart = settings[PreferencesKeys.CHECK_UPDATE_ON_START] ?: false,
+            batteryStatsResetEnabled = settings[PreferencesKeys.BATTERY_STATS_RESET_ENABLED] ?: false,
+            bankingWarningDismissed = settings[PreferencesKeys.BANKING_WARNING_DISMISSED] ?: false,
+            showCurrentEvent = settings[PreferencesKeys.SHOW_CURRENT_EVENT] ?: false,
+            dailyRecapEnabled = settings[PreferencesKeys.DAILY_RECAP_ENABLED] ?: true,
+            weeklyInsightEnabled = settings[PreferencesKeys.WEEKLY_INSIGHT_ENABLED] ?: true,
+            trendMilestoneEnabled = settings[PreferencesKeys.TREND_MILESTONE_ENABLED] ?: true,
+            incentiveLockEnabled = settings[PreferencesKeys.INCENTIVE_LOCK_ENABLED] ?: false,
+            eyeCareEnabled = settings[PreferencesKeys.EYE_CARE_ENABLED] ?: false,
+            eyeCareWorkMinutes = settings[PreferencesKeys.EYE_CARE_WORK_MINUTES] ?: 20,
+            eyeCareRestSeconds = settings[PreferencesKeys.EYE_CARE_REST_SECONDS] ?: 20,
+            dayStartHour = settings[PreferencesKeys.DAY_START_HOUR] ?: 0,
+            dayStartMinute = settings[PreferencesKeys.DAY_START_MINUTE] ?: 0,
+            usageGlimpseEnabled = settings[PreferencesKeys.USAGE_GLIMPSE_ENABLED] ?: false,
+            websiteAutoTrackingEnabled = settings[PreferencesKeys.WEBSITE_AUTO_TRACKING] ?: false,
+            lastBankingAppsCount = settings[PreferencesKeys.LAST_BANKING_APPS_COUNT] ?: -1,
+            incentiveLockDisableRequestTimestamp = runtime[RuntimeKeys.INCENTIVE_LOCK_DISABLE_REQUEST_TIMESTAMP] ?: 0L,
+            incentiveLockGoalsMetToday = if (runtime[RuntimeKeys.INCENTIVE_LOCK_GOALS_MET_TODAY] != true) false
+                else runtime[RuntimeKeys.INCENTIVE_LOCK_GOALS_MET_DATE] == SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date()),
+            incentiveBonusUsesUsed = {
+                val date = runtime[RuntimeKeys.INCENTIVE_BONUS_USES_DATE] ?: ""
+                val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+                if (date != today) 0 else (runtime[RuntimeKeys.INCENTIVE_BONUS_USES_USED] ?: 0)
+            }(),
+            performanceLevel = PerformanceLevel.valueOf(settings[PreferencesKeys.PERFORMANCE_LEVEL] ?: PerformanceLevel.BALANCED.name),
+            perfA11yActiveDelay = settings[PreferencesKeys.PERF_A11Y_ACTIVE_DELAY] ?: PerformanceConfig().a11yActiveDelay,
+            perfA11yInactiveDelay = settings[PreferencesKeys.PERF_A11Y_INACTIVE_DELAY] ?: PerformanceConfig().a11yInactiveDelay,
+            perfScreenOffDelay = settings[PreferencesKeys.PERF_SCREEN_OFF_DELAY] ?: PerformanceConfig().screenOffDelay,
+            perfPowerSaveDelay = settings[PreferencesKeys.PERF_POWER_SAVE_DELAY] ?: PerformanceConfig().powerSaveDelay,
+            perfUsageStatsCacheMs = settings[PreferencesKeys.PERF_USAGE_STATS_CACHE] ?: PerformanceConfig().usageStatsCacheMs,
+            perfShieldDbWriteMs = settings[PreferencesKeys.PERF_SHIELD_DB_WRITE] ?: PerformanceConfig().shieldDbWriteMs,
+            perfShieldDbWriteNearMs = settings[PreferencesKeys.PERF_SHIELD_DB_WRITE_NEAR] ?: PerformanceConfig().shieldDbWriteNearMs,
+            perfLauncherCacheMs = settings[PreferencesKeys.PERF_LAUNCHER_CACHE] ?: PerformanceConfig().launcherCacheMs,
+            perfGoalReminderTick = settings[PreferencesKeys.PERF_GOAL_REMINDER_TICK] ?: PerformanceConfig().goalReminderTick,
+            perfDayChangeTick = settings[PreferencesKeys.PERF_DAY_CHANGE_TICK] ?: PerformanceConfig().dayChangeTick,
+            perfMonPowerSave = settings[PreferencesKeys.PERF_MON_POWER_SAVE] ?: PerformanceConfig().monPowerSave,
+            perfMonOverlayShowing = settings[PreferencesKeys.PERF_MON_OVERLAY_SHOWING] ?: PerformanceConfig().monOverlayShowing,
+            perfMonGoalNear = settings[PreferencesKeys.PERF_MON_GOAL_NEAR] ?: PerformanceConfig().monGoalNear,
+            perfMonGoalMid = settings[PreferencesKeys.PERF_MON_GOAL_MID] ?: PerformanceConfig().monGoalMid,
+            perfMonGoalFar = settings[PreferencesKeys.PERF_MON_GOAL_FAR] ?: PerformanceConfig().monGoalFar,
+            perfMonShieldNear = settings[PreferencesKeys.PERF_MON_SHIELD_NEAR] ?: PerformanceConfig().monShieldNear,
+            perfMonShieldMid = settings[PreferencesKeys.PERF_MON_SHIELD_MID] ?: PerformanceConfig().monShieldMid,
+            perfMonShieldFar = settings[PreferencesKeys.PERF_MON_SHIELD_FAR] ?: PerformanceConfig().monShieldFar,
+            perfMonShieldVeryFar = settings[PreferencesKeys.PERF_MON_SHIELD_VERY_FAR] ?: PerformanceConfig().monShieldVeryFar,
+            perfMonDefault = settings[PreferencesKeys.PERF_MON_DEFAULT] ?: PerformanceConfig().monDefault,
+            lastChargeTimestamp = runtime[RuntimeKeys.LAST_CHARGE_TIMESTAMP] ?: 0L,
+            manualResetTimestamps = runtime[RuntimeKeys.MANUAL_RESET_TIMESTAMPS]?.split(",")
+                ?.filter { it.contains(":") }
+                ?.associate { 
+                    val parts = it.split(":")
+                    parts[0] to (parts[1].toLongOrNull() ?: 0L)
+                } ?: emptyMap(),
+            gsFlexSettings = GSFlexSettings(
+                preset = GSFlexPreset.valueOf(settings[PreferencesKeys.GS_FLEX_PRESET] ?: GSFlexPreset.ZENITH.name),
+                display = FontAxes(
+                    weight = settings[PreferencesKeys.GS_D_WGHT] ?: 400f,
+                    width = settings[PreferencesKeys.GS_D_WDTH] ?: 100f,
+                    opsz = settings[PreferencesKeys.GS_D_OPSZ] ?: 72f,
+                    grade = settings[PreferencesKeys.GS_D_GRAD] ?: 0f,
+                    slant = settings[PreferencesKeys.GS_D_SLNT] ?: 0f,
+                    roundness = settings[PreferencesKeys.GS_D_ROND] ?: 0f
+                ),
+                headline = FontAxes(
+                    weight = settings[PreferencesKeys.GS_H_WGHT] ?: 400f,
+                    width = settings[PreferencesKeys.GS_H_WDTH] ?: 100f,
+                    opsz = settings[PreferencesKeys.GS_H_OPSZ] ?: 32f,
+                    grade = settings[PreferencesKeys.GS_H_GRAD] ?: 0f,
+                    slant = settings[PreferencesKeys.GS_H_SLNT] ?: 0f,
+                    roundness = settings[PreferencesKeys.GS_H_ROND] ?: 0f
+                ),
+                body = FontAxes(
+                    weight = settings[PreferencesKeys.GS_B_WGHT] ?: 400f,
+                    width = settings[PreferencesKeys.GS_B_WDTH] ?: 100f,
+                    opsz = settings[PreferencesKeys.GS_B_OPSZ] ?: 16f,
+                    grade = settings[PreferencesKeys.GS_B_GRAD] ?: 0f,
+                    slant = settings[PreferencesKeys.GS_B_SLNT] ?: 0f,
+                    roundness = settings[PreferencesKeys.GS_B_ROND] ?: 0f
+                ),
+            ),
+            overlayPaletteId = settings[PreferencesKeys.OVERLAY_PALETTE_ID] ?: "dynamic",
+            overlaySheetOpacity = settings[PreferencesKeys.OVERLAY_SHEET_OPACITY] ?: 1f,
+            overlayFullScreen = settings[PreferencesKeys.OVERLAY_FULL_SCREEN] ?: false,
+            overlayCustomHue = settings[PreferencesKeys.OVERLAY_CUSTOM_HUE] ?: 270f,
+            disableTrackingAtUnusedHours = settings[PreferencesKeys.DISABLE_TRACKING_AT_UNUSED_HOURS] ?: false,
+            disableTrackingStartHour = settings[PreferencesKeys.DISABLE_TRACKING_START_HOUR] ?: 2,
+            disableTrackingEndHour = settings[PreferencesKeys.DISABLE_TRACKING_END_HOUR] ?: 4,
+            alarmEnabled = settings[PreferencesKeys.ALARM_ENABLED] ?: false,
+            alarmTime = settings[PreferencesKeys.ALARM_TIME] ?: "07:00",
+            alarmSoundUri = settings[PreferencesKeys.ALARM_SOUND_URI]?.takeIf { it.isNotEmpty() },
+            alarmSoundEnabled = settings[PreferencesKeys.ALARM_SOUND_ENABLED] ?: true,
+            alarmAutoRepeatEnabled = settings[PreferencesKeys.ALARM_AUTO_REPEAT_ENABLED] ?: true,
+            alarmMasterEnabled = settings[PreferencesKeys.ALARM_MASTER_ENABLED] ?: false,
+            alarmsJson = settings[PreferencesKeys.ALARMS_JSON] ?: "[]",
+            streakRecoveryPerformed = runtime[RuntimeKeys.STREAK_RECOVERY_PERFORMED] ?: false,
+            lockdownEnabled = settings[PreferencesKeys.LOCKDOWN_ENABLED] ?: false,
+            lockdownStartTime = settings[PreferencesKeys.LOCKDOWN_START_TIME] ?: "22:00",
+            lockdownEndTime = settings[PreferencesKeys.LOCKDOWN_END_TIME] ?: "07:00",
+            lockdownDays = settings[PreferencesKeys.LOCKDOWN_DAYS]?.split(",")?.filter { it.isNotEmpty() }?.map { it.toInt() }?.toSet() ?: setOf(1, 2, 3, 4, 5, 6, 7),
+            dismissedUninstalledApps = runtime[RuntimeKeys.DISMISSED_UNINSTALLED_APPS]
+                ?.split(",")
+                ?.filter { it.isNotEmpty() }
+                ?.associate { entry ->
+                    val parts = entry.split(":")
+                    parts[0] to parts.getOrElse(1) { "" }
+                } ?: emptyMap(),
+            pomodoroEnabled = settings[PreferencesKeys.POMODORO_ENABLED] ?: false,
+            pomodoroAllowedPackages = settings[PreferencesKeys.POMODORO_ALLOWED_PACKAGES]?.split(",")?.filter { it.isNotEmpty() }?.toSet() ?: emptySet(),
+            pomodoroBreakDurationMinutes = settings[PreferencesKeys.POMODORO_BREAK_DURATION_MINUTES] ?: 5,
+            pomodoroBlockAllowedApps = settings[PreferencesKeys.POMODORO_BLOCK_ALLOWED_APPS] ?: true,
+            pomodoroSessionDurationMinutes = settings[PreferencesKeys.POMODORO_SESSION_DURATION_MINUTES] ?: 25,
+            pomodoroMaxAllowedApps = settings[PreferencesKeys.POMODORO_MAX_ALLOWED_APPS] ?: 7,
+            pomodoroPauseable = settings[PreferencesKeys.POMODORO_PAUSEABLE] ?: true,
+            pomodoroLongBreakDurationMinutes = settings[PreferencesKeys.POMODORO_LONG_BREAK_DURATION_MINUTES] ?: 15,
+            pomodoroSessionCount = settings[PreferencesKeys.POMODORO_SESSION_COUNT] ?: 4,
+            pomodoroSessionsBeforeLongBreak = settings[PreferencesKeys.POMODORO_SESSIONS_BEFORE_LONG_BREAK] ?: 4,
+            pomodoroCurrentSessionNumber = runtime[RuntimeKeys.POMODORO_CURRENT_SESSION_NUMBER] ?: 1,
+            pomodoroPresets = settings[PreferencesKeys.POMODORO_PRESETS] ?: "{}",
+            pomodoroSessionEndTimestamp = runtime[RuntimeKeys.POMODORO_SESSION_END_TIMESTAMP] ?: 0L,
+            pomodoroBreakEndTimestamp = runtime[RuntimeKeys.POMODORO_BREAK_END_TIMESTAMP] ?: 0L,
+            pomodoroNextBreakAllowedTimestamp = runtime[RuntimeKeys.POMODORO_NEXT_BREAK_ALLOWED_TIMESTAMP] ?: 0L,
+            pausePointEnabled = settings[PreferencesKeys.PAUSE_POINT_ENABLED] ?: false,
+            pausePointTaskTypes = settings[PreferencesKeys.PAUSE_POINT_TASK_TYPES]
+                ?.split(",")
+                ?.filter { it.isNotEmpty() }
+                ?.mapNotNull { runCatching { PausePointTaskType.valueOf(it) }.getOrNull() }
+                ?.toSet() ?: emptySet(),
+            pausePointQrCodes = parseStringList(settings[PreferencesKeys.PAUSE_POINT_QR_CODES]),
+            pausePointNfcTagIds = parseStringList(settings[PreferencesKeys.PAUSE_POINT_NFC_TAG_IDS]),
+            pausePointWaitingVariants = parseVariantList(settings[PreferencesKeys.PAUSE_POINT_WAITING_VARIANTS]).distinct(),
+            pausePointBreathingVariants = parseVariantList(settings[PreferencesKeys.PAUSE_POINT_BREATHING_VARIANTS]).distinct(),
+            pausePointWalkVariants = parseVariantList(settings[PreferencesKeys.PAUSE_POINT_WALK_VARIANTS]).distinct(),
+            pausePointNumberSlideVariants = parseVariantList(settings[PreferencesKeys.PAUSE_POINT_NUMBER_SLIDE_VARIANTS]).distinct(),
+            pausePointSwitchVariants = parseVariantList(settings[PreferencesKeys.PAUSE_POINT_SWITCH_VARIANTS]).distinct(),
+            pausePointMathVariants = parseVariantList(settings[PreferencesKeys.PAUSE_POINT_MATH_VARIANTS]).distinct(),
+            pausePointCountingVariants = parseVariantList(settings[PreferencesKeys.PAUSE_POINT_COUNTING_VARIANTS]).distinct(),
+            pausePointTypingVariants = parseVariantList(settings[PreferencesKeys.PAUSE_POINT_TYPING_VARIANTS]).distinct()
+        )
+    }.distinctUntilChanged()
+    data class AppearancePrefs(
+        val themeConfig: ThemeConfig = ThemeConfig.FOLLOW_SYSTEM,
+        val dynamicColor: Boolean = true,
+        val fontOption: FontOption = FontOption.GOOGLE_SANS_FLEX,
+        val expressiveColors: Boolean = false,
+        val gsFlexSettings: GSFlexSettings = GSFlexSettings()
+    )
+
+    val appearanceFlow: Flow<AppearancePrefs> = userPreferencesFlow.map {
+        AppearancePrefs(
+            themeConfig = it.themeConfig,
+            dynamicColor = it.dynamicColor,
+            fontOption = it.fontOption,
+            expressiveColors = it.expressiveColors,
+            gsFlexSettings = it.gsFlexSettings
+        )
+    }.distinctUntilChanged()
+
+    data class BannerPrefs(
+        val userBannerUri: String = "",
+        val profileBannerOnHome: Boolean = false
+    )
+
+    val bannerPrefsFlow: Flow<BannerPrefs> = userPreferencesFlow.map {
+        BannerPrefs(
+            userBannerUri = it.userBannerUri,
+            profileBannerOnHome = it.profileBannerOnHome
+        )
+    }.distinctUntilChanged()
+
+    data class AlarmPrefs(
+        val alarmsJson: String = "[]",
+        val alarmMasterEnabled: Boolean = false,
+        val alarmAutoRepeatEnabled: Boolean = true,
+        val pausePointQrCodeCount: Int = 0,
+        val pausePointNfcTagCount: Int = 0
+    )
+
+    val alarmPrefsFlow: Flow<AlarmPrefs> = userPreferencesFlow.map {
+        AlarmPrefs(
+            alarmsJson = it.alarmsJson,
+            alarmMasterEnabled = it.alarmMasterEnabled,
+            alarmAutoRepeatEnabled = it.alarmAutoRepeatEnabled,
+            pausePointQrCodeCount = it.pausePointQrCodes.count { code -> code.trim().isNotEmpty() },
+            pausePointNfcTagCount = it.pausePointNfcTagIds.count { id ->
+                com.etrisad.zenith.ui.components.pausepoint.PausePointEngine.normalizeNfcId(id).isNotEmpty()
+            }
+        )
+    }.distinctUntilChanged()
+
+    val streakCalculator = StreakCalculator(context, userPreferencesFlow)
+
+    private val moshi = Moshi.Builder()
+        .add(KotlinJsonAdapterFactory())
+        .build()
+
+    private val alarmsAdapter: com.squareup.moshi.JsonAdapter<List<AlarmItem>> by lazy {
+        moshi.adapter(com.squareup.moshi.Types.newParameterizedType(List::class.java, AlarmItem::class.java))
+    }
+    private val stringListAdapter: com.squareup.moshi.JsonAdapter<List<String>> by lazy {
+        moshi.adapter(com.squareup.moshi.Types.newParameterizedType(List::class.java, String::class.java))
+    }
+    private val variantListAdapter: com.squareup.moshi.JsonAdapter<List<PausePointVariant>> by lazy {
+        moshi.adapter(com.squareup.moshi.Types.newParameterizedType(List::class.java, PausePointVariant::class.java))
+    }
+
+    fun parseAlarms(json: String): List<AlarmItem> {
+        return try {
+            alarmsAdapter.fromJson(json) ?: emptyList()
+        } catch (_: Exception) {
+            emptyList()
+        }
+    }
+
+    fun parseStringList(json: String?): List<String> {
+        if (json.isNullOrBlank()) return emptyList()
+        return try {
+            stringListAdapter.fromJson(json) ?: emptyList()
+        } catch (_: Exception) {
+            emptyList()
+        }
+    }
+
+    fun serializeStringList(values: List<String>): String {
+        return try {
+            stringListAdapter.toJson(values)
+        } catch (_: Exception) {
+            "[]"
+        }
+    }
+
+    private fun parseVariantList(json: String?): List<PausePointVariant> {
+        if (json.isNullOrBlank()) return emptyList()
+        return try {
+            variantListAdapter.fromJson(json) ?: emptyList()
+        } catch (_: Exception) {
+            emptyList()
+        }
+    }
+
+    private fun serializePausePointVariants(variants: List<PausePointVariant>): String {
+        return try {
+            variantListAdapter.toJson(variants)
+        } catch (_: Exception) {
+            "[]"
+        }
+    }
+
+    fun serializeAlarms(alarms: List<AlarmItem>): String {
+        return try {
+            alarmsAdapter.toJson(alarms)
+        } catch (_: Exception) {
+            "[]"
+        }
+    }
+
+    suspend fun refreshGlobalStreak(shieldRepository: ShieldRepository): Pair<Int, Int> =
+        streakCalculator.refreshGlobalStreak(shieldRepository)
+
+    suspend fun refreshAppStreaks(shieldRepository: ShieldRepository) =
+        streakCalculator.refreshAppStreaks(shieldRepository)
+
+    suspend fun refreshWebStreaks(shieldRepository: ShieldRepository) =
+        streakCalculator.refreshWebStreaks(shieldRepository)
+
+    suspend fun refreshAllAppStreaks(shieldRepository: ShieldRepository) =
+        streakCalculator.refreshAllAppStreaks(shieldRepository)
+
+    suspend fun runManualStreakRecovery(shieldRepository: ShieldRepository) =
+        streakCalculator.runManualStreakRecovery(shieldRepository)
+
+    suspend fun setUserName(name: String) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.USER_NAME] = name }
+    }
+
+    suspend fun setUserBio(bio: String) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.USER_BIO] = bio }
+    }
+
+    suspend fun setUserAvatarUri(uri: String) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.USER_AVATAR_URI] = uri }
+    }
+
+    suspend fun setUserBannerUri(uri: String) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.USER_BANNER_URI] = uri }
+    }
+
+    suspend fun setUserTitle(titleId: String) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.USER_TITLE] = titleId }
+    }
+
+    suspend fun setUserAvatarBorder(borderId: String) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.USER_AVATAR_BORDER] = borderId }
+    }
+
+    suspend fun setProfileBannerOnHome(enabled: Boolean) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.PROFILE_BANNER_ON_HOME] = enabled }
+    }
+
+    suspend fun setUserSharedProfile(shared: Boolean) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.USER_SHARED_PROFILE] = shared }
+    }
+
+    suspend fun addInfoVisitedRoute(route: String) {
+        if (route.isBlank()) return
+        context.dataStore.edit { preferences ->
+            val current = preferences[PreferencesKeys.INFO_VISITED_ROUTES]
+                ?.split(",")?.filter { it.isNotEmpty() }?.toMutableSet() ?: mutableSetOf()
+            if (current.add(route)) {
+                preferences[PreferencesKeys.INFO_VISITED_ROUTES] = current.joinToString(",")
+            }
+        }
+    }
+
+    suspend fun setLifetimeSnapshot(snapshot: String, lastSyncDate: String) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.LIFETIME_SNAPSHOT] = snapshot
+            preferences[PreferencesKeys.LIFETIME_LAST_SYNC_DATE] = lastSyncDate
+        }
+    }
+
+    suspend fun setAchievementHistory(history: String) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.ACHIEVEMENT_HISTORY] = history }
+    }
+
+    suspend fun setAchievementLastValues(values: String) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.ACHIEVEMENT_LAST_VALUES] = values }
+    }
+
+    suspend fun setAchievementDailyCounts(counts: String) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.ACHIEVEMENT_DAILY_COUNTS] = counts }
+    }
+
+    suspend fun setAchievementBannersSeen(seen: String) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.ACHIEVEMENT_BANNERS_SEEN] = seen }
+    }
+
+    suspend fun awardDailyXp(todayDate: String, xp: Int, savedMillis: Long) {
+        context.runtimeDataStore.edit { preferences ->
+            preferences[RuntimeKeys.USER_XP_TOTAL] = (preferences[RuntimeKeys.USER_XP_TOTAL] ?: 0L) + xp
+            preferences[RuntimeKeys.USER_XP_LAST_AWARD_DATE] = todayDate
+            preferences[RuntimeKeys.USER_TOTAL_SAVED_MILLIS] =
+                (preferences[RuntimeKeys.USER_TOTAL_SAVED_MILLIS] ?: 0L) + savedMillis
+        }
+        context.dataStore.edit { preferences ->
+            val raw = preferences[PreferencesKeys.USER_XP_HISTORY] ?: ""
+            val lines = raw.lines().filter { it.isNotBlank() }.toMutableList()
+            lines.removeAll { it.substringBefore('\t') == todayDate }
+            lines.add(0, "$todayDate\t$xp\t$savedMillis")
+            preferences[PreferencesKeys.USER_XP_HISTORY] = lines.take(30).joinToString("\n")
+        }
+    }
+    suspend fun setUserXpTotal(xp: Long) {
+        context.runtimeDataStore.edit { preferences ->
+            if ((preferences[RuntimeKeys.USER_XP_DEBUG_BASE] ?: -1L) < 0L) {
+                preferences[RuntimeKeys.USER_XP_DEBUG_BASE] =
+                    preferences[RuntimeKeys.USER_XP_TOTAL] ?: 0L
+            }
+            preferences[RuntimeKeys.USER_XP_TOTAL] = xp.coerceAtLeast(0L)
+        }
+    }
+    suspend fun clearXpDebugOverride(): Boolean {
+        var hadOverride = false
+        context.runtimeDataStore.edit { preferences ->
+            val base = preferences[RuntimeKeys.USER_XP_DEBUG_BASE]
+            if (base != null) {
+                preferences[RuntimeKeys.USER_XP_TOTAL] = base
+                preferences.remove(RuntimeKeys.USER_XP_DEBUG_BASE)
+                hadOverride = true
+            }
+        }
+        return hadOverride
+    }
+
+    suspend fun setThemeConfig(themeConfig: ThemeConfig) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.THEME_CONFIG] = themeConfig.name }
+    }
+
+    suspend fun setFontOption(fontOption: FontOption) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.FONT_OPTION] = fontOption.name }
+    }
+
+    suspend fun setDynamicColor(enabled: Boolean) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.DYNAMIC_COLOR] = enabled }
+    }
+
+    suspend fun setAccessibilityDisabled(disabled: Boolean) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.ACCESSIBILITY_DISABLED] = disabled }
+    }
+
+    suspend fun setAccessibilityRequired(required: Boolean) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.ACCESSIBILITY_REQUIRED] = required }
+    }
+
+    suspend fun setScreenTimeTarget(minutes: Int) {
+        // Direct key read: avoids building the full ~150-field UserPreferences
+        // (with Moshi parses) just to compare one int.
+        val currentTarget = context.dataStore.data.first()[PreferencesKeys.SCREEN_TIME_TARGET] ?: 0
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.SCREEN_TIME_TARGET] = minutes
+        }
+        if (minutes > currentTarget && currentTarget > 0) {
+            context.runtimeDataStore.edit { preferences ->
+                preferences[RuntimeKeys.GLOBAL_CURRENT_STREAK] = 0
+            }
+        }
+    }
+
+    suspend fun setEmergencyRechargeDuration(minutes: Int) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.EMERGENCY_RECHARGE_DURATION_MINUTES] = minutes }
+    }
+
+    suspend fun setDelayAppDuration(seconds: Int) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.DELAY_APP_DURATION_SECONDS] = seconds }
+    }
+
+    suspend fun setSessionUsageOverlayEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.SESSION_USAGE_OVERLAY_ENABLED] = enabled }
+    }
+
+    suspend fun setSessionUsageOverlaySize(size: Int) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.SESSION_USAGE_OVERLAY_SIZE] = size }
+    }
+
+    suspend fun setSessionUsageOverlayOpacity(opacity: Int) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.SESSION_USAGE_OVERLAY_OPACITY] = opacity }
+    }
+
+    suspend fun setWhitelistedPackages(packages: Set<String>) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.WHITELISTED_PACKAGES] = packages.joinToString(",") }
+    }
+
+    suspend fun setExcludedFromTrackingPackages(packages: Set<String>) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.EXCLUDED_FROM_TRACKING_PACKAGES] = packages.joinToString(",") }
+    }
+
+    suspend fun setIncentiveLockEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.INCENTIVE_LOCK_ENABLED] = enabled }
+    }
+
+    suspend fun setEyeCareEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.EYE_CARE_ENABLED] = enabled }
+    }
+
+    suspend fun setEyeCareWorkMinutes(minutes: Int) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.EYE_CARE_WORK_MINUTES] = minutes }
+    }
+
+    suspend fun setEyeCareRestSeconds(seconds: Int) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.EYE_CARE_REST_SECONDS] = seconds }
+    }
+
+    suspend fun setDayStartTime(hour: Int, minute: Int) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.DAY_START_HOUR] = hour
+            preferences[PreferencesKeys.DAY_START_MINUTE] = minute
+        }
+    }
+
+    suspend fun setUsageGlimpseEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.USAGE_GLIMPSE_ENABLED] = enabled }
+    }
+
+    suspend fun setWebsiteAutoTrackingEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.WEBSITE_AUTO_TRACKING] = enabled }
+    }
+
+    suspend fun setIncentiveLockDisableRequestTimestamp(timestamp: Long) {
+        context.runtimeDataStore.edit { preferences -> preferences[RuntimeKeys.INCENTIVE_LOCK_DISABLE_REQUEST_TIMESTAMP] = timestamp }
+    }
+
+    suspend fun setIncentiveLockGoalsMetToday(met: Boolean) {
+        context.runtimeDataStore.edit { preferences -> preferences[RuntimeKeys.INCENTIVE_LOCK_GOALS_MET_TODAY] = met }
+    }
+
+    suspend fun setIncentiveLockGoalsMetDate(date: String) {
+        context.runtimeDataStore.edit { preferences -> preferences[RuntimeKeys.INCENTIVE_LOCK_GOALS_MET_DATE] = date }
+    }
+
+    suspend fun setIncentiveBonusUsesUsed(uses: Int) {
+        val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+        context.runtimeDataStore.edit { preferences ->
+            preferences[RuntimeKeys.INCENTIVE_BONUS_USES_USED] = uses
+            preferences[RuntimeKeys.INCENTIVE_BONUS_USES_DATE] = today
+        }
+    }
+
+    suspend fun resetIncentiveBonusUsesIfNeeded() {
+        val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+        context.runtimeDataStore.edit { preferences ->
+            val savedDate = preferences[RuntimeKeys.INCENTIVE_BONUS_USES_DATE] ?: ""
+            if (savedDate != today) {
+                preferences[RuntimeKeys.INCENTIVE_BONUS_USES_USED] = 0
+                preferences[RuntimeKeys.INCENTIVE_BONUS_USES_DATE] = today
+            }
+        }
+    }
+
+    suspend fun setDismissedUninstalledApp(packageName: String, date: String) {
+        context.runtimeDataStore.edit { preferences ->
+            val current = preferences[RuntimeKeys.DISMISSED_UNINSTALLED_APPS] ?: ""
+            val entries = current.split(",").filter { it.isNotEmpty() }.toMutableList()
+            entries.removeAll { it.startsWith("$packageName:") }
+            entries.add("$packageName:$date")
+            preferences[RuntimeKeys.DISMISSED_UNINSTALLED_APPS] = entries.joinToString(",")
+        }
+    }
+
+    suspend fun initializeDefaultWhitelist() {
+        // Direct key reads: this runs at startup, avoid the full prefs build.
+        val initialized = context.runtimeDataStore.data.first()[RuntimeKeys.WHITELIST_INITIALIZED] ?: false
+        val existing = context.dataStore.data.first()[PreferencesKeys.WHITELISTED_PACKAGES]
+            ?.split(",")?.filter { it.isNotEmpty() }?.toSet() ?: emptySet()
+        if (!initialized && existing.isEmpty()) {
+            withContext(Dispatchers.IO) {
+                val pm = context.packageManager
+                val installedApps = try {
+                    pm.getInstalledApplications(0)
+                } catch (e: Exception) {
+                    emptyList()
+                }
+
+                val systemApps = installedApps.filter {
+                    val isSystemFlag = (it.flags and (ApplicationInfo.FLAG_SYSTEM or ApplicationInfo.FLAG_UPDATED_SYSTEM_APP)) != 0
+                    val hasLauncher = pm.getLaunchIntentForPackage(it.packageName) != null
+                    val pkg = it.packageName
+
+                    val isCoreComponent = pkg == "android" ||
+                            pkg.startsWith("com.android.settings") ||
+                            pkg.startsWith("com.android.systemui") ||
+                            pkg.startsWith("com.android.shell") ||
+                            pkg.startsWith("com.android.phone") ||
+                            pkg.startsWith("com.android.angle") ||
+                            pkg.startsWith("com.android.providers") ||
+                            pkg.startsWith("com.google.android.angle") ||
+                            pkg.startsWith("com.google.android.setupwizard") ||
+                            pkg.contains("restore") ||
+                            pkg.contains("overlay") ||
+                            pkg.contains("documentsui")
+
+                    isSystemFlag && (!hasLauncher || isCoreComponent)
+                }.map { it.packageName }.toSet()
+
+                if (systemApps.isNotEmpty()) {
+                    setWhitelistedPackages(systemApps)
+                }
+
+                context.runtimeDataStore.edit { preferences ->
+                    preferences[RuntimeKeys.WHITELIST_INITIALIZED] = true
+                }
+            }
+        }
+    }
+
+    suspend fun setLastResetDate(date: String) {
+        context.runtimeDataStore.edit { preferences -> preferences[RuntimeKeys.LAST_RESET_DATE] = date }
+    }
+
+    suspend fun setLastWeeklyResetDate(timestamp: Long) {
+        context.runtimeDataStore.edit { preferences -> preferences[RuntimeKeys.LAST_WEEKLY_RESET_DATE] = timestamp }
+    }
+
+    suspend fun setLastStreakCheckDate(date: String) {
+        context.runtimeDataStore.edit { preferences -> preferences[RuntimeKeys.LAST_STREAK_CHECK_DATE] = date }
+    }
+
+    
+
+    suspend fun refreshBedtimeStreak(): Pair<Int, Int> {
+        val prefs = userPreferencesFlow.first()
+        if (!prefs.bedtimeEnabled) return Pair(0, prefs.bedtimeBestStreak)
+
+        val usageStatsManager = context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
+        val now = System.currentTimeMillis()
+        val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+
+        val startH = try { prefs.bedtimeStartTime.split(":")[0].toInt() } catch(_: Exception) { 22 }
+        val startM = try { prefs.bedtimeStartTime.split(":")[1].toInt() } catch(_: Exception) { 0 }
+        val endH = try { prefs.bedtimeEndTime.split(":")[0].toInt() } catch(_: Exception) { 7 }
+        val endM = try { prefs.bedtimeEndTime.split(":")[1].toInt() } catch(_: Exception) { 0 }
+
+        val (launcherPackage, launcherApps) = withContext(Dispatchers.IO) {
+            val launcherIntent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
+            val lPkg = try {
+                context.packageManager.resolveActivity(launcherIntent, PackageManager.MATCH_DEFAULT_ONLY)?.activityInfo?.packageName
+            } catch (_: Exception) { null }
+            val lApps = try {
+                context.packageManager.queryIntentActivities(
+                    Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER), 0
+                ).map { it.activityInfo.packageName }.toSet()
+            } catch (_: Exception) { emptySet() }
+            lPkg to lApps
+        }
+
+        val excludePackages = setOfNotNull(context.packageName, launcherPackage) + prefs.whitelistedPackages + prefs.bedtimeWhitelistedPackages + prefs.excludedFromTrackingPackages
+
+        var liveStreak = 0
+        var currentBest = prefs.bedtimeBestStreak
+
+        val bedtimeLoopLimit = (prefs.bedtimeBestStreak + 15).coerceAtMost(30)
+        for (i in 0..bedtimeLoopLimit) {
+            val cal = Calendar.getInstance()
+            cal.add(Calendar.DAY_OF_YEAR, -i)
+
+            if (prefs.bedtimeStreakResetDate.isNotEmpty()) {
+                val dayStr = sdf.format(cal.time)
+                if (dayStr < prefs.bedtimeStreakResetDate) break
+            }
+
+            val dayOfWeek = cal.get(Calendar.DAY_OF_WEEK)
+
+            if (dayOfWeek !in prefs.bedtimeDays) continue
+
+            val startCal = Calendar.getInstance().apply {
+                timeInMillis = cal.timeInMillis
+                set(Calendar.HOUR_OF_DAY, startH)
+                set(Calendar.MINUTE, startM)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+            }
+
+            val endCal = Calendar.getInstance().apply {
+                timeInMillis = startCal.timeInMillis
+                if (endH < startH || (endH == startH && endM <= startM)) {
+                    add(Calendar.DAY_OF_YEAR, 1)
+                }
+                set(Calendar.HOUR_OF_DAY, endH)
+                set(Calendar.MINUTE, endM)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+            }
+
+            val startTime = startCal.timeInMillis
+            val endTime = endCal.timeInMillis
+
+            if (startTime > now) continue
+
+            val isSessionCompleted = endTime <= now
+            val actualEnd = if (isSessionCompleted) endTime else now
+            if (actualEnd <= startTime) continue
+
+            val totalDuration = endTime - startTime
+            val targetMillis = (totalDuration * 0.1).toLong()
+
+            val events = withContext(Dispatchers.IO) {
+                try {
+                    usageStatsManager.queryEvents(startTime - 30 * 60 * 1000L, actualEnd)
+                } catch (e: Exception) {
+                    null
+                }
+            }
+            val event = android.app.usage.UsageEvents.Event()
+            val usageMap = mutableMapOf<String, Long>()
+            var activePkg: String? = null
+            var activeStartTime = startTime
+
+            while (events?.hasNextEvent() == true) {
+                events.getNextEvent(event)
+                val pkg = event.packageName
+                val time = event.timeStamp
+
+                if (time < startTime) {
+                    when (event.eventType) {
+                        android.app.usage.UsageEvents.Event.ACTIVITY_RESUMED,
+                        android.app.usage.UsageEvents.Event.MOVE_TO_FOREGROUND -> {
+                            activePkg = pkg
+                            activeStartTime = startTime
+                        }
+                        android.app.usage.UsageEvents.Event.ACTIVITY_PAUSED,
+                        android.app.usage.UsageEvents.Event.MOVE_TO_BACKGROUND -> {
+                            activePkg = null
+                        }
+                    }
+                    continue
+                }
+
+                when (event.eventType) {
+                    android.app.usage.UsageEvents.Event.ACTIVITY_RESUMED,
+                    android.app.usage.UsageEvents.Event.MOVE_TO_FOREGROUND -> {
+                        if (activePkg != null) {
+                            val duration = time - activeStartTime
+                            if (duration > 0) usageMap[activePkg!!] = (usageMap[activePkg!!] ?: 0L) + duration
+                        }
+                        activePkg = pkg
+                        activeStartTime = time
+                    }
+                    android.app.usage.UsageEvents.Event.ACTIVITY_PAUSED,
+                    android.app.usage.UsageEvents.Event.MOVE_TO_BACKGROUND -> {
+                        if (activePkg == pkg) {
+                            val duration = time - activeStartTime
+                            if (duration > 0) usageMap[pkg] = (usageMap[pkg] ?: 0L) + duration
+                            activePkg = null
+                        }
+                    }
+                }
+            }
+            activePkg?.let { pkg ->
+                val duration = actualEnd - activeStartTime
+                if (duration > 0) usageMap[pkg] = (usageMap[pkg] ?: 0L) + duration
+            }
+
+            var usage = 0L
+            usageMap.forEach { (pkg, time) ->
+                if (pkg !in excludePackages && pkg in launcherApps) {
+                    usage += time
+                }
+            }
+
+            if (usage > targetMillis) {
+                break
+            } else if (isSessionCompleted) {
+                liveStreak++
+            }
+        }
+
+        currentBest = maxOf(currentBest, liveStreak)
+        updateBedtimeStreak(liveStreak, currentBest)
+        return Pair(liveStreak, currentBest)
+    }
+
+    suspend fun setAutoBackupEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.AUTO_BACKUP_ENABLED] = enabled }
+    }
+
+    suspend fun setBackupDirectoryUri(uri: String) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.BACKUP_DIRECTORY_URI] = uri }
+    }
+
+    suspend fun setBackupIntervalHours(hours: Int) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.BACKUP_INTERVAL_HOURS] = hours }
+    }
+
+    suspend fun setLastBackupTimestamp(timestamp: Long) {
+        context.runtimeDataStore.edit { preferences -> preferences[RuntimeKeys.LAST_BACKUP_TIMESTAMP] = timestamp }
+    }
+
+    suspend fun setFloatingTabBarEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.FLOATING_TAB_BAR_ENABLED] = enabled }
+    }
+
+    suspend fun setHeaderInfoButtonEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.HEADER_INFO_BUTTON_ENABLED] = enabled }
+    }
+
+    suspend fun setExpressiveColors(enabled: Boolean) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.EXPRESSIVE_COLORS] = enabled }
+    }
+
+    suspend fun setOverlayPaletteId(paletteId: String) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.OVERLAY_PALETTE_ID] = paletteId }
+    }
+
+    suspend fun setOverlaySheetOpacity(opacity: Float) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.OVERLAY_SHEET_OPACITY] = opacity }
+    }
+
+    suspend fun setOverlayFullScreen(enabled: Boolean) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.OVERLAY_FULL_SCREEN] = enabled }
+    }
+
+    suspend fun setOverlayCustomHue(hue: Float) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.OVERLAY_CUSTOM_HUE] = hue }
+    }
+
+    suspend fun setTotalUsagePillEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.TOTAL_USAGE_PILL_ENABLED] = enabled }
+    }
+
+    private var lastSavedDailyUsage: Pair<Long, String>? = null
+
+    suspend fun setForegroundNotificationStatusMode(mode: ForegroundNotificationStatusMode) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.FOREGROUND_NOTIFICATION_STATUS_MODE] = mode.name }
+    }
+
+    suspend fun setLastKnownDailyUsage(usage: Long, date: String) {
+        if (lastSavedDailyUsage == Pair(usage, date)) return
+        context.runtimeDataStore.edit { preferences -> preferences[RuntimeKeys.LAST_KNOWN_DAILY_USAGE] = usage; preferences[RuntimeKeys.LAST_KNOWN_DAILY_USAGE_DATE] = date }
+        lastSavedDailyUsage = Pair(usage, date)
+    }
+
+    suspend fun setBedtimeEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.BEDTIME_ENABLED] = enabled }
+    }
+
+    suspend fun setBedtimeStartTime(time: String) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.BEDTIME_START_TIME] = time }
+    }
+
+    suspend fun setBedtimeEndTime(time: String) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.BEDTIME_END_TIME] = time }
+    }
+
+    suspend fun setBedtimeDays(days: Set<Int>) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.BEDTIME_DAYS] = days.joinToString(",") }
+    }
+
+    suspend fun setBedtimeDndEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.BEDTIME_DND_ENABLED] = enabled }
+    }
+
+    suspend fun setBedtimeWindDownEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.BEDTIME_WIND_DOWN_ENABLED] = enabled }
+    }
+
+    suspend fun setBedtimeNotificationEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.BEDTIME_NOTIFICATION_ENABLED] = enabled }
+    }
+
+    suspend fun setBedtimeWhitelistedPackages(packages: Set<String>) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.BEDTIME_WHITELISTED_PACKAGES] = packages.joinToString(",") }
+    }
+
+    companion object {
+        const val GRACE_PERIOD_MAX_DURATION_MINUTES = 120
+        const val GRACE_PERIOD_EDIT_COOLDOWN_MILLIS = 7 * 24 * 60 * 60 * 1000L
+    }
+
+    fun getGracePeriodDurationMinutes(start: String, end: String): Int {
+        return try {
+            val s = start.split(":").let { it[0].toInt() * 60 + it[1].toInt() }
+            val e = end.split(":").let { it[0].toInt() * 60 + it[1].toInt() }
+            if (e > s) e - s else (24 * 60 - s) + e
+        } catch (_: Exception) { 0 }
+    }
+
+    fun isGracePeriodDurationValid(start: String, end: String): Boolean {
+        val dur = getGracePeriodDurationMinutes(start, end)
+        return dur in 1..GRACE_PERIOD_MAX_DURATION_MINUTES
+    }
+
+    suspend fun isGracePeriodEditAllowed(): Boolean {
+        // Direct key reads: avoid the full prefs build for two keys.
+        val preferences = context.dataStore.data.first()
+        if (!(preferences[PreferencesKeys.GRACE_PERIOD_EDIT_LOCK_ENABLED] ?: false)) return true
+        val last = preferences[PreferencesKeys.GRACE_PERIOD_LAST_EDIT_TIMESTAMP] ?: 0L
+        if (last == 0L) return true
+        return System.currentTimeMillis() - last >= GRACE_PERIOD_EDIT_COOLDOWN_MILLIS
+    }
+
+    fun getGracePeriodCooldownRemaining(prefs: UserPreferences): Long {
+        if (!prefs.gracePeriodEditLockEnabled) return 0L
+        val last = prefs.gracePeriodLastEditTimestamp
+        if (last == 0L) return 0L
+        val elapsed = System.currentTimeMillis() - last
+        return (GRACE_PERIOD_EDIT_COOLDOWN_MILLIS - elapsed).coerceAtLeast(0L)
+    }
+
+    suspend fun setGracePeriodEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.GRACE_PERIOD_ENABLED] = enabled }
+    }
+
+    suspend fun setGracePeriodEditLockEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.GRACE_PERIOD_EDIT_LOCK_ENABLED] = enabled }
+    }
+
+    suspend fun setGracePeriodStartTime(time: String): Boolean {
+        if (!isGracePeriodEditAllowed()) return false
+        // Direct key read for the paired value: avoid the full prefs build.
+        val endTime = context.dataStore.data.first()[PreferencesKeys.GRACE_PERIOD_END_TIME] ?: "13:00"
+        if (!isGracePeriodDurationValid(time, endTime)) return false
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.GRACE_PERIOD_START_TIME] = time
+            preferences[PreferencesKeys.GRACE_PERIOD_LAST_EDIT_TIMESTAMP] = System.currentTimeMillis()
+        }
+        return true
+    }
+
+    suspend fun setGracePeriodEndTime(time: String): Boolean {
+        if (!isGracePeriodEditAllowed()) return false
+        // Direct key read for the paired value: avoid the full prefs build.
+        val startTime = context.dataStore.data.first()[PreferencesKeys.GRACE_PERIOD_START_TIME] ?: "12:00"
+        if (!isGracePeriodDurationValid(startTime, time)) return false
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.GRACE_PERIOD_END_TIME] = time
+            preferences[PreferencesKeys.GRACE_PERIOD_LAST_EDIT_TIMESTAMP] = System.currentTimeMillis()
+        }
+        return true
+    }
+
+    suspend fun setGracePeriodDays(days: Set<Int>): Boolean {
+        if (!isGracePeriodEditAllowed()) return false
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.GRACE_PERIOD_DAYS] = days.joinToString(",")
+            preferences[PreferencesKeys.GRACE_PERIOD_LAST_EDIT_TIMESTAMP] = System.currentTimeMillis()
+        }
+        return true
+    }
+
+    private var lastSavedBedtimeStreak: Pair<Int, Int>? = null
+
+    suspend fun updateBedtimeStreak(current: Int, best: Int) {
+        if (lastSavedBedtimeStreak == Pair(current, best)) return
+        context.runtimeDataStore.edit { preferences ->
+            preferences[RuntimeKeys.BEDTIME_CURRENT_STREAK] = current
+            preferences[RuntimeKeys.BEDTIME_BEST_STREAK] = best
+        }
+        lastSavedBedtimeStreak = Pair(current, best)
+    }
+
+    suspend fun resetBedtimeStreak() {
+        val today = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(System.currentTimeMillis())
+        context.runtimeDataStore.edit { preferences ->
+            preferences[RuntimeKeys.BEDTIME_CURRENT_STREAK] = 0
+            preferences[RuntimeKeys.BEDTIME_BEST_STREAK] = 0
+            preferences[RuntimeKeys.BEDTIME_STREAK_RESET_DATE] = today
+        }
+    }
+
+    suspend fun setEarlyKickEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.EARLY_KICK_ENABLED] = enabled }
+    }
+
+    suspend fun setInterceptAudioFocusEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.INTERCEPT_AUDIO_FOCUS_ENABLED] = enabled }
+    }
+
+    suspend fun setShowDatabaseIndicator(enabled: Boolean) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.SHOW_DATABASE_INDICATOR] = enabled }
+    }
+
+    suspend fun setDeveloperModeEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.DEVELOPER_MODE_ENABLED] = enabled }
+    }
+
+    private var lastSavedSyncTimestamp = 0L
+
+    suspend fun setLastSyncTimestamp(timestamp: Long) {
+        if (lastSavedSyncTimestamp == timestamp) return
+        context.runtimeDataStore.edit { preferences -> preferences[RuntimeKeys.LAST_SYNC_TIMESTAMP] = timestamp }
+        lastSavedSyncTimestamp = timestamp
+    }
+
+    suspend fun setPreferSystemUsageHistory(enabled: Boolean) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.PREFER_SYSTEM_USAGE_HISTORY] = enabled }
+    }
+
+    suspend fun setOnboardingStatsCompleted(completed: Boolean) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.ONBOARDING_STATS_COMPLETED] = completed }
+    }
+
+    suspend fun setOnboardingUpdateCompleted(completed: Boolean) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.ONBOARDING_UPDATE_COMPLETED] = completed }
+    }
+
+    suspend fun setHudHideFeatureLearned(learned: Boolean) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.HUD_HIDE_FEATURE_LEARNED] = learned }
+    }
+
+    suspend fun setSmartRepairOnRefresh(enabled: Boolean) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.SMART_REPAIR_ON_REFRESH] = enabled }
+    }
+
+    suspend fun setAllowRepairNonUnavailable(enabled: Boolean) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.ALLOW_REPAIR_NON_UNAVAILABLE] = enabled }
+    }
+
+    suspend fun setShortsScreenTimeMs(ms: Long) {
+        context.runtimeDataStore.edit { preferences -> preferences[RuntimeKeys.SHORTS_SCREEN_TIME_MS] = ms }
+    }
+
+    suspend fun setMindfulGatewayEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.MINDFUL_GATEWAY_ENABLED] = enabled }
+    }
+
+    suspend fun setRefreshOnOpenUsageStats(enabled: Boolean) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.REFRESH_ON_OPEN_USAGE_STATS] = enabled }
+    }
+
+    suspend fun setCheckUpdateOnStart(enabled: Boolean) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.CHECK_UPDATE_ON_START] = enabled }
+    }
+
+    suspend fun setBatteryStatsResetEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.BATTERY_STATS_RESET_ENABLED] = enabled }
+    }
+
+    suspend fun setBankingWarningDismissed(dismissed: Boolean) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.BANKING_WARNING_DISMISSED] = dismissed }
+    }
+
+    suspend fun setLastBankingAppsCount(count: Int) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.LAST_BANKING_APPS_COUNT] = count }
+    }
+
+    suspend fun setShowCurrentEvent(enabled: Boolean) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.SHOW_CURRENT_EVENT] = enabled }
+    }
+
+    suspend fun setDailyRecapEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.DAILY_RECAP_ENABLED] = enabled }
+    }
+
+    suspend fun setWeeklyInsightEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.WEEKLY_INSIGHT_ENABLED] = enabled }
+    }
+
+    suspend fun setTrendMilestoneEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.TREND_MILESTONE_ENABLED] = enabled }
+    }
+
+    suspend fun setPerformanceLevel(level: PerformanceLevel) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.PERFORMANCE_LEVEL] = level.name
+        }
+    }
+
+    suspend fun applyPerformanceSettings(config: PerformanceConfig) {
+        context.dataStore.edit { prefs ->
+            prefs[PreferencesKeys.PERF_A11Y_ACTIVE_DELAY] = config.a11yActiveDelay
+            prefs[PreferencesKeys.PERF_A11Y_INACTIVE_DELAY] = config.a11yInactiveDelay
+            prefs[PreferencesKeys.PERF_SCREEN_OFF_DELAY] = config.screenOffDelay
+            prefs[PreferencesKeys.PERF_POWER_SAVE_DELAY] = config.powerSaveDelay
+            prefs[PreferencesKeys.PERF_USAGE_STATS_CACHE] = config.usageStatsCacheMs
+            prefs[PreferencesKeys.PERF_SHIELD_DB_WRITE] = config.shieldDbWriteMs
+            prefs[PreferencesKeys.PERF_SHIELD_DB_WRITE_NEAR] = config.shieldDbWriteNearMs
+            prefs[PreferencesKeys.PERF_LAUNCHER_CACHE] = config.launcherCacheMs
+            prefs[PreferencesKeys.PERF_MON_POWER_SAVE] = config.monPowerSave
+            prefs[PreferencesKeys.PERF_MON_OVERLAY_SHOWING] = config.monOverlayShowing
+            prefs[PreferencesKeys.PERF_MON_GOAL_NEAR] = config.monGoalNear
+            prefs[PreferencesKeys.PERF_MON_GOAL_MID] = config.monGoalMid
+            prefs[PreferencesKeys.PERF_MON_GOAL_FAR] = config.monGoalFar
+            prefs[PreferencesKeys.PERF_MON_SHIELD_NEAR] = config.monShieldNear
+            prefs[PreferencesKeys.PERF_MON_SHIELD_MID] = config.monShieldMid
+            prefs[PreferencesKeys.PERF_MON_SHIELD_FAR] = config.monShieldFar
+            prefs[PreferencesKeys.PERF_MON_SHIELD_VERY_FAR] = config.monShieldVeryFar
+            prefs[PreferencesKeys.PERF_MON_DEFAULT] = config.monDefault
+        }
+    }
+
+    suspend fun setPerfMonPowerSave(delay: Long) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.PERF_MON_POWER_SAVE] = delay }
+    }
+    suspend fun setPerfMonOverlayShowing(delay: Long) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.PERF_MON_OVERLAY_SHOWING] = delay }
+    }
+    suspend fun setPerfMonGoalNear(delay: Long) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.PERF_MON_GOAL_NEAR] = delay }
+    }
+    suspend fun setPerfMonGoalMid(delay: Long) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.PERF_MON_GOAL_MID] = delay }
+    }
+    suspend fun setPerfMonGoalFar(delay: Long) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.PERF_MON_GOAL_FAR] = delay }
+    }
+    suspend fun setPerfMonShieldNear(delay: Long) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.PERF_MON_SHIELD_NEAR] = delay }
+    }
+    suspend fun setPerfMonShieldMid(delay: Long) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.PERF_MON_SHIELD_MID] = delay }
+    }
+    suspend fun setPerfMonShieldFar(delay: Long) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.PERF_MON_SHIELD_FAR] = delay }
+    }
+    suspend fun setPerfMonShieldVeryFar(delay: Long) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.PERF_MON_SHIELD_VERY_FAR] = delay }
+    }
+    suspend fun setPerfMonDefault(delay: Long) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.PERF_MON_DEFAULT] = delay }
+    }
+    suspend fun resetPerfMonDelays() {
+        context.dataStore.edit { preferences ->
+            preferences.remove(PreferencesKeys.PERF_MON_POWER_SAVE)
+            preferences.remove(PreferencesKeys.PERF_MON_OVERLAY_SHOWING)
+            preferences.remove(PreferencesKeys.PERF_MON_GOAL_NEAR)
+            preferences.remove(PreferencesKeys.PERF_MON_GOAL_MID)
+            preferences.remove(PreferencesKeys.PERF_MON_GOAL_FAR)
+            preferences.remove(PreferencesKeys.PERF_MON_SHIELD_NEAR)
+            preferences.remove(PreferencesKeys.PERF_MON_SHIELD_MID)
+            preferences.remove(PreferencesKeys.PERF_MON_SHIELD_FAR)
+            preferences.remove(PreferencesKeys.PERF_MON_SHIELD_VERY_FAR)
+            preferences.remove(PreferencesKeys.PERF_MON_DEFAULT)
+        }
+    }
+
+    suspend fun updateLastChargeTimestamp(timestamp: Long) {
+        context.runtimeDataStore.edit { preferences -> preferences[RuntimeKeys.LAST_CHARGE_TIMESTAMP] = timestamp }
+    }
+
+    suspend fun resetAppStats(packageName: String) {
+        context.runtimeDataStore.edit { preferences ->
+            val currentMap = preferences[RuntimeKeys.MANUAL_RESET_TIMESTAMPS]?.split(",")
+                ?.filter { it.contains(":") }
+                ?.associate { 
+                    val parts = it.split(":")
+                    parts[0] to parts[1]
+                }                ?.toMutableMap() ?: hashMapOf()
+            
+            currentMap[packageName] = System.currentTimeMillis().toString()
+            preferences[RuntimeKeys.MANUAL_RESET_TIMESTAMPS] = currentMap.entries.joinToString(",") { "${it.key}:${it.value}" }
+        }
+    }
+
+    suspend fun setGSFlexSettings(settings: GSFlexSettings) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.GS_FLEX_PRESET] = settings.preset.name
+            preferences[PreferencesKeys.GS_D_WGHT] = settings.display.weight
+            preferences[PreferencesKeys.GS_D_WDTH] = settings.display.width
+            preferences[PreferencesKeys.GS_D_OPSZ] = settings.display.opsz
+            preferences[PreferencesKeys.GS_D_GRAD] = settings.display.grade
+            preferences[PreferencesKeys.GS_D_SLNT] = settings.display.slant
+            preferences[PreferencesKeys.GS_D_ROND] = settings.display.roundness
+            preferences[PreferencesKeys.GS_H_WGHT] = settings.headline.weight
+            preferences[PreferencesKeys.GS_H_WDTH] = settings.headline.width
+            preferences[PreferencesKeys.GS_H_OPSZ] = settings.headline.opsz
+            preferences[PreferencesKeys.GS_H_GRAD] = settings.headline.grade
+            preferences[PreferencesKeys.GS_H_SLNT] = settings.headline.slant
+            preferences[PreferencesKeys.GS_H_ROND] = settings.headline.roundness
+            preferences[PreferencesKeys.GS_B_WGHT] = settings.body.weight
+            preferences[PreferencesKeys.GS_B_WDTH] = settings.body.width
+            preferences[PreferencesKeys.GS_B_OPSZ] = settings.body.opsz
+            preferences[PreferencesKeys.GS_B_GRAD] = settings.body.grade
+            preferences[PreferencesKeys.GS_B_SLNT] = settings.body.slant
+            preferences[PreferencesKeys.GS_B_ROND] = settings.body.roundness
+        }
+    }
+
+    suspend fun setStreakRecoveryPerformed(performed: Boolean) {
+        context.runtimeDataStore.edit { preferences -> preferences[RuntimeKeys.STREAK_RECOVERY_PERFORMED] = performed }
+    }
+
+    suspend fun setLockdownEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.LOCKDOWN_ENABLED] = enabled }
+    }
+
+    suspend fun setLockdownStartTime(time: String) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.LOCKDOWN_START_TIME] = time }
+    }
+
+    suspend fun setLockdownEndTime(time: String) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.LOCKDOWN_END_TIME] = time }
+    }
+
+    suspend fun setLockdownDays(days: Set<Int>) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.LOCKDOWN_DAYS] = days.joinToString(",") }
+    }
+
+    suspend fun setPomodoroEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.POMODORO_ENABLED] = enabled }
+    }
+
+    suspend fun setPausePointEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.PAUSE_POINT_ENABLED] = enabled }
+    }
+
+    suspend fun setPausePointTaskTypes(types: Set<PausePointTaskType>) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.PAUSE_POINT_TASK_TYPES] = types.joinToString(",") { it.name } }
+    }
+
+    suspend fun setPausePointQrCodes(codes: List<String>) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.PAUSE_POINT_QR_CODES] = serializeStringList(codes) }
+    }
+
+    suspend fun setPausePointNfcTagIds(tagIds: List<String>) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.PAUSE_POINT_NFC_TAG_IDS] = serializeStringList(tagIds) }
+    }
+
+    suspend fun setPausePointVariants(type: PausePointTaskType, variants: List<PausePointVariant>) {
+        context.dataStore.edit { preferences -> preferences[keyForPausePointVariants(type)] = serializePausePointVariants(variants) }
+    }
+
+    private fun keyForPausePointVariants(type: PausePointTaskType): Preferences.Key<String> = when (type) {
+        PausePointTaskType.WAITING -> PreferencesKeys.PAUSE_POINT_WAITING_VARIANTS
+        PausePointTaskType.BREATHING -> PreferencesKeys.PAUSE_POINT_BREATHING_VARIANTS
+        PausePointTaskType.WALK -> PreferencesKeys.PAUSE_POINT_WALK_VARIANTS
+        PausePointTaskType.NUMBER_SLIDE -> PreferencesKeys.PAUSE_POINT_NUMBER_SLIDE_VARIANTS
+        PausePointTaskType.SWITCH -> PreferencesKeys.PAUSE_POINT_SWITCH_VARIANTS
+        PausePointTaskType.MATH -> PreferencesKeys.PAUSE_POINT_MATH_VARIANTS
+        PausePointTaskType.COUNTING -> PreferencesKeys.PAUSE_POINT_COUNTING_VARIANTS
+        PausePointTaskType.TYPING -> PreferencesKeys.PAUSE_POINT_TYPING_VARIANTS
+        PausePointTaskType.QR_SCAN, PausePointTaskType.NFC_SCAN, PausePointTaskType.CHOOSE_APP ->
+            throw IllegalArgumentException("No sub-task variants for $type")
+    }
+
+    suspend fun setPomodoroAllowedPackages(packages: Set<String>) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.POMODORO_ALLOWED_PACKAGES] = packages.joinToString(",") }
+    }
+
+    suspend fun setPomodoroBreakDurationMinutes(minutes: Int) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.POMODORO_BREAK_DURATION_MINUTES] = minutes }
+    }
+
+    suspend fun setPomodoroBlockAllowedApps(block: Boolean) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.POMODORO_BLOCK_ALLOWED_APPS] = block }
+    }
+
+    suspend fun setPomodoroSessionDurationMinutes(minutes: Int) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.POMODORO_SESSION_DURATION_MINUTES] = minutes }
+    }
+
+    suspend fun setPomodoroSessionEndTimestamp(timestamp: Long) {
+        context.runtimeDataStore.edit { preferences -> preferences[RuntimeKeys.POMODORO_SESSION_END_TIMESTAMP] = timestamp }
+    }
+
+    suspend fun setPomodoroBreakEndTimestamp(timestamp: Long) {
+        context.runtimeDataStore.edit { preferences -> preferences[RuntimeKeys.POMODORO_BREAK_END_TIMESTAMP] = timestamp }
+    }
+
+    suspend fun setPomodoroNextBreakAllowedTimestamp(timestamp: Long) {
+        context.runtimeDataStore.edit { preferences -> preferences[RuntimeKeys.POMODORO_NEXT_BREAK_ALLOWED_TIMESTAMP] = timestamp }
+    }
+
+    suspend fun setPomodoroMaxAllowedApps(max: Int) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.POMODORO_MAX_ALLOWED_APPS] = max }
+    }
+
+    suspend fun setPomodoroPauseable(pauseable: Boolean) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.POMODORO_PAUSEABLE] = pauseable }
+    }
+
+    suspend fun setPomodoroLongBreakDurationMinutes(minutes: Int) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.POMODORO_LONG_BREAK_DURATION_MINUTES] = minutes }
+    }
+
+    suspend fun setPomodoroSessionCount(count: Int) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.POMODORO_SESSION_COUNT] = count }
+    }
+
+    suspend fun setPomodoroSessionsBeforeLongBreak(count: Int) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.POMODORO_SESSIONS_BEFORE_LONG_BREAK] = count }
+    }
+
+    suspend fun setPomodoroCurrentSessionNumber(session: Int) {
+        context.runtimeDataStore.edit { preferences -> preferences[RuntimeKeys.POMODORO_CURRENT_SESSION_NUMBER] = session }
+    }
+
+    suspend fun setPomodoroPresets(presetsJson: String) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.POMODORO_PRESETS] = presetsJson }
+    }
+
+    suspend fun setDisableTrackingAtUnusedHours(enabled: Boolean) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.DISABLE_TRACKING_AT_UNUSED_HOURS] = enabled }
+    }
+
+    suspend fun setDisableTrackingStartHour(hour: Int) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.DISABLE_TRACKING_START_HOUR] = hour }
+    }
+
+    suspend fun setDisableTrackingEndHour(hour: Int) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.DISABLE_TRACKING_END_HOUR] = hour }
+    }
+
+    suspend fun setAlarmEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.ALARM_ENABLED] = enabled }
+    }
+
+    suspend fun setAlarmTime(time: String) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.ALARM_TIME] = time }
+    }
+
+    suspend fun setAlarmSoundUri(uri: String?) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.ALARM_SOUND_URI] = uri ?: "" }
+    }
+
+    suspend fun setAlarmSoundEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.ALARM_SOUND_ENABLED] = enabled }
+    }
+
+    suspend fun setAlarmAutoRepeatEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.ALARM_AUTO_REPEAT_ENABLED] = enabled }
+    }
+
+    suspend fun setAlarmMasterEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences -> preferences[PreferencesKeys.ALARM_MASTER_ENABLED] = enabled }
+    }
+
+    // Cold flow of the parsed alarm list: subscribe instead of building the full
+    // ~150-field UserPreferences + re-parsing at every call site.
+    val alarmsListFlow: Flow<List<AlarmItem>> = context.dataStore.data
+        .map { prefs -> parseAlarms(prefs[PreferencesKeys.ALARMS_JSON] ?: "[]") }
+        .distinctUntilChanged()
+
+    suspend fun getAlarmsSnapshot(): List<AlarmItem> {
+        // Single-key read + cached adapter: callers must use this instead of
+        // building the full UserPreferences just to parse one JSON string.
+        val json = context.dataStore.data.first()[PreferencesKeys.ALARMS_JSON] ?: "[]"
+        return parseAlarms(json)
+    }
+
+    // Serializes concurrent read-modify-writes of ALARMS_JSON (UI actions +
+    // watchdog/boot/overlay can interleave) so no update is silently lost.
+    private val alarmsMutex = kotlinx.coroutines.sync.Mutex()
+
+    suspend fun addAlarm(alarm: AlarmItem) {
+        alarmsMutex.withLock {
+            context.dataStore.edit { prefs ->
+                val current = parseAlarms(prefs[PreferencesKeys.ALARMS_JSON] ?: "[]")
+                prefs[PreferencesKeys.ALARMS_JSON] = serializeAlarms(current + alarm)
+            }
+        }
+    }
+
+    suspend fun updateAlarm(alarm: AlarmItem) {
+        alarmsMutex.withLock {
+            context.dataStore.edit { prefs ->
+                val current = parseAlarms(prefs[PreferencesKeys.ALARMS_JSON] ?: "[]").toMutableList()
+                val index = current.indexOfFirst { it.id == alarm.id }
+                if (index >= 0) {
+                    current[index] = alarm
+                    prefs[PreferencesKeys.ALARMS_JSON] = serializeAlarms(current)
+                }
+            }
+        }
+    }
+
+    suspend fun deleteAlarm(alarmId: Long) {
+        alarmsMutex.withLock {
+            context.dataStore.edit { prefs ->
+                val current = parseAlarms(prefs[PreferencesKeys.ALARMS_JSON] ?: "[]").toMutableList()
+                current.removeAll { it.id == alarmId }
+                prefs[PreferencesKeys.ALARMS_JSON] = serializeAlarms(current)
+            }
+        }
+    }
+
+    suspend fun migrateAlarmIdsIfNeeded() {
+        val rawType = com.squareup.moshi.Types.newParameterizedType(List::class.java, Map::class.java)
+        val rawAdapter: com.squareup.moshi.JsonAdapter<List<Map<String, Any?>>> = moshi.adapter(rawType)
+
+        context.dataStore.edit { prefs ->
+            val json = prefs[PreferencesKeys.ALARMS_JSON]
+            if (json.isNullOrBlank() || json == "[]") return@edit
+
+            val raw = try { rawAdapter.fromJson(json) } catch (_: Exception) { null }
+            if (raw == null || raw.isEmpty()) return@edit
+
+            val migrated = raw.map { entry ->
+                if (entry.containsKey("id")) entry
+                else entry.toMutableMap().apply { put("id", com.etrisad.zenith.data.model.AlarmItem.createNew().id) }
+            }
+
+            val needsSave = raw.size != migrated.size || raw.zip(migrated).any { (o, n) -> o !== n }
+            if (needsSave) {
+                prefs[PreferencesKeys.ALARMS_JSON] = rawAdapter.toJson(migrated)
+            }
+        }
+    }
+
+
+}
+
+data class UserPreferences(
+    val themeConfig: ThemeConfig = ThemeConfig.FOLLOW_SYSTEM,
+    val fontOption: FontOption = FontOption.GOOGLE_SANS_FLEX,
+    val dynamicColor: Boolean = true,
+    val accessibilityDisabled: Boolean = false,
+    val accessibilityRequired: Boolean = false,
+    val screenTimeTargetMinutes: Int = 0,
+    val emergencyRechargeDurationMinutes: Int = 60,
+    val delayAppDurationSeconds: Int = 30,
+    val sessionUsageOverlayEnabled: Boolean = false,
+    val sessionUsageOverlaySize: Int = 100,
+    val sessionUsageOverlayOpacity: Int = 90,
+    val whitelistedPackages: Set<String> = emptySet(),
+    val excludedFromTrackingPackages: Set<String> = emptySet(),
+    val lastResetDate: String = "",
+    val lastWeeklyResetDate: Long = 0L,
+    val lastStreakCheckDate: String = "",
+    val globalCurrentStreak: Int = 0,
+    val globalBestStreak: Int = 0,
+    val globalLastStreakUpdateTimestamp: Long = 0L,
+    val autoBackupEnabled: Boolean = false,
+    val backupDirectoryUri: String = "",
+    val backupIntervalHours: Int = 3,
+    val lastBackupTimestamp: Long = 0L,
+    val floatingTabBarEnabled: Boolean = false,
+    val headerInfoButtonEnabled: Boolean = true,
+    val expressiveColors: Boolean = false,
+    val totalUsagePillEnabled: Boolean = false,
+    val foregroundNotificationStatusMode: ForegroundNotificationStatusMode = ForegroundNotificationStatusMode.DEFAULT,
+    val lastKnownDailyUsage: Long = 0L,
+    val lastKnownDailyUsageDate: String = "",
+    val bedtimeEnabled: Boolean = false,
+    val bedtimeStartTime: String = "22:00",
+    val bedtimeEndTime: String = "07:00",
+    val bedtimeDays: Set<Int> = setOf(1, 2, 3, 4, 5, 6, 7),
+    val bedtimeDndEnabled: Boolean = false,
+    val bedtimeWindDownEnabled: Boolean = false,
+    val bedtimeNotificationEnabled: Boolean = true,
+    val bedtimeWhitelistedPackages: Set<String> = emptySet(),
+    val bedtimeCurrentStreak: Int = 0,
+    val bedtimeBestStreak: Int = 0,
+    val bedtimeStreakResetDate: String = "",
+    val gracePeriodEnabled: Boolean = false,
+    val gracePeriodStartTime: String = "12:00",
+    val gracePeriodEndTime: String = "13:00",
+    val gracePeriodDays: Set<Int> = setOf(1, 2, 3, 4, 5, 6, 7),
+    val gracePeriodLastEditTimestamp: Long = 0L,
+    val gracePeriodEditLockEnabled: Boolean = false,
+    val userName: String = "User",
+    val userBio: String = "",
+    val userAvatarUri: String = "",
+    val userBannerUri: String = "",
+    val userTitle: String = "",
+    val userAvatarBorder: String = "",
+    val profileBannerOnHome: Boolean = false,
+    val userSharedProfile: Boolean = false,
+    val infoVisitedRoutes: Set<String> = emptySet(),
+    val lifetimeSnapshot: String = "",
+    val lifetimeLastSyncDate: String = "",
+    val achievementHistory: String = "",
+    val achievementLastValues: String = "",
+    val achievementDailyCounts: String = "",
+    val achievementBannersSeen: String = "",
+    val userXpTotal: Long = 0L,
+    val userXpDebugBase: Long = -1L,
+    val userXpLastAwardDate: String = "",
+    val userTotalSavedMillis: Long = 0L,
+    val userXpHistory: String = "",
+    val earlyKickEnabled: Boolean = false,
+    val interceptAudioFocusEnabled: Boolean = true,
+    val showDatabaseIndicator: Boolean = false,
+    val developerModeEnabled: Boolean = false,
+    val lastSyncTimestamp: Long = 0L,
+    val preferSystemUsageHistory: Boolean = true,
+    val onboardingStatsCompleted: Boolean = false,
+    val onboardingUpdateCompleted: Boolean = false,
+    val whitelistInitialized: Boolean = false,
+    val hudHideFeatureLearned: Boolean = false,
+    val smartRepairOnRefresh: Boolean = false,
+    val allowRepairNonUnavailable: Boolean = false,
+    val shortsScreenTimeMs: Long = 0L,
+    val mindfulGatewayEnabled: Boolean = false,
+    val refreshOnOpenUsageStats: Boolean = false,
+    val checkUpdateOnStart: Boolean = false,
+    val batteryStatsResetEnabled: Boolean = false,
+    val showCurrentEvent: Boolean = false,
+    val dailyRecapEnabled: Boolean = true,
+    val weeklyInsightEnabled: Boolean = true,
+    val trendMilestoneEnabled: Boolean = true,
+    val performanceLevel: PerformanceLevel = PerformanceLevel.BALANCED,
+    val perfA11yActiveDelay: Long = PerformanceConfig().a11yActiveDelay,
+    val perfA11yInactiveDelay: Long = PerformanceConfig().a11yInactiveDelay,
+    val perfScreenOffDelay: Long = PerformanceConfig().screenOffDelay,
+    val perfPowerSaveDelay: Long = PerformanceConfig().powerSaveDelay,
+    val perfUsageStatsCacheMs: Long = PerformanceConfig().usageStatsCacheMs,
+    val perfShieldDbWriteMs: Long = PerformanceConfig().shieldDbWriteMs,
+    val perfShieldDbWriteNearMs: Long = PerformanceConfig().shieldDbWriteNearMs,
+    val perfLauncherCacheMs: Long = PerformanceConfig().launcherCacheMs,
+    val perfGoalReminderTick: Long = PerformanceConfig().goalReminderTick,
+    val perfDayChangeTick: Long = PerformanceConfig().dayChangeTick,
+    val perfMonPowerSave: Long = PerformanceConfig().monPowerSave,
+    val perfMonOverlayShowing: Long = PerformanceConfig().monOverlayShowing,
+    val perfMonGoalNear: Long = PerformanceConfig().monGoalNear,
+    val perfMonGoalMid: Long = PerformanceConfig().monGoalMid,
+    val perfMonGoalFar: Long = PerformanceConfig().monGoalFar,
+    val perfMonShieldNear: Long = PerformanceConfig().monShieldNear,
+    val perfMonShieldMid: Long = PerformanceConfig().monShieldMid,
+    val perfMonShieldFar: Long = PerformanceConfig().monShieldFar,
+    val perfMonShieldVeryFar: Long = PerformanceConfig().monShieldVeryFar,
+    val perfMonDefault: Long = PerformanceConfig().monDefault,
+    val lastChargeTimestamp: Long = 0L,
+    val manualResetTimestamps: Map<String, Long> = emptyMap(),
+    val gsFlexSettings: GSFlexSettings = GSFlexSettings(),
+    val streakRecoveryPerformed: Boolean = false,
+    val lockdownEnabled: Boolean = false,
+    val lockdownStartTime: String = "22:00",
+    val lockdownEndTime: String = "07:00",
+    val lockdownDays: Set<Int> = setOf(1, 2, 3, 4, 5, 6, 7),
+    val dismissedUninstalledApps: Map<String, String> = emptyMap(),
+    val pomodoroEnabled: Boolean = false,
+    val pomodoroAllowedPackages: Set<String> = emptySet(),
+    val pomodoroBreakDurationMinutes: Int = 5,
+    val pomodoroBlockAllowedApps: Boolean = true,
+    val pomodoroSessionDurationMinutes: Int = 25,
+    val pomodoroMaxAllowedApps: Int = 7,
+    val pomodoroPauseable: Boolean = true,
+    val pomodoroLongBreakDurationMinutes: Int = 15,
+    val pomodoroSessionCount: Int = 4,
+    val pomodoroSessionsBeforeLongBreak: Int = 4,
+    val pomodoroCurrentSessionNumber: Int = 1,
+    val pomodoroPresets: String = "{}",
+    val pomodoroSessionEndTimestamp: Long = 0L,
+    val pomodoroBreakEndTimestamp: Long = 0L,
+    val pomodoroNextBreakAllowedTimestamp: Long = 0L,
+    val pausePointEnabled: Boolean = false,
+    val pausePointTaskTypes: Set<PausePointTaskType> = emptySet(),
+    val pausePointQrCodes: List<String> = emptyList(),
+    val pausePointNfcTagIds: List<String> = emptyList(),
+    val pausePointWaitingVariants: List<PausePointVariant> = PausePointDefaults.waitingVariants,
+    val pausePointBreathingVariants: List<PausePointVariant> = PausePointDefaults.breathingVariants,
+    val pausePointWalkVariants: List<PausePointVariant> = PausePointDefaults.walkVariants,
+    val pausePointNumberSlideVariants: List<PausePointVariant> = PausePointDefaults.numberSlideVariants,
+    val pausePointSwitchVariants: List<PausePointVariant> = PausePointDefaults.switchVariants,
+    val pausePointMathVariants: List<PausePointVariant> = PausePointDefaults.mathVariants,
+    val pausePointCountingVariants: List<PausePointVariant> = PausePointDefaults.countingVariants,
+    val pausePointTypingVariants: List<PausePointVariant> = PausePointDefaults.typingVariants,
+    val incentiveLockEnabled: Boolean = false,
+    val incentiveLockDisableRequestTimestamp: Long = 0L,
+    val incentiveLockGoalsMetToday: Boolean = false,
+    val incentiveBonusUsesUsed: Int = 0,
+    val bankingWarningDismissed: Boolean = false,
+    val eyeCareEnabled: Boolean = false,
+    val eyeCareWorkMinutes: Int = 20,
+    val eyeCareRestSeconds: Int = 20,
+    val dayStartHour: Int = 0,
+    val dayStartMinute: Int = 0,
+    val usageGlimpseEnabled: Boolean = false,
+    val websiteAutoTrackingEnabled: Boolean = false,
+    val lastBankingAppsCount: Int = -1,
+    val overlayPaletteId: String = "dynamic",
+    val overlaySheetOpacity: Float = 1f,
+    val overlayFullScreen: Boolean = false,
+    val overlayCustomHue: Float = 270f,
+    val disableTrackingAtUnusedHours: Boolean = false,
+    val disableTrackingStartHour: Int = 2,
+    val disableTrackingEndHour: Int = 4,
+    val alarmEnabled: Boolean = false,
+    val alarmTime: String = "07:00",
+    val alarmSoundUri: String? = null,
+    val alarmSoundEnabled: Boolean = true,
+    val alarmAutoRepeatEnabled: Boolean = true,
+    val alarmMasterEnabled: Boolean = false,
+    val alarmsJson: String = "[]",
+
+) {
+    val pausePointConfig: PausePointConfig
+        get() = PausePointConfig(
+            waitingVariants = pausePointWaitingVariants,
+            breathingVariants = pausePointBreathingVariants,
+            walkVariants = pausePointWalkVariants,
+            numberSlideVariants = pausePointNumberSlideVariants,
+            switchVariants = pausePointSwitchVariants,
+            mathVariants = pausePointMathVariants,
+            countingVariants = pausePointCountingVariants,
+            typingVariants = pausePointTypingVariants
+        )
+
+    fun isInLockdown(): Boolean {
+        if (!lockdownEnabled) return false
+        val cal = Calendar.getInstance()
+        val dayOfWeek = cal.get(Calendar.DAY_OF_WEEK)
+        val nowMinutes = cal.get(Calendar.HOUR_OF_DAY) * 60 + cal.get(Calendar.MINUTE)
+        val startParts = lockdownStartTime.split(":")
+        val endParts = lockdownEndTime.split(":")
+        val startMinutes = try { startParts[0].toInt() * 60 + startParts[1].toInt() } catch (_: Exception) { 22 * 60 }
+        val endMinutes = try { endParts[0].toInt() * 60 + endParts[1].toInt() } catch (_: Exception) { 7 * 60 }
+        return if (endMinutes > startMinutes) {
+            if (dayOfWeek !in lockdownDays) return false
+            nowMinutes in startMinutes until endMinutes
+        } else {
+            if (nowMinutes >= startMinutes) {
+                dayOfWeek in lockdownDays
+            } else if (nowMinutes < endMinutes) {
+                val yesterday = cal.clone() as Calendar
+                yesterday.add(Calendar.DATE, -1)
+                yesterday.get(Calendar.DAY_OF_WEEK) in lockdownDays
+            } else {
+                false
+            }
+        }
+    }
+
+    fun buildPerformanceConfig(): PerformanceConfig {
+        if (performanceLevel.isPreset()) return performanceLevel.toConfig()
+        return PerformanceConfig(
+            a11yActiveDelay = perfA11yActiveDelay,
+            a11yInactiveDelay = perfA11yInactiveDelay,
+            screenOffDelay = perfScreenOffDelay,
+            powerSaveDelay = perfPowerSaveDelay,
+            usageStatsCacheMs = perfUsageStatsCacheMs,
+            shieldDbWriteMs = perfShieldDbWriteMs,
+            shieldDbWriteNearMs = perfShieldDbWriteNearMs,
+            launcherCacheMs = perfLauncherCacheMs,
+            goalReminderTick = perfGoalReminderTick,
+            dayChangeTick = perfDayChangeTick,
+            monPowerSave = perfMonPowerSave,
+            monOverlayShowing = perfMonOverlayShowing,
+            monGoalNear = perfMonGoalNear,
+            monGoalMid = perfMonGoalMid,
+            monGoalFar = perfMonGoalFar,
+            monShieldNear = perfMonShieldNear,
+            monShieldMid = perfMonShieldMid,
+            monShieldFar = perfMonShieldFar,
+            monShieldVeryFar = perfMonShieldVeryFar,
+            monDefault = perfMonDefault,
+        )
+    }
+}
+
+fun PerformanceConfig.detectPreset(): PerformanceLevel {
+    PerformanceLevel.entries.forEach { level ->
+        if (level.isPreset()) {
+            val preset = level.toConfig()
+            if (a11yActiveDelay == preset.a11yActiveDelay &&
+                a11yInactiveDelay == preset.a11yInactiveDelay &&
+                screenOffDelay == preset.screenOffDelay &&
+                powerSaveDelay == preset.powerSaveDelay &&
+                usageStatsCacheMs == preset.usageStatsCacheMs &&
+                shieldDbWriteMs == preset.shieldDbWriteMs &&
+                shieldDbWriteNearMs == preset.shieldDbWriteNearMs &&
+                launcherCacheMs == preset.launcherCacheMs &&
+                monPowerSave == preset.monPowerSave &&
+                monOverlayShowing == preset.monOverlayShowing &&
+                monGoalNear == preset.monGoalNear &&
+                monGoalMid == preset.monGoalMid &&
+                monGoalFar == preset.monGoalFar &&
+                monShieldNear == preset.monShieldNear &&
+                monShieldMid == preset.monShieldMid &&
+                monShieldFar == preset.monShieldFar &&
+                monShieldVeryFar == preset.monShieldVeryFar &&
+                monDefault == preset.monDefault) return level
+        }
+    }
+    return PerformanceLevel.CUSTOM
+}

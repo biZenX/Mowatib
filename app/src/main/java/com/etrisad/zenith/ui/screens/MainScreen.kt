@@ -1,0 +1,1963 @@
+package com.etrisad.zenith.ui.screens
+
+import android.widget.Toast
+import androidx.compose.animation.*
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.ui.Alignment
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.AccountCircle
+import androidx.compose.material.icons.outlined.EmojiEvents
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.material.icons.outlined.Checklist
+import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.PauseCircle
+import androidx.compose.material.icons.filled.Bedtime
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import kotlin.math.roundToInt
+import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
+import com.etrisad.zenith.data.preferences.ThemeConfig
+import com.etrisad.zenith.data.preferences.UserPreferencesRepository
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
+import com.etrisad.zenith.ui.screens.profile.achievementTrackingKey
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.etrisad.zenith.crash.CrashSafetyOverlay
+import com.etrisad.zenith.ui.components.PermissionBottomSheet
+import com.etrisad.zenith.ui.components.onboarding.OnboardingStatsBottomSheet
+import com.etrisad.zenith.ui.components.onboarding.OnboardingUpdateBottomSheet
+import com.etrisad.zenith.ui.components.ZenithHeader
+import com.etrisad.zenith.ui.components.TopSheet
+import com.etrisad.zenith.ui.components.ConfirmBottomSheet
+import com.etrisad.zenith.ui.navigation.Screen
+import com.etrisad.zenith.ui.navigation.navItems
+import com.etrisad.zenith.ui.screens.focus.FocusScreen
+import com.etrisad.zenith.ui.screens.home.HomeScreen
+import com.etrisad.zenith.ui.screens.home.UsageStatsScreen
+import com.etrisad.zenith.ui.screens.alarm.AlarmScreen
+import com.etrisad.zenith.ui.screens.bedtime.BedtimeScreen
+import com.etrisad.zenith.ui.screens.graceperiod.GracePeriodScreen
+import com.etrisad.zenith.ui.screens.pomodoro.PomodoroScreen
+import com.etrisad.zenith.ui.screens.profile.AchievementProgressBanner
+import com.etrisad.zenith.ui.screens.profile.AchievementUnlockBanner
+import com.etrisad.zenith.ui.screens.profile.AVATAR_BORDERS
+import com.etrisad.zenith.ui.screens.profile.AchievementsScreen
+import com.etrisad.zenith.ui.screens.profile.LevelScreen
+import com.etrisad.zenith.ui.screens.profile.avatarRing
+import com.etrisad.zenith.ui.screens.profile.PendingUnlock
+import com.etrisad.zenith.ui.screens.profile.ProfileBannerEvent
+import com.etrisad.zenith.ui.screens.profile.ProfileScreen
+import com.etrisad.zenith.ui.screens.profile.AchievementState
+import com.etrisad.zenith.ui.screens.profile.ProfileViewModel
+import com.etrisad.zenith.ui.screens.profile.ProfileViewModelFactory
+import com.etrisad.zenith.ui.screens.profile.formatCompactDuration
+import com.etrisad.zenith.ui.screens.profile.formatProgressNumber
+import com.etrisad.zenith.ui.screens.profile.levelForHistoryKey
+import com.etrisad.zenith.ui.screens.profile.nextThresholdFor
+import com.etrisad.zenith.ui.screens.profile.prettyProfileDate
+import com.etrisad.zenith.ui.screens.profile.requiredFor
+import com.etrisad.zenith.ui.screens.profile.tierCountFor
+import com.etrisad.zenith.ui.screens.profile.tierDisplayName
+import com.etrisad.zenith.ui.screens.profile.tierIconsForLevel
+import com.etrisad.zenith.ui.screens.settings.EyeCareScreen
+import com.etrisad.zenith.ui.screens.settings.LockdownSettings
+import com.etrisad.zenith.ui.screens.settings.pausepoint.PausePointScreen
+import com.etrisad.zenith.ui.screens.settings.pausepoint.PausePointTypeSettingsScreen
+import com.etrisad.zenith.ui.components.pausepoint.PausePointTaskType
+import com.etrisad.zenith.ui.screens.settings.SettingsScreen
+import com.etrisad.zenith.ui.viewmodel.FocusViewModel
+import com.etrisad.zenith.ui.viewmodel.HomeViewModel
+import com.etrisad.zenith.ui.viewmodel.BedtimeViewModel
+import com.etrisad.zenith.ui.viewmodel.BedtimeViewModelFactory
+import com.etrisad.zenith.ui.viewmodel.GracePeriodViewModel
+import com.etrisad.zenith.ui.viewmodel.GracePeriodViewModelFactory
+import com.etrisad.zenith.ui.viewmodel.PomodoroViewModel
+import com.etrisad.zenith.ui.viewmodel.PomodoroViewModelFactory
+import com.etrisad.zenith.data.local.entity.ShieldEntity
+import com.etrisad.zenith.data.repository.ShieldRepository
+import com.etrisad.zenith.data.manager.GitHubUpdateManager
+import com.etrisad.zenith.data.remote.model.GitHubRelease
+import com.etrisad.zenith.ui.components.UpdateBottomSheet
+import com.etrisad.zenith.ui.components.FeatureInfoSheet
+import com.etrisad.zenith.ui.components.FeatureInfoRegistry
+import com.etrisad.zenith.data.preferences.UserPreferences
+import androidx.compose.material3.windowsizeclass.WindowSizeClass
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
+
+@OptIn(
+    ExperimentalMaterial3ExpressiveApi::class,
+    ExperimentalMaterial3Api::class,
+    kotlinx.coroutines.FlowPreview::class
+)
+@Composable
+fun MainScreen(
+    homeViewModel: HomeViewModel,
+    focusViewModel: FocusViewModel,
+    shieldRepository: ShieldRepository,
+    userPreferencesRepository: UserPreferencesRepository,
+    windowSizeClass: WindowSizeClass,
+    initialPackageName: String? = null,
+    onInitialPackageHandled: () -> Unit = {}
+) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val bedtimeViewModel: BedtimeViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
+        factory = BedtimeViewModelFactory(context, userPreferencesRepository, shieldRepository)
+    )
+    val gracePeriodViewModel: GracePeriodViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
+        factory = GracePeriodViewModelFactory(userPreferencesRepository)
+    )
+    val PomodoroViewModel: PomodoroViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
+        factory = PomodoroViewModelFactory(context, userPreferencesRepository, shieldRepository)
+    )
+    val profileViewModel: ProfileViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
+        factory = ProfileViewModelFactory(context, shieldRepository, userPreferencesRepository)
+    )
+    val navController = rememberNavController()
+    LaunchedEffect(Unit) {
+        combine(
+            userPreferencesRepository.userPreferencesFlow
+                .map { it.achievementTrackingKey() }
+                .distinctUntilChanged(),
+            shieldRepository.allShields
+                .map { shields ->
+                    shields.map {
+                        it.packageName + it.type + it.bestStreak + it.timeLimitMinutes +
+                            it.emergencyUseCount + it.isDelayAppEnabled +
+                            it.isStrictModeEnabled + it.isGoalCallerEnabled +
+                            it.isAutoQuitEnabled
+                    }
+                }
+                .distinctUntilChanged(),
+            shieldRepository.allSchedules
+                .map { schedules -> schedules.map { it.id } }
+                .distinctUntilChanged(),
+            shieldRepository.getPomodoroTotalCountFlow()
+                .catch { emit(-1) }
+                .distinctUntilChanged()
+        ) { _, _, _, _ -> Unit }
+            .debounce(800)
+            .catch { }
+            .collect { profileViewModel.refresh(silent = true) }
+    }
+
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+    val currentDestination = navBackStackEntry?.destination
+
+    var activeTabRoute by rememberSaveable { mutableStateOf(Screen.Home.route) }
+    LaunchedEffect(currentDestination) {
+        navItems.find { item ->
+            currentDestination?.hierarchy?.any { it.route == item.route } == true
+        }?.let {
+            activeTabRoute = it.route
+        }
+    }
+
+    LaunchedEffect(initialPackageName) {
+        if (initialPackageName != null) {
+            val currentDetailRoute = Screen.AppDetail.createRoute(initialPackageName)
+            if (currentRoute != currentDetailRoute) {
+                navController.navigate(currentDetailRoute) {
+                    val homeRoute = Screen.Home.route
+                    if (currentRoute != null &&
+                        currentRoute != homeRoute && 
+                        !currentRoute.startsWith("app_detail")) {
+                        popUpTo(navController.graph.findStartDestination().id) {
+                            saveState = true
+                        }
+                    }
+                    launchSingleTop = true
+                    restoreState = true
+                }
+            }
+            onInitialPackageHandled()
+        }
+    }
+
+    val isDeepScreen =
+        currentRoute == Screen.UsageStats.route ||
+                currentRoute == Screen.Bedtime.route ||
+                currentRoute == Screen.Alarm.route ||
+                currentRoute == Screen.GracePeriod.route ||
+                currentRoute == Screen.EyeCare.route ||
+                currentRoute == Screen.Lockdown.route ||
+                currentRoute == Screen.Pomodoro.route ||
+                currentRoute == Screen.Profile.route ||
+                currentRoute == Screen.Achievements.route ||
+                currentRoute == Screen.Level.route ||
+                currentRoute == Screen.PausePoint.route ||
+                currentRoute?.startsWith("pause_point_type") == true ||
+                currentRoute == Screen.DatabaseDebug.route ||
+                currentRoute == Screen.DataRepairment.route ||
+                currentRoute == Screen.FontTest.route ||
+                currentRoute == Screen.GSFlexCustomizer.route ||
+                currentRoute == Screen.SystemUsageDebug.route ||
+                currentRoute == Screen.OverlayAppearance.route ||
+                currentRoute?.startsWith("settings_category") == true ||
+                currentRoute?.startsWith("app_detail") == true
+
+    val enterAlwaysScrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+    val pinnedScrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+
+    val scrollBehavior = if (isDeepScreen || currentRoute == Screen.Focus.route) pinnedScrollBehavior else enterAlwaysScrollBehavior
+
+    LaunchedEffect(currentRoute) {
+        if (!isDeepScreen) {
+            enterAlwaysScrollBehavior.state.heightOffset = 0f
+            enterAlwaysScrollBehavior.state.contentOffset = 0f
+        }
+    }
+
+    val preferencesResult by userPreferencesRepository.userPreferencesFlow.collectAsState(
+        initial = null
+    )
+
+    if (preferencesResult == null) return
+
+    val preferences = preferencesResult!!
+
+    val homeUiState by homeViewModel.uiState.collectAsState()
+    val focusUiState by focusViewModel.uiState.collectAsState()
+    val headerProfile by profileViewModel.uiState.collectAsState()
+    val headerBorder = remember(
+        preferences.userAvatarBorder, headerProfile.level
+    ) {
+        AVATAR_BORDERS.find { it.id == preferences.userAvatarBorder }
+            ?.takeIf { it.requiredLevel <= headerProfile.level }
+    }
+
+    val useNavigationRail = windowSizeClass.widthSizeClass != WindowWidthSizeClass.Compact
+
+    val scope = rememberCoroutineScope()
+    var showPauseSheet by remember { mutableStateOf(false) }
+    val performanceBackInterceptor = remember { mutableStateOf<() -> Boolean>({ false }) }
+    val pausePointBackInterceptor = remember { mutableStateOf<() -> Boolean>({ false }) }
+
+    var showBatchDeleteSheet by remember { mutableStateOf(false) }
+    var showBatchPauseSheet by remember { mutableStateOf(false) }
+    val headerSwitchKey: String? = when {
+        currentRoute == Screen.Bedtime.route && preferences.bedtimeEnabled -> "bedtime"
+        currentRoute == Screen.GracePeriod.route && preferences.gracePeriodEnabled -> "grace"
+        currentRoute == Screen.EyeCare.route && preferences.eyeCareEnabled -> "eye"
+        currentRoute == Screen.Lockdown.route && preferences.lockdownEnabled -> "lockdown"
+        currentRoute == Screen.PausePoint.route && preferences.pausePointEnabled -> "pause"
+        currentRoute == Screen.Alarm.route -> "alarm"
+        else -> null
+    }
+
+    var showFeatureInfoSheet by remember { mutableStateOf(false) }
+    var showPermissionSheet by remember { mutableStateOf(false) }
+    var showOnboardingStatsSheet by remember { mutableStateOf(false) }
+    var showOnboardingUpdateSheet by remember { mutableStateOf(false) }
+    var permissionsMissing by remember { mutableStateOf(false) }
+
+    val updateManager = remember { GitHubUpdateManager(context) }
+    var latestRelease by remember { mutableStateOf<GitHubRelease?>(null) }
+    var showUpdateSheet by remember { mutableStateOf(false) }
+    var showNotifCenter by remember { mutableStateOf(false) }
+
+    LaunchedEffect(preferences.checkUpdateOnStart) {
+        if (com.etrisad.zenith.BuildConfig.SHOW_UPDATES && preferences.checkUpdateOnStart) {
+            val result = updateManager.checkForUpdates()
+            if (result is GitHubUpdateManager.UpdateResult.NewUpdate) {
+                latestRelease = result.release
+                showUpdateSheet = true
+            }
+        }
+    }
+
+    fun updatePermissionsBadge() {
+        val hasUsage = com.etrisad.zenith.util.hasUsageStatsPermission(context)
+        val hasOvl = android.provider.Settings.canDrawOverlays(context)
+        val hasNotif = com.etrisad.zenith.util.hasNotificationPermission(context)
+        val hasNotifPolicy = (context.getSystemService(android.content.Context.NOTIFICATION_SERVICE) as android.app.NotificationManager).isNotificationPolicyAccessGranted
+        val hasAccess = com.etrisad.zenith.util.isAccessibilityServiceEnabled(context)
+        val allMain = hasUsage && hasOvl && hasNotif && hasNotifPolicy
+        val allRequired = if (preferences.accessibilityRequired) allMain && hasAccess else allMain
+        permissionsMissing = !allRequired
+    }
+
+    val currentCheckPermissions by rememberUpdatedState {
+        val hasUsageStats = com.etrisad.zenith.util.hasUsageStatsPermission(context)
+        val hasOverlay = android.provider.Settings.canDrawOverlays(context)
+        val hasNotifications = com.etrisad.zenith.util.hasNotificationPermission(context)
+        val hasNotificationPolicy = (context.getSystemService(android.content.Context.NOTIFICATION_SERVICE) as android.app.NotificationManager).isNotificationPolicyAccessGranted
+        val hasAccessibility = com.etrisad.zenith.util.isAccessibilityServiceEnabled(context)
+
+        permissionsMissing = !(hasUsageStats && hasOverlay && hasNotifications && hasNotificationPolicy)
+
+        val mainGranted = hasUsageStats && hasOverlay && hasNotifications && hasNotificationPolicy
+
+        if (!mainGranted) {
+            showPermissionSheet = true
+        } else {
+            scope.launch {
+                val latestPrefs = userPreferencesRepository.userPreferencesFlow.first()
+                val accessibilityRequiredAndMissing = latestPrefs.accessibilityRequired && !hasAccessibility
+
+                if (accessibilityRequiredAndMissing) {
+                    showPermissionSheet = true
+                } else {
+                    val allOnboardingGranted = hasAccessibility || !latestPrefs.accessibilityRequired
+
+                    if (allOnboardingGranted) {
+                        if (!latestPrefs.onboardingStatsCompleted) {
+                            showOnboardingStatsSheet = true
+                        } else {
+                            showOnboardingStatsSheet = false
+                            if (!latestPrefs.onboardingUpdateCompleted && com.etrisad.zenith.BuildConfig.SHOW_UPDATES) {
+                                showOnboardingUpdateSheet = true
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    
+    LaunchedEffect(
+        lifecycleOwner,
+        preferences.accessibilityRequired,
+        preferences.onboardingStatsCompleted,
+        preferences.onboardingUpdateCompleted,
+        preferences.whitelistInitialized
+    ) {
+        currentCheckPermissions()
+
+        if (!preferences.whitelistInitialized) {
+            val hasUsageStats = com.etrisad.zenith.util.hasUsageStatsPermission(context)
+            val hasOverlay = android.provider.Settings.canDrawOverlays(context)
+            if (hasUsageStats && hasOverlay) {
+                userPreferencesRepository.initializeDefaultWhitelist()
+            }
+        }
+    }
+
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                updatePermissionsBadge()
+                profileViewModel.refresh(silent = true)
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
+    if (showPermissionSheet) {
+        PermissionBottomSheet(
+            preferencesRepository = userPreferencesRepository,
+            onDismissRequest = {
+                showPermissionSheet = false
+                scope.launch { userPreferencesRepository.initializeDefaultWhitelist() }
+                updatePermissionsBadge()
+            },
+            onAllPermissionsGranted = {
+                showPermissionSheet = false
+                scope.launch { userPreferencesRepository.initializeDefaultWhitelist() }
+                currentCheckPermissions()
+            }
+        )
+    }
+
+    if (showOnboardingStatsSheet) {
+        OnboardingStatsBottomSheet(
+            repository = userPreferencesRepository,
+            onDismiss = {
+                showOnboardingStatsSheet = false
+                if (!preferences.onboardingUpdateCompleted && com.etrisad.zenith.BuildConfig.SHOW_UPDATES) {
+                    showOnboardingUpdateSheet = true
+                }
+            }
+        )
+    }
+
+    if (showOnboardingUpdateSheet) {
+        OnboardingUpdateBottomSheet(
+            repository = userPreferencesRepository,
+            onDismiss = {
+                showOnboardingUpdateSheet = false
+            }
+        )
+    }
+
+    if (showFeatureInfoSheet) {
+        LaunchedEffect(currentRoute, navBackStackEntry?.arguments?.getString("category")) {
+            val route = currentRoute ?: return@LaunchedEffect
+            val cat = navBackStackEntry?.arguments?.getString("category") ?: ""
+            val key = if (cat.isNotBlank()) "$route:$cat" else route
+            userPreferencesRepository.addInfoVisitedRoute(key)
+        }
+        FeatureInfoSheet(
+            info = FeatureInfoRegistry.infoFor(
+                currentRoute,
+                navBackStackEntry?.arguments?.getString("category")
+            ),
+            onDismissRequest = { showFeatureInfoSheet = false }
+        )
+    }
+    Box(modifier = Modifier.fillMaxSize()) {
+    Row(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        val showNavRail =
+            currentRoute != Screen.UsageStats.route &&
+                    currentRoute != Screen.Bedtime.route &&
+                    currentRoute != Screen.Alarm.route &&
+                    currentRoute != Screen.GracePeriod.route &&
+                    currentRoute != Screen.EyeCare.route &&
+                    currentRoute != Screen.Lockdown.route &&
+                    currentRoute != Screen.Pomodoro.route &&
+                    currentRoute != Screen.Profile.route &&
+                    currentRoute != Screen.Achievements.route &&
+                    currentRoute != Screen.Level.route &&
+                    currentRoute != Screen.PausePoint.route &&
+                    currentRoute?.startsWith("pause_point_type") == false &&
+                    currentRoute != Screen.DatabaseDebug.route &&
+                    currentRoute != Screen.DataRepairment.route &&
+                    currentRoute != Screen.FontTest.route &&
+                    currentRoute != Screen.GSFlexCustomizer.route &&
+                    currentRoute != Screen.SystemUsageDebug.route &&
+                    currentRoute != Screen.OverlayAppearance.route &&
+                    currentRoute?.startsWith("settings_category") == false &&
+                    currentRoute?.startsWith("app_detail") == false
+
+        if (useNavigationRail) {
+            AnimatedVisibility(
+                visible = showNavRail,
+                enter = slideInHorizontally(initialOffsetX = { -it }) + expandHorizontally(expandFrom = Alignment.Start),
+                exit = slideOutHorizontally(targetOffsetX = { -it }) + shrinkHorizontally(shrinkTowards = Alignment.Start)
+            ) {
+                NavigationRail(
+                    modifier = Modifier.fillMaxHeight(),
+                    header = {
+                    }
+                ) {
+                    val currentDestination = navBackStackEntry?.destination
+                    navItems.forEach { screen ->
+                        val selected = activeTabRoute == screen.route
+                        NavigationRailItem(
+                            icon = {
+                                Icon(
+                                    imageVector = if (selected) screen.selectedIcon else screen.unselectedIcon,
+                                    contentDescription = null
+                                )
+                            },
+                            label = { Text(screen.title) },
+                            selected = selected,
+                            onClick = {
+                                if (currentDestination?.route != screen.route) {
+                                    navController.navigate(screen.route) {
+                                        popUpTo(navController.graph.findStartDestination().id) {
+                                            saveState = true
+                                        }
+                                        launchSingleTop = true
+                                        restoreState = true
+                                    }
+                                }
+                            }
+                        )
+                    }
+                }
+            }
+        }
+
+        Scaffold(
+            modifier = Modifier
+                .weight(1f)
+                .nestedScroll(scrollBehavior.nestedScrollConnection),
+            topBar = {
+                ZenithHeader(
+                    currentRoute = currentRoute,
+                    scrollBehavior = scrollBehavior,
+                    isNavRailVisible = useNavigationRail && !isDeepScreen,
+                    userName = preferences.userName,
+                    categoryName = navBackStackEntry?.arguments?.getString("category"),
+                    pausePointTypeName = navBackStackEntry?.arguments?.getString("type")
+                        ?.let { runCatching { PausePointTaskType.valueOf(it).displayName }.getOrNull() },
+                    onBack = {
+                        val intercepted = when {
+                            currentRoute?.startsWith("settings_category") == true ->
+                                performanceBackInterceptor.value()
+                            currentRoute == Screen.PausePoint.route ->
+                                pausePointBackInterceptor.value()
+                            else -> false
+                        }
+                        if (!intercepted) navController.popBackStack()
+                    },
+                    showInfoButton = preferences.headerInfoButtonEnabled && FeatureInfoRegistry.infoFor(
+                        currentRoute,
+                        navBackStackEntry?.arguments?.getString("category")
+                    ) != null && !focusUiState.isSelectionMode,
+                    onInfoClick = { showFeatureInfoSheet = true },
+                    infoNextToAction = !isDeepScreen || currentRoute?.startsWith("app_detail") == true,
+                    navigationIcon = {
+                        AnimatedContent(
+                            targetState = if (currentRoute == Screen.Focus.route) "focus" else "none",
+                            transitionSpec = {
+                                (fadeIn(animationSpec = spring(stiffness = Spring.StiffnessLow)) +
+                                        scaleIn(initialScale = 0.92f, animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessLow)) +
+                                        slideInHorizontally(initialOffsetX = { -it / 2 }, animationSpec = spring(stiffness = Spring.StiffnessLow)))
+                                    .togetherWith(
+                                        fadeOut(animationSpec = spring(stiffness = Spring.StiffnessLow)) +
+                                        scaleOut(targetScale = 0.92f) +
+                                        slideOutHorizontally(targetOffsetX = { -it / 2 }, animationSpec = spring(stiffness = Spring.StiffnessLow))
+                                    )
+                            },
+                            label = "LeftActionsContent"
+                        ) { state ->
+                            if (state == "focus") {
+                                val isSelected = focusUiState.isSelectionMode
+                                val interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+                                val isPressed by interactionSource.collectIsPressedAsState()
+                                val scale by animateFloatAsState(
+                                    targetValue = if (isPressed) 0.92f else 1f,
+                                    animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy),
+                                    label = "SelectScale"
+                                )
+
+                                IconButton(
+                                    onClick = { focusViewModel.toggleSelectionMode() },
+                                    modifier = Modifier
+                                        .padding(start = 12.dp)
+                                        .size(48.dp)
+                                        .clip(CircleShape)
+                                        .scale(scale),
+                                    interactionSource = interactionSource
+                                ) {
+                                    Icon(
+                                        imageVector = if (isSelected) Icons.Outlined.Close else Icons.Outlined.Checklist,
+                                        contentDescription = "Select",
+                                        tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
+                            }
+                        }
+                    },
+                    actions = {
+                        Box(contentAlignment = Alignment.CenterEnd) {
+                            val isSelectionMode = currentRoute == Screen.Focus.route && focusUiState.isSelectionMode
+                            val hasSelection = focusUiState.selectedShields.isNotEmpty() || focusUiState.selectedSchedules.isNotEmpty()
+
+                            AnimatedContent(
+                                targetState = when {
+                                    isSelectionMode -> "selection"
+                                    currentRoute?.startsWith("app_detail") == true -> "app_detail"
+                                    !isDeepScreen -> "user"
+                                    else -> "none"
+                                },
+                                transitionSpec = {
+                                    (fadeIn(animationSpec = spring(stiffness = Spring.StiffnessLow)) +
+                                            scaleIn(initialScale = 0.92f, animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessLow)) +
+                                            slideInHorizontally(initialOffsetX = { it / 2 }, animationSpec = spring(stiffness = Spring.StiffnessLow)))
+                                        .togetherWith(
+                                            fadeOut(animationSpec = spring(stiffness = Spring.StiffnessLow)) +
+                                            scaleOut(targetScale = 0.92f) +
+                                            slideOutHorizontally(targetOffsetX = { it / 2 }, animationSpec = spring(stiffness = Spring.StiffnessLow))
+                                        )
+                                },
+                                label = "RightActionsContent"
+                            ) { state ->
+                                when (state) {
+                                    "selection" -> {
+                                        Row(
+                                            modifier = Modifier.padding(end = 4.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            IconButton(
+                                                onClick = { showBatchPauseSheet = true },
+                                                enabled = focusUiState.selectedShields.isNotEmpty(),
+                                                modifier = Modifier.size(48.dp).clip(CircleShape)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Outlined.PauseCircle,
+                                                    contentDescription = "Pause Selected",
+                                                    tint = if (focusUiState.selectedShields.isNotEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
+                                                )
+                                            }
+                                            IconButton(
+                                                onClick = { showBatchDeleteSheet = true },
+                                                enabled = hasSelection,
+                                                modifier = Modifier.size(48.dp).clip(CircleShape)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Outlined.Delete,
+                                                    contentDescription = "Delete Selected",
+                                                    tint = if (hasSelection) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.outline
+                                                )
+                                            }
+                                        }
+                                    }
+                                    "app_detail" -> {
+                                        val detailLocked = preferences.isInLockdown()
+                                        IconButton(
+                                            onClick = {
+                                                if (!detailLocked) homeViewModel.openSettingsSheet()
+                                                else Toast.makeText(context, "Locked during lockdown hours", Toast.LENGTH_SHORT).show()
+                                            },
+                                            modifier = Modifier.padding(end = 12.dp).size(48.dp).clip(CircleShape)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Outlined.Edit,
+                                                contentDescription = "Edit App Settings",
+                                                tint = if (detailLocked) MaterialTheme.colorScheme.outline else MaterialTheme.colorScheme.primary,
+                                                modifier = Modifier.size(24.dp)
+                                            )
+                                        }
+                                    }
+                                    "user" -> {
+                                        IconButton(
+                                            onClick = { navController.navigate(Screen.Profile.route) },
+                                            modifier = Modifier.padding(end = 12.dp).size(48.dp).clip(CircleShape)
+                                        ) {
+                                            if (preferences.userAvatarUri.isEmpty()) {
+                                                Icon(
+                                                    imageVector = Icons.Outlined.AccountCircle,
+                                                    contentDescription = "User Profile",
+                                                    modifier = Modifier.size(24.dp)
+                                                )
+                                            } else {
+                                                var headerImgError by remember(preferences.userAvatarUri) {
+                                                    mutableStateOf(false)
+                                                }
+                                                if (headerImgError) {
+                                                    Icon(
+                                                        imageVector = Icons.Outlined.AccountCircle,
+                                                        contentDescription = "User Profile",
+                                                        modifier = Modifier.size(24.dp)
+                                                    )
+                                                } else {
+                                                    AsyncImage(
+                                                        model = ImageRequest.Builder(context)
+                                                            .data(preferences.userAvatarUri)
+                                                            .crossfade(300).build(),
+                                                        contentDescription = "User Profile",
+                                                        contentScale = ContentScale.Crop,
+                                                        onError = { headerImgError = true },
+                                                        modifier = Modifier
+                                                            .size(32.dp)
+                                                            .then(
+                                                                if (headerBorder != null) {
+                                                                    Modifier
+                                                                        .avatarRing(
+                                                                            headerBorder, 2.dp,
+                                                                            SolidColor(
+                                                                                MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+                                                                            ),
+                                                                            animate = false
+                                                                        )
+                                                                        .padding(2.dp)
+                                                                } else {
+                                                                    Modifier
+                                                                }
+                                                            )
+                                                            .clip(CircleShape)
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            androidx.compose.animation.AnimatedVisibility(
+                                visible = headerSwitchKey != null,
+                                enter = fadeIn(animationSpec = spring(stiffness = Spring.StiffnessLow)) +
+                                        scaleIn(initialScale = 0.7f, animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessLow)) +
+                                        slideInHorizontally(initialOffsetX = { it / 2 }, animationSpec = spring(stiffness = Spring.StiffnessLow)) +
+                                        expandHorizontally(expandFrom = Alignment.End, animationSpec = spring(stiffness = Spring.StiffnessLow)),
+                                exit = fadeOut(animationSpec = spring(stiffness = Spring.StiffnessLow)) +
+                                        scaleOut(targetScale = 0.7f, animationSpec = spring(stiffness = Spring.StiffnessLow)) +
+                                        slideOutHorizontally(targetOffsetX = { it / 2 }, animationSpec = spring(stiffness = Spring.StiffnessLow)) +
+                                        shrinkHorizontally(shrinkTowards = Alignment.End, animationSpec = spring(stiffness = Spring.StiffnessLow)),
+                                label = "HeaderSwitchSlot"
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .padding(end = 16.dp)
+                                        .width(52.dp)
+                                        .height(32.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    AnimatedContent(
+                                        targetState = headerSwitchKey,
+                                        transitionSpec = {
+                                            (fadeIn(animationSpec = spring(stiffness = Spring.StiffnessLow)) +
+                                                    scaleIn(initialScale = 0.7f, animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessLow)))
+                                                .togetherWith(
+                                                    fadeOut(animationSpec = spring(stiffness = Spring.StiffnessLow)) +
+                                                            scaleOut(targetScale = 0.7f, animationSpec = spring(stiffness = Spring.StiffnessLow))
+                                                )
+                                        },
+                                        label = "HeaderSwitchContent"
+                                    ) { key ->
+                                        when (key) {
+                                            "bedtime" -> HeaderSwitch(
+                                                checked = preferences.bedtimeEnabled,
+                                                onCheckedChange = {
+                                                    if (preferences.bedtimeEnabled) {
+                                                        showPauseSheet = true
+                                                    } else {
+                                                        bedtimeViewModel.setBedtimeEnabled(true)
+                                                    }
+                                                }
+                                            )
+                                            "grace" -> HeaderSwitch(
+                                                checked = preferences.gracePeriodEnabled,
+                                                onCheckedChange = {
+                                                    gracePeriodViewModel.setGracePeriodEnabled(!preferences.gracePeriodEnabled)
+                                                }
+                                            )
+                                            "eye" -> HeaderSwitch(
+                                                checked = preferences.eyeCareEnabled,
+                                                onCheckedChange = {
+                                                    scope.launch {
+                                                        userPreferencesRepository.setEyeCareEnabled(!preferences.eyeCareEnabled)
+                                                    }
+                                                }
+                                            )
+                                            "lockdown" -> HeaderSwitch(
+                                                checked = preferences.lockdownEnabled,
+                                                onCheckedChange = {
+                                                    if (preferences.lockdownEnabled) {
+                                                        navController.navigate(Screen.Lockdown.route)
+                                                    } else {
+                                                        scope.launch {
+                                                            userPreferencesRepository.setLockdownEnabled(true)
+                                                        }
+                                                    }
+                                                }
+                                            )
+                                            "pause" -> HeaderSwitch(
+                                                checked = preferences.pausePointEnabled,
+                                                onCheckedChange = {
+                                                    scope.launch {
+                                                        userPreferencesRepository.setPausePointEnabled(!preferences.pausePointEnabled)
+                                                    }
+                                                }
+                                            )
+                                            "alarm" -> HeaderSwitch(
+                                                checked = preferences.alarmMasterEnabled,
+                                                onCheckedChange = {
+                                                    scope.launch {
+                                                        val newEnabled = !preferences.alarmMasterEnabled
+                                                        userPreferencesRepository.setAlarmMasterEnabled(newEnabled)
+                                                        if (newEnabled) {
+                                                            if (!com.etrisad.zenith.receiver.AlarmBroadcastReceiver.hasExactAlarmPermission(context)) {
+                                                                com.etrisad.zenith.receiver.AlarmBroadcastReceiver.promptExactAlarmPermission(context)
+                                                            }
+                                                            com.etrisad.zenith.receiver.AlarmBroadcastReceiver.requestBatteryOptimizationExemption(context)
+                                                            val alarms = userPreferencesRepository.parseAlarms(preferences.alarmsJson)
+                                                            val enabledAlarms = alarms.filter { it.enabled }
+                                                            com.etrisad.zenith.receiver.AlarmBroadcastReceiver.rescheduleAllAlarms(context, enabledAlarms)
+                                                        } else {
+                                                            val alarms = userPreferencesRepository.parseAlarms(preferences.alarmsJson)
+                                                            for (alarm in alarms) {
+                                                                com.etrisad.zenith.receiver.AlarmBroadcastReceiver.cancelAlarm(context, alarm.timeString, alarm.id)
+                                                            }
+                                                            com.etrisad.zenith.receiver.AlarmBroadcastReceiver.cancelAlarm(context)
+                                                            try {
+                                                                com.etrisad.zenith.receiver.AlarmBroadcastReceiver.cancelAllAlarmNotifications(context)
+                                                            } catch (_: Exception) { }
+                                                        }
+                                                    }
+                                                }
+                                            )
+                                            else -> Box(modifier = Modifier.size(0.dp))
+                                        }
+                                    }
+                                }
+                            }
+
+                        }
+                    }
+                )
+            }
+        ) { innerPadding ->
+            if (showBatchDeleteSheet) {
+                ConfirmBottomSheet(
+                    onDismiss = { showBatchDeleteSheet = false },
+                    onConfirm = {
+                        focusViewModel.deleteSelected()
+                        showBatchDeleteSheet = false
+                    },
+                    leverCount = 3,
+                    showTimeSelection = false
+                )
+            }
+            if (showBatchPauseSheet) {
+                ConfirmBottomSheet(
+                    onDismiss = { showBatchPauseSheet = false },
+                    onConfirm = { hours ->
+                        val minutes = if (hours == null) -1 else hours * 60
+                        focusViewModel.pauseSelected(minutes)
+                        showBatchPauseSheet = false
+                    },
+                    leverCount = 5,
+                    showTimeSelection = true
+                )
+            }
+            if (showPauseSheet) {
+                ConfirmBottomSheet(
+                    onDismiss = { showPauseSheet = false },
+                    onConfirm = { _ ->
+                        bedtimeViewModel.setBedtimeEnabled(false)
+                        showPauseSheet = false
+                    },
+                    leverCount = 10,
+                    puzzleTimeoutSeconds = 10,
+                    showTimeSelection = false
+                )
+            }
+    if (showUpdateSheet && latestRelease != null) {
+        val isDark = when (preferences.themeConfig) {
+            ThemeConfig.FOLLOW_SYSTEM -> isSystemInDarkTheme()
+            ThemeConfig.LIGHT -> false
+            ThemeConfig.DARK -> true
+        }
+        UpdateBottomSheet(
+            release = latestRelease!!,
+            useExpressiveColors = preferences.expressiveColors,
+            isDark = isDark,
+            onDismiss = { showUpdateSheet = false },
+            onUpdate = {
+                val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(latestRelease!!.htmlUrl))
+                context.startActivity(intent)
+                showUpdateSheet = false
+            }
+        )
+    }
+            Box(modifier = Modifier.fillMaxSize()) {
+                NavHost(
+                    navController = navController,
+                    startDestination = Screen.Home.route,
+                    modifier = Modifier.fillMaxSize(),
+                    enterTransition = {
+                        val initialRoute = initialState.destination.route
+                        val targetRoute = targetState.destination.route
+
+                        val isTargetDeep =
+                            targetRoute == Screen.UsageStats.route ||
+                                    targetRoute == Screen.Bedtime.route ||
+                                    targetRoute == Screen.Alarm.route ||
+                                    targetRoute == Screen.GracePeriod.route ||
+                                    targetRoute == Screen.EyeCare.route ||
+                                    targetRoute == Screen.Lockdown.route ||
+                                    targetRoute == Screen.Pomodoro.route ||
+                                    targetRoute == Screen.Profile.route ||
+                                    targetRoute == Screen.Achievements.route ||
+                            targetRoute == Screen.Level.route ||
+                                    targetRoute == Screen.PausePoint.route ||
+                                    targetRoute?.startsWith("pause_point_type") == true ||
+                                    targetRoute == Screen.DatabaseDebug.route ||
+                                    targetRoute == Screen.DataRepairment.route ||
+                                    targetRoute == Screen.FontTest.route ||
+                                    targetRoute == Screen.GSFlexCustomizer.route ||
+                                    targetRoute == Screen.SystemUsageDebug.route ||
+                                    targetRoute == Screen.OverlayAppearance.route ||
+                                    targetRoute?.startsWith("settings_category") == true ||
+                                    targetRoute?.startsWith("app_detail") == true
+                        val isInitialDeep =
+                            initialRoute == Screen.UsageStats.route ||
+                                    initialRoute == Screen.Bedtime.route ||
+                                    initialRoute == Screen.Alarm.route ||
+                                    initialRoute == Screen.GracePeriod.route ||
+                                    initialRoute == Screen.EyeCare.route ||
+                                    initialRoute == Screen.Lockdown.route ||
+                                    initialRoute == Screen.Pomodoro.route ||
+                                    initialRoute == Screen.Profile.route ||
+                                    initialRoute == Screen.Achievements.route ||
+                            initialRoute == Screen.Level.route ||
+                                    initialRoute == Screen.PausePoint.route ||
+                                    initialRoute?.startsWith("pause_point_type") == true ||
+                                    initialRoute == Screen.DatabaseDebug.route ||
+                                    initialRoute == Screen.DataRepairment.route ||
+                                    initialRoute == Screen.FontTest.route ||
+                                    initialRoute == Screen.GSFlexCustomizer.route ||
+                                    initialRoute == Screen.SystemUsageDebug.route ||
+                                    initialRoute == Screen.OverlayAppearance.route ||
+                                    initialRoute?.startsWith("settings_category") == true ||
+                                    initialRoute?.startsWith("app_detail") == true
+
+                        val animationSpec = spring<IntOffset>(
+                            dampingRatio = Spring.DampingRatioLowBouncy,
+                            stiffness = Spring.StiffnessLow
+                        )
+
+                        if (isTargetDeep) {
+                            slideInHorizontally(
+                                initialOffsetX = { it },
+                                animationSpec = animationSpec
+                            ) + fadeIn()
+                        } else {
+                            val initialIndex = navItems.indexOfFirst { it.route == initialRoute }
+                            val targetIndex = navItems.indexOfFirst { it.route == targetRoute }
+
+                            if (targetIndex > initialIndex && initialIndex != -1) {
+                                slideInHorizontally(
+                                    initialOffsetX = { it },
+                                    animationSpec = animationSpec
+                                ) + fadeIn()
+                            } else {
+                                slideInHorizontally(
+                                    initialOffsetX = { -it },
+                                    animationSpec = animationSpec
+                                ) + fadeIn()
+                            }
+                        }
+                    },
+                    exitTransition = {
+                        val initialRoute = initialState.destination.route
+                        val targetRoute = targetState.destination.route
+
+                        val isTargetDeep =
+                            targetRoute == Screen.UsageStats.route ||
+                                    targetRoute == Screen.Bedtime.route ||
+                                    targetRoute == Screen.Alarm.route ||
+                                    targetRoute == Screen.GracePeriod.route ||
+                                    targetRoute == Screen.EyeCare.route ||
+                                    targetRoute == Screen.Lockdown.route ||
+                                    targetRoute == Screen.Pomodoro.route ||
+                                    targetRoute == Screen.Profile.route ||
+                                    targetRoute == Screen.Achievements.route ||
+                            targetRoute == Screen.Level.route ||
+                                    targetRoute == Screen.PausePoint.route ||
+                                    targetRoute?.startsWith("pause_point_type") == true ||
+                                    targetRoute == Screen.DatabaseDebug.route ||
+                                    targetRoute == Screen.DataRepairment.route ||
+                                    targetRoute == Screen.FontTest.route ||
+                                    targetRoute == Screen.GSFlexCustomizer.route ||
+                                    targetRoute == Screen.SystemUsageDebug.route ||
+                                    targetRoute == Screen.OverlayAppearance.route ||
+                                    targetRoute?.startsWith("settings_category") == true ||
+                                    targetRoute?.startsWith("app_detail") == true
+
+                        val isInitialDeep =
+                            initialRoute == Screen.UsageStats.route ||
+                                    initialRoute == Screen.Bedtime.route ||
+                                    initialRoute == Screen.Alarm.route ||
+                                    initialRoute == Screen.GracePeriod.route ||
+                                    initialRoute == Screen.EyeCare.route ||
+                                    initialRoute == Screen.Lockdown.route ||
+                                    initialRoute == Screen.Pomodoro.route ||
+                                    initialRoute == Screen.Profile.route ||
+                                    initialRoute == Screen.Achievements.route ||
+                            initialRoute == Screen.Level.route ||
+                                    initialRoute == Screen.PausePoint.route ||
+                                    initialRoute?.startsWith("pause_point_type") == true ||
+                                    initialRoute == Screen.DatabaseDebug.route ||
+                                    initialRoute == Screen.DataRepairment.route ||
+                                    initialRoute == Screen.FontTest.route ||
+                                    initialRoute == Screen.GSFlexCustomizer.route ||
+                                    initialRoute == Screen.SystemUsageDebug.route ||
+                                    initialRoute == Screen.OverlayAppearance.route ||
+                                    initialRoute?.startsWith("settings_category") == true ||
+                                    initialRoute?.startsWith("app_detail") == true
+
+                        val animationSpec = spring<IntOffset>(
+                            dampingRatio = Spring.DampingRatioNoBouncy,
+                            stiffness = Spring.StiffnessLow
+                        )
+
+                        if (isTargetDeep) {
+                            slideOutHorizontally(
+                                targetOffsetX = { -it / 3 },
+                                animationSpec = animationSpec
+                            ) + fadeOut()
+                        } else if (isInitialDeep) {
+                            slideOutHorizontally(
+                                targetOffsetX = { it },
+                                animationSpec = animationSpec
+                            ) + fadeOut()
+                        } else {
+                            val initialIndex = navItems.indexOfFirst { it.route == initialRoute }
+                            val targetIndex = navItems.indexOfFirst { it.route == targetRoute }
+
+                            if (targetIndex > initialIndex) {
+                                slideOutHorizontally(
+                                    targetOffsetX = { -it / 3 },
+                                    animationSpec = animationSpec
+                                ) + fadeOut()
+                            } else {
+                                slideOutHorizontally(
+                                    targetOffsetX = { it / 3 },
+                                    animationSpec = animationSpec
+                                ) + fadeOut()
+                            }
+                        }
+                    },
+                    popEnterTransition = {
+                        slideInHorizontally(
+                            initialOffsetX = { -it / 3 },
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioLowBouncy,
+                                stiffness = Spring.StiffnessLow
+                            )
+                        ) + fadeIn()
+                    },
+                    popExitTransition = {
+                        slideOutHorizontally(
+                            targetOffsetX = { it },
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioLowBouncy,
+                                stiffness = Spring.StiffnessLow
+                            )
+                        ) + fadeOut()
+                    }
+                ) {
+                    composable(Screen.Home.route) {
+                        val homeScope = rememberCoroutineScope()
+                        HomeScreen(
+                            homeViewModel,
+                            userPreferencesRepository,
+                            innerPadding,
+                            onSeeFullList = { navController.navigate(Screen.UsageStats.route) },
+                            onAppClick = { packageName ->
+                                navController.navigate(Screen.AppDetail.createRoute(packageName))
+                            },
+                            onBedtimeClick = { navController.navigate(Screen.Bedtime.route) },
+                            onAlarmClick = { navController.navigate(Screen.Alarm.route) },
+                            onPomodoroClick = { navController.navigate(Screen.Pomodoro.route) },
+                            onDeleteShield = { shield -> homeViewModel.deleteShield(shield) },
+                            onDismissUninstalled = { pkg ->
+                                homeScope.launch {
+                                    userPreferencesRepository.setDismissedUninstalledApp(
+                                        pkg,
+                                        java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(java.util.Date())
+                                    )
+                                }
+                            }
+                        )
+                    }
+                    composable(Screen.Focus.route) {
+                        val focusScope = rememberCoroutineScope()
+                        FocusScreen(
+                            focusViewModel,
+                            innerPadding,
+                            scrollBehavior = scrollBehavior,
+                            onAppClick = { packageName ->
+                                navController.navigate(Screen.AppDetail.createRoute(packageName))
+                            },
+                            onDeleteShield = { shield -> focusViewModel.deleteShield(shield) },
+                            onDismissUninstalled = { pkg ->
+                                focusScope.launch {
+                                    userPreferencesRepository.setDismissedUninstalledApp(
+                                        pkg,
+                                        java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(java.util.Date())
+                                    )
+                                }
+                            }
+                        )
+                    }
+                    composable(Screen.Settings.route) {
+                        SettingsScreen(
+                            preferencesRepository = userPreferencesRepository,
+                            innerPadding = innerPadding,
+                            navController = navController,
+                            onOpenPermissions = { showPermissionSheet = true },
+                            permissionsMissing = permissionsMissing
+                        )
+                    }
+                    composable(Screen.Bedtime.route) {
+                        BedtimeScreen(bedtimeViewModel, innerPadding)
+                    }
+                    composable(Screen.Alarm.route) {
+                        AlarmScreen(
+                            preferencesRepository = userPreferencesRepository,
+                            innerPadding = innerPadding,
+                            onBack = { navController.popBackStack() }
+                        )
+                    }
+                    composable(Screen.GracePeriod.route) {
+                        GracePeriodScreen(gracePeriodViewModel, innerPadding)
+                    }
+                    composable(Screen.EyeCare.route) {
+                        EyeCareScreen(
+                            preferences = preferences,
+                            preferencesRepository = userPreferencesRepository,
+                            innerPadding = innerPadding
+                        )
+                    }
+                    composable(Screen.Lockdown.route) {
+                        LockdownSettings(
+                            preferences = preferences,
+                            innerPadding = innerPadding,
+                            preferencesRepository = userPreferencesRepository
+                        )
+                    }
+                    composable(Screen.Pomodoro.route) {
+                        PomodoroScreen(
+                            viewModel = PomodoroViewModel,
+                            innerPadding = innerPadding,
+                            preferencesRepository = userPreferencesRepository
+                        )
+                    }
+                    composable(Screen.Profile.route) {
+                        ProfileScreen(
+                            profileViewModel = profileViewModel,
+                            homeViewModel = homeViewModel,
+                            preferencesRepository = userPreferencesRepository,
+                            innerPadding = innerPadding,
+                            onAppClick = { packageName ->
+                                navController.navigate(Screen.AppDetail.createRoute(packageName))
+                            },
+                            onSeeAllAchievements = {
+                                navController.navigate(Screen.Achievements.route)
+                            },
+                            onOpenLevel = {
+                                navController.navigate(Screen.Level.route)
+                            }
+                        )
+                    }
+                    composable(Screen.Level.route) {
+                        LevelScreen(
+                            profileViewModel = profileViewModel,
+                            preferencesRepository = userPreferencesRepository,
+                            innerPadding = innerPadding
+                        )
+                    }
+                    composable(
+                        route = Screen.Achievements.route,
+                        arguments = listOf(
+                            androidx.navigation.navArgument("highlightId") {
+                                type = androidx.navigation.NavType.StringType
+                                nullable = true
+                                defaultValue = null
+                            }
+                        )
+                    ) { backStackEntry ->
+                        val highlightId = backStackEntry.arguments?.getString("highlightId")
+                        AchievementsScreen(
+                            profileViewModel = profileViewModel,
+                            innerPadding = innerPadding,
+                            highlightAchievementId = highlightId
+                        )
+                    }
+                    composable(Screen.PausePoint.route) {
+                        PausePointScreen(
+                            preferences = preferences,
+                            innerPadding = innerPadding,
+                            preferencesRepository = userPreferencesRepository,
+                            onTaskTypeClick = { taskType ->
+                                navController.navigate(Screen.PausePointTypeSettings.createRoute(taskType.name))
+                            },
+                            onBack = { navController.popBackStack() },
+                            backInterceptor = pausePointBackInterceptor
+                        )
+                    }
+                    composable(
+                        route = Screen.PausePointTypeSettings.route,
+                        arguments = listOf(androidx.navigation.navArgument("type") {
+                            type = androidx.navigation.NavType.StringType
+                        })
+                    ) { backStackEntry ->
+                        val typeName = backStackEntry.arguments?.getString("type") ?: ""
+                        val taskType = runCatching {
+                            PausePointTaskType.valueOf(typeName)
+                        }.getOrNull()
+                        if (taskType != null) {
+                            PausePointTypeSettingsScreen(
+                                taskType = taskType,
+                                preferences = preferences,
+                                innerPadding = innerPadding,
+                                preferencesRepository = userPreferencesRepository
+                            )
+                        } else {
+                            LaunchedEffect(Unit) { navController.popBackStack() }
+                        }
+                    }
+                    composable(Screen.UsageStats.route) {
+                        UsageStatsScreen(
+                            viewModel = homeViewModel,
+                            focusViewModel = focusViewModel,
+                            userPreferencesRepository = userPreferencesRepository,
+                            innerPadding = innerPadding,
+                            showDatabaseIndicator = preferences.showDatabaseIndicator,
+                            onAppClick = { packageName ->
+                                navController.navigate(Screen.AppDetail.createRoute(packageName))
+                            }
+                        )
+                    }
+                    composable(Screen.DatabaseDebug.route) {
+                        com.etrisad.zenith.ui.screens.settings.DatabaseDebugScreen(
+                            viewModel = homeViewModel,
+                            innerPadding = innerPadding,
+                            onBack = { navController.popBackStack() }
+                        )
+                    }
+                    composable(Screen.DataRepairment.route) {
+                        com.etrisad.zenith.ui.screens.settings.DataRepairmentScreen(
+                            viewModel = homeViewModel,
+                            innerPadding = innerPadding
+                        )
+                    }
+                    composable(Screen.FontTest.route) {
+                        com.etrisad.zenith.ui.screens.home.FontTestScreen(
+                            onBack = { navController.popBackStack() },
+                            innerPadding = innerPadding
+                        )
+                    }
+                    composable(Screen.GSFlexCustomizer.route) {
+                        com.etrisad.zenith.ui.screens.settings.GSFlexCustomizerScreen(
+                            repository = userPreferencesRepository,
+                            onBack = { navController.popBackStack() },
+                            innerPadding = innerPadding
+                        )
+                    }
+                    composable(Screen.OverlayAppearance.route) {
+                        com.etrisad.zenith.ui.screens.settings.OverlayAppearanceScreen(
+                            repository = userPreferencesRepository,
+                            onBack = { navController.popBackStack() },
+                            innerPadding = innerPadding
+                        )
+                    }
+                    composable(Screen.SystemUsageDebug.route) {
+                        com.etrisad.zenith.ui.screens.settings.SystemUsageDebugScreen(
+                            viewModel = homeViewModel,
+                            innerPadding = innerPadding,
+                            onBack = { navController.popBackStack() }
+                        )
+                    }
+                    composable(
+                        route = Screen.AppDetail.route,
+                        arguments = listOf(androidx.navigation.navArgument("packageName") {
+                            type = androidx.navigation.NavType.StringType
+                        })
+                    ) { backStackEntry ->
+                        val packageName = backStackEntry.arguments?.getString("packageName") ?: ""
+                        com.etrisad.zenith.ui.screens.home.AppDetailScreen(
+                            packageName = packageName,
+                            viewModel = homeViewModel,
+                            userPreferencesRepository = userPreferencesRepository,
+                            innerPadding = innerPadding
+                        )
+                    }
+                    composable(
+                        route = Screen.SettingsCategory.route,
+                        arguments = listOf(androidx.navigation.navArgument("category") {
+                            type = androidx.navigation.NavType.StringType
+                        })
+                    ) { backStackEntry ->
+                        val category = backStackEntry.arguments?.getString("category") ?: ""
+                        com.etrisad.zenith.ui.screens.settings.SettingsCategoryScreen(
+                            category = category,
+                            preferencesRepository = userPreferencesRepository,
+                            navController = navController,
+                            innerPadding = innerPadding,
+                            onOpenPermissions = { showPermissionSheet = true },
+                            onTriggerOnboardingStats = { showOnboardingStatsSheet = true },
+                            onTriggerOnboardingUpdate = { showOnboardingUpdateSheet = true },
+                            onTestAchievementBanner = {
+                                profileViewModel.testUnlockBanner()
+                                navController.navigate(Screen.Profile.route)
+                            },
+                            performanceBackInterceptor = performanceBackInterceptor
+                        )
+                    }
+                }
+
+                if (!useNavigationRail) {
+                    val showBottomBar =
+                    currentRoute != Screen.UsageStats.route &&
+                            currentRoute != Screen.Bedtime.route &&
+                            currentRoute != Screen.Alarm.route &&
+                            currentRoute != Screen.GracePeriod.route &&
+                            currentRoute != Screen.EyeCare.route &&
+                            currentRoute != Screen.Lockdown.route &&
+                            currentRoute != Screen.DatabaseDebug.route &&
+                            currentRoute != Screen.DataRepairment.route &&
+                            currentRoute != Screen.FontTest.route &&
+                            currentRoute != Screen.GSFlexCustomizer.route &&
+                            currentRoute != Screen.SystemUsageDebug.route &&
+                            currentRoute != Screen.OverlayAppearance.route &&
+                            currentRoute != Screen.Pomodoro.route &&
+                            currentRoute != Screen.Profile.route &&
+                            currentRoute != Screen.Achievements.route &&
+                    currentRoute != Screen.Level.route &&
+                            currentRoute != Screen.PausePoint.route &&
+                            currentRoute?.startsWith("pause_point_type") == false &&
+                            currentRoute?.startsWith("settings_category") == false &&
+                            currentRoute?.startsWith("app_detail") == false
+
+                    androidx.compose.animation.AnimatedVisibility(
+                        visible = showBottomBar,
+                        modifier = Modifier.align(Alignment.BottomCenter),
+                        enter = slideInVertically(initialOffsetY = { it }) + expandVertically(expandFrom = Alignment.Top),
+                        exit = slideOutVertically(targetOffsetY = { it }) + shrinkVertically(shrinkTowards = Alignment.Top)
+                    ) {
+                        AnimatedContent(
+                            targetState = preferences.floatingTabBarEnabled,
+                            transitionSpec = {
+                                (fadeIn(animationSpec = spring(stiffness = Spring.StiffnessLow)) +
+                                        scaleIn(initialScale = 0.92f, animationSpec = spring(stiffness = Spring.StiffnessLow)))
+                                    .togetherWith(fadeOut(animationSpec = spring(stiffness = Spring.StiffnessLow)) +
+                                            scaleOut(targetScale = 0.92f, animationSpec = spring(stiffness = Spring.StiffnessLow)))
+                            },
+                            label = "TabBarTransition"
+                        ) { isFloating ->
+                            if (isFloating) {
+                                val currentDestination = navBackStackEntry?.destination
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(bottom = 36.dp),
+                                    contentAlignment = Alignment.BottomCenter
+                                ) {
+                                    HorizontalFloatingToolbar(
+                                        expanded = true,
+                                        modifier = Modifier
+                                            .animateContentSize()
+                                            .height(68.dp),
+                                        shape = RoundedCornerShape(100),
+                                        contentPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp),
+                                        colors = FloatingToolbarDefaults.standardFloatingToolbarColors(
+                                            toolbarContainerColor = MaterialTheme.colorScheme.primaryContainer
+                                        )
+                                    ) {
+                                        navItems.forEach { screen ->
+                                            val selected = activeTabRoute == screen.route
+                                            ShortNavigationBarItem(
+                                                selected = selected,
+                                                onClick = {
+                                                    if (currentDestination?.route != screen.route) {
+                                                        navController.navigate(screen.route) {
+                                                            popUpTo(navController.graph.findStartDestination().id) {
+                                                                saveState = true
+                                                            }
+                                                            launchSingleTop = true
+                                                            restoreState = true
+                                                        }
+                                                    }
+                                                },
+                                                icon = {
+                                                    val extraHeight by animateDpAsState(
+                                                        targetValue = if (selected) 16.dp else 0.dp,
+                                                        animationSpec = spring(
+                                                            dampingRatio = Spring.DampingRatioLowBouncy,
+                                                            stiffness = Spring.StiffnessLow
+                                                        ),
+                                                        label = "indicatorHeight"
+                                                    )
+                                                    Box(
+                                                        modifier = Modifier.height(26.dp + extraHeight),
+                                                        contentAlignment = Alignment.Center
+                                                    ) {
+                                                        Icon(
+                                                            imageVector = if (selected) screen.selectedIcon else screen.unselectedIcon,
+                                                            contentDescription = screen.title,
+                                                            modifier = Modifier.size(26.dp)
+                                                        )
+                                                    }
+                                                },
+                                                label = {
+                                                    androidx.compose.animation.AnimatedVisibility(
+                                                        visible = selected,
+                                                        enter = fadeIn() + slideInHorizontally(
+                                                            initialOffsetX = { -15 },
+                                                            animationSpec = spring(
+                                                                dampingRatio = Spring.DampingRatioLowBouncy,
+                                                                stiffness = Spring.StiffnessLow
+                                                            )
+                                                        ) + expandHorizontally(expandFrom = Alignment.Start),
+                                                        exit = fadeOut() + slideOutHorizontally(
+                                                            targetOffsetX = { -15 }) + shrinkHorizontally(
+                                                            shrinkTowards = Alignment.Start
+                                                        )
+                                                    ) {
+                                                        Text(
+                                                            text = screen.title,
+                                                            style = MaterialTheme.typography.titleMedium,
+                                                            fontWeight = FontWeight.ExtraBold,
+                                                            maxLines = 1,
+                                                            modifier = Modifier.padding(start = 2.dp, end = 4.dp)
+                                                        )
+                                                    }
+                                                },
+                                                iconPosition = NavigationItemIconPosition.Start,
+                                                colors = ShortNavigationBarItemDefaults.colors(
+                                                    selectedIconColor = MaterialTheme.colorScheme.onPrimary,
+                                                    selectedTextColor = MaterialTheme.colorScheme.onPrimary,
+                                                    selectedIndicatorColor = MaterialTheme.colorScheme.primary,
+                                                    unselectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                                    unselectedTextColor = Color.Transparent
+                                                ),
+                                                modifier = Modifier
+                                                    .padding(horizontal = 4.dp)
+                                                    .fillMaxHeight()
+                                            )
+                                        }
+                                    }
+                                }
+                            } else {
+                                NavigationBar(
+                                    containerColor = MaterialTheme.colorScheme.surface
+                                ) {
+                                    navItems.forEach { screen ->
+                                        val selected = activeTabRoute == screen.route
+                                        NavigationBarItem(
+                                            icon = {
+                                                Icon(
+                                                    imageVector = if (selected) screen.selectedIcon else screen.unselectedIcon,
+                                                    contentDescription = null
+                                                )
+                                            },
+                                            label = { Text(screen.title) },
+                                            selected = selected,
+                                            onClick = {
+                                                if (currentDestination?.route != screen.route) {
+                                                    navController.navigate(screen.route) {
+                                                        popUpTo(navController.graph.findStartDestination().id) {
+                                                            saveState = true
+                                                        }
+                                                        launchSingleTop = true
+                                                        restoreState = true
+                                                    }
+                                                }
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                GlobalAchievementBanners(
+                    profileViewModel = profileViewModel,
+                    navController = navController,
+                    onOpenCenter = { showNotifCenter = true },
+                    onOpenAchievement = { defId ->
+                        navController.navigate(Screen.Achievements.createRoute(defId))
+                    },
+                    modifier = Modifier.align(Alignment.TopCenter)
+                )
+
+                CrashSafetyOverlay()
+            }
+        }
+    }
+    run {
+        val centerPending by profileViewModel.pendingBanners.collectAsState()
+        val centerProfile by profileViewModel.uiState.collectAsState()
+        NotificationCenterSheet(
+            visible = showNotifCenter,
+            pending = centerPending,
+            achievements = centerProfile.achievements,
+            onOpenPending = { event ->
+                profileViewModel.consumeBanner(event.key)
+                showNotifCenter = false
+                val defId = when (event) {
+                    is ProfileBannerEvent.Unlock -> event.defId
+                    is ProfileBannerEvent.Progress -> event.defId
+                }
+                navController.navigate(Screen.Achievements.createRoute(defId))
+            },
+                            onDismissOne = { profileViewModel.consumeBanner(it) },
+                            onClearAll = { profileViewModel.clearAllBanners() },
+                            onOpenRecent = {
+                                showNotifCenter = false
+                                navController.navigate(Screen.Achievements.route)
+                            },
+            onDismiss = { showNotifCenter = false }
+        )
+    }
+    }
+}
+
+@Composable
+private fun NotificationCenterSheet(
+    visible: Boolean,
+    pending: List<ProfileBannerEvent>,
+    achievements: List<AchievementState>,
+    onOpenPending: (ProfileBannerEvent) -> Unit,
+    onDismissOne: (String) -> Unit,
+    onClearAll: () -> Unit,
+    onOpenRecent: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    val recent = remember(achievements, pending) {
+        val pendingKeys = pending.mapNotNull { event ->
+            (event as? ProfileBannerEvent.Unlock)?.let { it.defId to it.tierValue }
+        }.toSet()
+        achievements.flatMap { state ->
+            state.unlockedDates.mapNotNull { (key, date) ->
+                if (state.def.id to key in pendingKeys) null
+                else {
+                    val level = levelForHistoryKey(state.def, key)
+                    if (level < 1) null else Triple(state.def, level, date)
+                }
+            }
+        }.sortedByDescending { it.third }.take(8)
+    }
+    TopSheet(
+        visible = visible,
+        onDismissRequest = onDismiss
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 24.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "Notifications",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Black,
+                    modifier = Modifier.weight(1f)
+                )
+                TextButton(
+                    onClick = onClearAll,
+                    enabled = pending.isNotEmpty()
+                ) { Text("Clear all") }
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = "New",
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            if (pending.isEmpty()) {
+                Text(
+                    text = "You're all caught up",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            } else {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    pending.forEachIndexed { index, event ->
+                        val def = achievements.find {
+                            it.def.id == when (event) {
+                                is ProfileBannerEvent.Unlock -> event.defId
+                                is ProfileBannerEvent.Progress -> event.defId
+                            }
+                        }?.def
+                        val (title, subtitle) = when (event) {
+                            is ProfileBannerEvent.Unlock -> {
+                                val name = def?.let { tierDisplayName(it, event.tierLevel) }
+                                    ?: "Achievement unlocked"
+                                name to "Achievement unlocked - ${prettyProfileDate(event.date)}"
+                            }
+                            is ProfileBannerEvent.Progress -> {
+                                val level = def?.let { tierCountFor(it, event.after) } ?: 0
+                                val name = def?.let { tierDisplayName(it, level) } ?: "Progress"
+                                name to "${formatProgressNumber(event.defId, event.before)} → ${
+                                    formatProgressNumber(event.defId, event.after)
+                                }"
+                            }
+                        }
+                        Card(
+                            onClick = { onOpenPending(event) },
+                            shape = notifGroupShape(index, pending.size),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+                            ),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(40.dp)
+                                        .clip(CircleShape)
+                                        .background(MaterialTheme.colorScheme.tertiaryContainer),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = def?.icon ?: Icons.Outlined.EmojiEvents,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                                        modifier = Modifier.size(22.dp)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = title,
+                                        style = MaterialTheme.typography.titleSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        maxLines = 1
+                                    )
+                                    Text(
+                                        text = subtitle,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        maxLines = 1
+                                    )
+                                }
+                                IconButton(
+                                    onClick = { onDismissOne(event.key) },
+                                    modifier = Modifier.size(32.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Outlined.Close,
+                                        contentDescription = "Dismiss",
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "Earlier",
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            if (recent.isEmpty()) {
+                Text(
+                    text = "No earlier notifications",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            } else {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    recent.forEachIndexed { index, (def, level, date) ->
+                        Card(
+                            onClick = onOpenRecent,
+                            shape = notifGroupShape(index, recent.size),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+                            ),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(40.dp)
+                                        .clip(CircleShape)
+                                        .background(
+                                            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                                        ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = def.icon,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.size(22.dp)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Text(
+                                    text = tierDisplayName(def, level),
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.weight(1f),
+                                    maxLines = 1
+                                )
+                                Text(
+                                    text = prettyProfileDate(date),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 12.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Box(
+                    modifier = Modifier
+                        .width(40.dp)
+                        .height(4.dp)
+                        .clip(CircleShape)
+                        .background(
+                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                        )
+                )
+            }
+        }
+    }
+}
+
+private fun notifGroupShape(index: Int, total: Int): RoundedCornerShape = when {
+    total == 1 -> RoundedCornerShape(24.dp)
+    index == 0 -> RoundedCornerShape(
+        topStart = 24.dp, topEnd = 24.dp, bottomStart = 8.dp, bottomEnd = 8.dp
+    )
+    index == total - 1 -> RoundedCornerShape(
+        topStart = 8.dp, topEnd = 8.dp, bottomStart = 24.dp, bottomEnd = 24.dp
+    )
+    else -> RoundedCornerShape(8.dp)
+}
+
+@Composable
+private fun GlobalAchievementBanners(
+    profileViewModel: ProfileViewModel,
+    navController: androidx.navigation.NavController,
+    onOpenCenter: () -> Unit,
+    onOpenAchievement: (String) -> Unit = {},
+    modifier: Modifier = Modifier
+) {
+    val pendingBanners by profileViewModel.pendingBanners.collectAsState()
+    val profileUiState by profileViewModel.uiState.collectAsState()
+    val currentBanner = pendingBanners.firstOrNull()
+    var bannerDrag by remember { mutableFloatStateOf(0f) }
+    var bannerReleased by remember { mutableStateOf(true) }
+    val bannerDensity = LocalDensity.current
+    val bannerFollowOffset by animateFloatAsState(
+        targetValue = if (bannerReleased) 0f else bannerDrag,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMediumLow
+        ),
+        label = "BannerDragFollow"
+    )
+    LaunchedEffect(currentBanner) {
+        if (currentBanner != null) {
+            val isFull = (currentBanner as? ProfileBannerEvent.Progress)?.let { banner ->
+                val def = profileUiState.achievements.find { it.def.id == banner.defId }?.def
+                def == null || nextThresholdFor(def, banner.after) == null
+            } ?: false
+            delay(
+                if (currentBanner is ProfileBannerEvent.Progress) {
+                    if (isFull) 5000L else 3200L
+                } else 4500L
+            )
+            profileViewModel.consumeBanner(currentBanner.key)
+        }
+    }
+    AnimatedContent(
+        targetState = currentBanner,
+        modifier = modifier
+            .windowInsetsPadding(WindowInsets.statusBars)
+            .padding(top = 72.dp, start = 16.dp, end = 16.dp)
+            .offset { IntOffset(0, bannerFollowOffset.roundToInt()) }
+            .draggable(
+                state = rememberDraggableState {
+                    bannerReleased = false
+                    bannerDrag += it
+                },
+                orientation = Orientation.Vertical,
+                onDragStopped = {
+                    val threshold = with(bannerDensity) { 56.dp.toPx() }
+                    when {
+                        bannerDrag > threshold -> onOpenCenter()
+                        bannerDrag < -threshold -> profileViewModel.clearAllBanners()
+                    }
+                    bannerDrag = 0f
+                    bannerReleased = true
+                }
+            ),
+        transitionSpec = {
+            val slideBouncy = spring<IntOffset>(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessLow
+            )
+            val fade = spring<Float>(stiffness = Spring.StiffnessMediumLow)
+            if (targetState != null) {
+                (slideInVertically(
+                    initialOffsetY = { -it },
+                    animationSpec = slideBouncy
+                ) + fadeIn(animationSpec = fade) + scaleIn(
+                    initialScale = 0.92f,
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessMediumLow
+                    )
+                )).togetherWith(
+                    slideOutVertically(
+                        targetOffsetY = { -it },
+                        animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
+                    ) + fadeOut(animationSpec = fade)
+                )
+            } else {
+                (fadeIn(animationSpec = fade) + scaleIn(initialScale = 0.92f)).togetherWith(
+                    slideOutVertically(
+                        targetOffsetY = { -it },
+                        animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
+                    ) + fadeOut(animationSpec = fade)
+                )
+            }.apply { targetContentZIndex = if (targetState != null) 1f else 0f }
+        },
+        label = "AchievementBannerSwap"
+    ) { banner ->
+        if (banner == null) {
+            Box(Modifier.fillMaxWidth())
+        } else {
+            val defId = when (banner) {
+                is ProfileBannerEvent.Unlock -> banner.defId
+                is ProfileBannerEvent.Progress -> banner.defId
+            }
+            val bannerState = remember(banner, profileUiState.achievements) {
+                profileUiState.achievements.find { it.def.id == defId }
+            }
+            when (banner) {
+                is ProfileBannerEvent.Unlock -> {
+                    AchievementUnlockBanner(
+                        unlock = PendingUnlock(
+                            banner.defId, banner.tierLevel, banner.tierValue,
+                            banner.date, banner.prevLevel
+                        ),
+                        state = bannerState,
+                        onOpen = {
+                            profileViewModel.consumeBanner(banner.key)
+                            onOpenAchievement(banner.defId)
+                        },
+                        onDismiss = { profileViewModel.consumeBanner(banner.key) },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+                is ProfileBannerEvent.Progress -> {
+                    val def = bannerState?.def
+                    val levelBefore = def?.let { tierCountFor(it, banner.before) } ?: 0
+                    val levelAfter = def?.let { tierCountFor(it, banner.after) } ?: 0
+                    val isFull: Boolean
+                    val beforeFraction: Float
+                    val afterFraction: Float
+                    val progressTitle: String
+                    val tierSymbols: List<androidx.compose.ui.graphics.vector.ImageVector>
+                    if (def != null && levelAfter > levelBefore) {
+                        val req = requiredFor(def, levelAfter).coerceAtLeast(1L)
+                        beforeFraction = (banner.before.toFloat() / req).coerceIn(0f, 1f)
+                        afterFraction = 1f
+                        progressTitle = tierDisplayName(def, levelAfter)
+                        tierSymbols = tierIconsForLevel(levelAfter)
+                        isFull = true
+                    } else {
+                        progressTitle = def?.let { tierDisplayName(it, levelAfter) } ?: "Progress"
+                        val nextReq = def?.let { nextThresholdFor(it, banner.after) }?.required
+                        beforeFraction = if (nextReq != null && nextReq > 0) (banner.before.toFloat() / nextReq).coerceIn(0f, 1f) else 1f
+                        afterFraction = if (nextReq != null && nextReq > 0) (banner.after.toFloat() / nextReq).coerceIn(0f, 1f) else 1f
+                        tierSymbols = emptyList()
+                        isFull = false
+                    }
+                    AchievementProgressBanner(
+                        title = progressTitle,
+                        icon = bannerState?.def?.icon ?: Icons.Outlined.EmojiEvents,
+                        beforeLabel = formatProgressNumber(banner.defId, banner.before),
+                        afterLabel = formatProgressNumber(banner.defId, banner.after),
+                        beforeFraction = beforeFraction,
+                        afterFraction = afterFraction,
+                        isFull = isFull,
+                        tierSymbols = tierSymbols,
+                        onOpen = {
+                            profileViewModel.consumeBanner(banner.key)
+                            onOpenAchievement(banner.defId)
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun HeaderSwitch(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    Switch(
+        checked = checked,
+        onCheckedChange = onCheckedChange,
+        thumbContent = {
+            val thumbSize by animateDpAsState(
+                targetValue = if (checked) 28.dp else 24.dp,
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                    stiffness = Spring.StiffnessMediumLow
+                ),
+                label = "thumb_size"
+            )
+            val iconColor by animateColorAsState(
+                targetValue = if (checked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHighest,
+                animationSpec = spring(stiffness = Spring.StiffnessMedium),
+                label = "switch_icon_color"
+            )
+            Box(
+                modifier = Modifier.size(thumbSize),
+                contentAlignment = Alignment.Center
+            ) {
+                AnimatedContent(
+                    targetState = checked,
+                    transitionSpec = {
+                        (fadeIn(animationSpec = spring(stiffness = Spring.StiffnessMediumLow)) +
+                                scaleIn(initialScale = 0.5f, animationSpec = spring(dampingRatio = Spring.DampingRatioHighBouncy, stiffness = Spring.StiffnessMediumLow)))
+                            .togetherWith(
+                                fadeOut(animationSpec = spring(stiffness = Spring.StiffnessMediumLow)) +
+                                        scaleOut(targetScale = 0.5f, animationSpec = spring(stiffness = Spring.StiffnessMediumLow))
+                            )
+                    },
+                    label = "switch_icon_anim"
+                ) { isChecked ->
+                    Icon(
+                        imageVector = if (isChecked) Icons.Filled.Check else Icons.Filled.Close,
+                        contentDescription = null,
+                        modifier = Modifier.size(if (isChecked) 18.dp else 16.dp),
+                        tint = iconColor
+                    )
+                }
+            }
+        }
+    )
+}

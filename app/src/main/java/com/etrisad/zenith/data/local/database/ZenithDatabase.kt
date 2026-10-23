@@ -1,0 +1,503 @@
+package com.etrisad.zenith.data.local.database
+
+import android.content.Context
+import androidx.room.Database
+import androidx.room.Room
+import androidx.room.RoomDatabase
+import androidx.room.TypeConverters
+import androidx.room.Transaction
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
+import java.util.concurrent.Executors
+import com.etrisad.zenith.data.local.dao.ScheduleDao
+import com.etrisad.zenith.data.local.dao.ShieldDao
+import com.etrisad.zenith.data.local.dao.PomodoroSessionDao
+import com.etrisad.zenith.data.local.dao.DailyUsageDao
+import com.etrisad.zenith.data.local.dao.HourlyUsageDao
+import com.etrisad.zenith.data.local.dao.InterceptedNotificationDao
+import com.etrisad.zenith.data.local.dao.WebsiteUsageDao
+import com.etrisad.zenith.data.local.entity.ShieldEntity
+import com.etrisad.zenith.data.local.entity.ScheduleEntity
+import com.etrisad.zenith.data.local.entity.DailyUsageEntity
+import com.etrisad.zenith.data.local.entity.HourlyUsageEntity
+import com.etrisad.zenith.data.local.entity.InterceptedNotificationEntity
+import com.etrisad.zenith.data.local.entity.WebsiteUsageEntity
+import com.etrisad.zenith.data.local.entity.PomodoroSessionEntity
+import com.etrisad.zenith.data.local.Converters
+
+@Database(
+    entities = [
+        ShieldEntity::class,
+        ScheduleEntity::class,
+        DailyUsageEntity::class,
+        HourlyUsageEntity::class,
+        InterceptedNotificationEntity::class,
+        WebsiteUsageEntity::class,
+        PomodoroSessionEntity::class
+    ],
+    version = 35,
+    exportSchema = true,
+    autoMigrations = [
+        androidx.room.AutoMigration(from = 12, to = 13),
+        androidx.room.AutoMigration(from = 13, to = 14),
+        androidx.room.AutoMigration(from = 14, to = 15)
+    ]
+)
+@TypeConverters(Converters::class)
+abstract class ZenithDatabase : RoomDatabase() {
+    abstract fun shieldDao(): ShieldDao
+    abstract fun scheduleDao(): ScheduleDao
+    abstract fun dailyUsageDao(): DailyUsageDao
+    abstract fun hourlyUsageDao(): HourlyUsageDao
+    abstract fun interceptedNotificationDao(): InterceptedNotificationDao
+    abstract fun websiteUsageDao(): WebsiteUsageDao
+    abstract fun pomodoroSessionDao(): PomodoroSessionDao
+
+    @Transaction
+    open suspend fun deleteUsageForPackageTransaction(date: String, packageName: String) {
+        dailyUsageDao().deleteUsageForPackage(date, packageName)
+        hourlyUsageDao().deleteHourlyUsageForPackage(date, packageName)
+    }
+
+    companion object {
+        @Volatile
+        private var INSTANCE: ZenithDatabase? = null
+
+        private val MIGRATION_26_27 = object : Migration(26, 27) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                try {
+                    db.execSQL("ALTER TABLE shields ADD COLUMN timeAdded INTEGER NOT NULL DEFAULT 0")
+                    db.execSQL("UPDATE shields SET timeAdded = lastStreakUpdateTimestamp WHERE lastStreakUpdateTimestamp > 0")
+                    db.execSQL("UPDATE shields SET timeAdded = lastUsedTimestamp WHERE timeAdded = 0 AND lastUsedTimestamp > 0")
+                } catch (_: Exception) {}
+            }
+        }
+
+        private val MIGRATION_27_28 = object : Migration(27, 28) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                try {
+                    db.execSQL("ALTER TABLE shields ADD COLUMN isWebsite INTEGER NOT NULL DEFAULT 0")
+                } catch (_: Exception) {}
+                try {
+                    db.execSQL("ALTER TABLE shields ADD COLUMN url TEXT")
+                } catch (_: Exception) {}
+                try {
+                    db.execSQL("CREATE TABLE IF NOT EXISTS `website_usage` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `date` TEXT NOT NULL, `domain` TEXT NOT NULL, `usageTimeMillis` INTEGER NOT NULL, `lastUpdated` INTEGER NOT NULL)")
+                } catch (_: Exception) {}
+                try {
+                    db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_website_usage_date_domain` ON `website_usage` (`date`, `domain`)")
+                } catch (_: Exception) {}
+            }
+        }
+
+        private val MIGRATION_28_29 = object : Migration(28, 29) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                try {
+                    db.execSQL("ALTER TABLE shields ADD COLUMN isHUDEnabled INTEGER NOT NULL DEFAULT 1")
+                } catch (_: Exception) {}
+            }
+        }
+
+        private val MIGRATION_30_31 = object : Migration(30, 31) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                try {
+                    db.execSQL("ALTER TABLE schedules ADD COLUMN linkedGoalPackageName TEXT")
+                } catch (_: Exception) {}
+            }
+        }
+
+        private val MIGRATION_31_32 = object : Migration(31, 32) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                try {
+                    db.execSQL("ALTER TABLE shields ADD COLUMN activeDays TEXT NOT NULL DEFAULT '1,2,3,4,5,6,7'")
+                } catch (_: Exception) {}
+            }
+        }
+
+        private val MIGRATION_32_33 = object : Migration(32, 33) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                try {
+                    db.execSQL("ALTER TABLE schedules ADD COLUMN activeDays TEXT NOT NULL DEFAULT '1,2,3,4,5,6,7'")
+                } catch (_: Exception) {}
+            }
+        }
+
+        private val MIGRATION_34_35 = object : Migration(34, 35) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                try {
+                    db.execSQL("CREATE INDEX IF NOT EXISTS `index_schedules_isActive` ON `schedules` (`isActive`)")
+                } catch (_: Exception) {}
+                try {
+                    db.execSQL("CREATE INDEX IF NOT EXISTS `index_website_usage_domain_date` ON `website_usage` (`domain`, `date`)")
+                } catch (_: Exception) {}
+                try {
+                    db.execSQL("CREATE INDEX IF NOT EXISTS `index_daily_usage_packageName_date` ON `daily_usage` (`packageName`, `date`)")
+                } catch (_: Exception) {}
+                try {
+                    db.execSQL("CREATE INDEX IF NOT EXISTS `index_pomodoro_sessions_date_completedAt` ON `pomodoro_sessions` (`date`, `completedAt`)")
+                } catch (_: Exception) {}
+            }
+        }
+
+        private val MIGRATION_33_34 = object : Migration(33, 34) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                try {
+                    db.execSQL("CREATE TABLE IF NOT EXISTS `pomodoro_sessions` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `date` TEXT NOT NULL, `completedAt` INTEGER NOT NULL, `focusMillis` INTEGER NOT NULL, `sessionNumber` INTEGER NOT NULL)")
+                } catch (_: Exception) {}
+                try {
+                    db.execSQL("CREATE INDEX IF NOT EXISTS `index_pomodoro_sessions_date` ON `pomodoro_sessions` (`date`)")
+                } catch (_: Exception) {}
+            }
+        }
+
+        private val MIGRATION_29_30 = object : Migration(29, 30) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                try {
+                    db.execSQL("""
+                        CREATE TABLE IF NOT EXISTS `shields_new` (
+                            `packageName` TEXT NOT NULL,
+                            `appName` TEXT NOT NULL,
+                            `type` TEXT NOT NULL,
+                            `timeLimitMinutes` INTEGER NOT NULL,
+                            `emergencyUseCount` INTEGER NOT NULL,
+                            `maxEmergencyUses` INTEGER NOT NULL,
+                            `isRemindersEnabled` INTEGER NOT NULL,
+                            `isStrictModeEnabled` INTEGER NOT NULL,
+                            `isAutoQuitEnabled` INTEGER NOT NULL,
+                            `remainingTimeMillis` INTEGER NOT NULL,
+                            `lastUsedTimestamp` INTEGER NOT NULL,
+                            `maxUsesPerPeriod` INTEGER NOT NULL,
+                            `refreshPeriodMinutes` INTEGER NOT NULL,
+                            `currentPeriodUses` INTEGER NOT NULL,
+                            `lastPeriodResetTimestamp` INTEGER NOT NULL,
+                            `lastEmergencyRechargeTimestamp` INTEGER NOT NULL,
+                            `goalReminderPeriodMinutes` INTEGER NOT NULL,
+                            `lastGoalReminderTimestamp` INTEGER NOT NULL DEFAULT 0,
+                            `isDelayAppEnabled` INTEGER NOT NULL,
+                            `lastDelayStartTimestamp` INTEGER NOT NULL,
+                            `currentStreak` INTEGER NOT NULL,
+                            `bestStreak` INTEGER NOT NULL,
+                            `lastStreakUpdateTimestamp` INTEGER NOT NULL,
+                            `lastSessionEndTimestamp` INTEGER NOT NULL DEFAULT 0,
+                            `isPaused` INTEGER NOT NULL DEFAULT 0,
+                            `pauseEndTimestamp` INTEGER NOT NULL DEFAULT 0,
+                            `isHUDEnabled` INTEGER NOT NULL DEFAULT 1,
+                            `isGoalCallerEnabled` INTEGER NOT NULL DEFAULT 0,
+                            `isGoalCallerSoundEnabled` INTEGER NOT NULL DEFAULT 1,
+                            `goalCallerSoundUri` TEXT,
+                            `limitPeriod` TEXT NOT NULL DEFAULT 'DAILY',
+                            `timeAdded` INTEGER NOT NULL DEFAULT 0,
+                            `isWebsite` INTEGER NOT NULL DEFAULT 0,
+                            `url` TEXT,
+                            PRIMARY KEY(`packageName`)
+                        )
+                    """.trimIndent())
+                    db.execSQL("""
+                        INSERT INTO `shields_new` (
+                            `packageName`, `appName`, `type`, `timeLimitMinutes`,
+                            `emergencyUseCount`, `maxEmergencyUses`, `isRemindersEnabled`,
+                            `isStrictModeEnabled`, `isAutoQuitEnabled`, `remainingTimeMillis`,
+                            `lastUsedTimestamp`, `maxUsesPerPeriod`, `refreshPeriodMinutes`,
+                            `currentPeriodUses`, `lastPeriodResetTimestamp`,
+                            `lastEmergencyRechargeTimestamp`, `goalReminderPeriodMinutes`,
+                            `lastGoalReminderTimestamp`, `isDelayAppEnabled`,
+                            `lastDelayStartTimestamp`, `currentStreak`, `bestStreak`,
+                            `lastStreakUpdateTimestamp`, `lastSessionEndTimestamp`,
+                            `isPaused`, `pauseEndTimestamp`,
+                            `isHUDEnabled`,
+                            `isGoalCallerEnabled`, `isGoalCallerSoundEnabled`,
+                            `goalCallerSoundUri`, `limitPeriod`, `timeAdded`,
+                            `isWebsite`, `url`
+                        ) SELECT
+                            `packageName`, `appName`, `type`, `timeLimitMinutes`,
+                            `emergencyUseCount`, `maxEmergencyUses`, `isRemindersEnabled`,
+                            `isStrictModeEnabled`, `isAutoQuitEnabled`, `remainingTimeMillis`,
+                            `lastUsedTimestamp`, `maxUsesPerPeriod`, `refreshPeriodMinutes`,
+                            `currentPeriodUses`, `lastPeriodResetTimestamp`,
+                            `lastEmergencyRechargeTimestamp`, `goalReminderPeriodMinutes`,
+                            `lastGoalReminderTimestamp`, `isDelayAppEnabled`,
+                            `lastDelayStartTimestamp`, `currentStreak`, `bestStreak`,
+                            `lastStreakUpdateTimestamp`, `lastSessionEndTimestamp`,
+                            `isPaused`, `pauseEndTimestamp`,
+                            `isHUDEnabled`,
+                            `isGoalCallerEnabled`, `isGoalCallerSoundEnabled`,
+                            `goalCallerSoundUri`, `limitPeriod`, `timeAdded`,
+                            `isWebsite`, `url`
+                        FROM `shields`
+                    """.trimIndent())
+                    db.execSQL("DROP TABLE `shields`")
+                    db.execSQL("ALTER TABLE `shields_new` RENAME TO `shields`")
+                    db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_shields_packageName` ON `shields` (`packageName`)")
+                } catch (_: Exception) {}
+            }
+        }
+
+        private val MIGRATION_25_26 = object : Migration(25, 26) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                try {
+                    db.execSQL("ALTER TABLE shields ADD COLUMN limitPeriod TEXT NOT NULL DEFAULT 'DAILY'")
+                } catch (_: Exception) {}
+            }
+        }
+
+        private val MIGRATION_24_25 = object : Migration(24, 25) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_intercepted_notifications_scheduleId` ON `intercepted_notifications` (`scheduleId`)")
+            }
+        }
+
+        private val MIGRATION_23_24 = object : Migration(23, 24) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_shields_packageName` ON `shields` (`packageName`)")
+            }
+        }
+
+        private val MIGRATION_22_23 = object : Migration(22, 23) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_daily_usage_date` ON `daily_usage` (`date`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_hourly_usage_packageName_date_hour` ON `hourly_usage` (`packageName`, `date`, `hour`)")
+            }
+        }
+
+        private val MIGRATION_21_22 = object : Migration(21, 22) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                try {
+                    db.execSQL("ALTER TABLE shields ADD COLUMN isGoalCallerEnabled INTEGER NOT NULL DEFAULT 0")
+                } catch (_: Exception) {}
+                try {
+                    db.execSQL("ALTER TABLE shields ADD COLUMN isGoalCallerSoundEnabled INTEGER NOT NULL DEFAULT 1")
+                } catch (_: Exception) {}
+                try {
+                    db.execSQL("ALTER TABLE shields ADD COLUMN goalCallerSoundUri TEXT")
+                } catch (_: Exception) {}
+            }
+        }
+
+        private val MIGRATION_10_11 = object : Migration(10, 11) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                try {
+                    db.execSQL("ALTER TABLE schedules ADD COLUMN emergencyUseCount INTEGER NOT NULL DEFAULT 0")
+                } catch (_: Exception) {}
+                try {
+                    db.execSQL("ALTER TABLE schedules ADD COLUMN maxEmergencyUses INTEGER NOT NULL DEFAULT 3")
+                } catch (_: Exception) {}
+            }
+        }
+
+        private val MIGRATION_8_9 = object : Migration(8, 9) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+            }
+        }
+
+        private val MIGRATION_9_10 = object : Migration(9, 10) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                try {
+                    db.execSQL("ALTER TABLE schedules ADD COLUMN maxEmergencyUses INTEGER NOT NULL DEFAULT 3")
+                } catch (_: Exception) {}
+            }
+        }
+
+        private val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE shields ADD COLUMN type TEXT NOT NULL DEFAULT 'SHIELD'")
+                db.execSQL("ALTER TABLE shields ADD COLUMN goalReminderPeriodMinutes INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+
+        private val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE shields ADD COLUMN maxEmergencyUses INTEGER NOT NULL DEFAULT 3")
+                db.execSQL("ALTER TABLE shields ADD COLUMN lastEmergencyRechargeTimestamp INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+
+        private val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE shields ADD COLUMN isDelayAppEnabled INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+
+        private val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE shields ADD COLUMN lastDelayStartTimestamp INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+
+        private val MIGRATION_7_8 = object : Migration(7, 8) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE shields ADD COLUMN currentStreak INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE shields ADD COLUMN lastStreakUpdateTimestamp INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+
+        private val MIGRATION_11_12 = object : Migration(11, 12) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                try {
+                    db.execSQL("ALTER TABLE shields ADD COLUMN maxUsesPerPeriod INTEGER NOT NULL DEFAULT 5")
+                } catch (_: Exception) {}
+                try {
+                    db.execSQL("ALTER TABLE shields ADD COLUMN refreshPeriodMinutes INTEGER NOT NULL DEFAULT 60")
+                } catch (_: Exception) {}
+                try {
+                    db.execSQL("ALTER TABLE shields ADD COLUMN currentPeriodUses INTEGER NOT NULL DEFAULT 0")
+                } catch (_: Exception) {}
+                try {
+                    db.execSQL("ALTER TABLE shields ADD COLUMN lastPeriodResetTimestamp INTEGER NOT NULL DEFAULT 0")
+                } catch (_: Exception) {}
+                try {
+                    db.execSQL("ALTER TABLE shields ADD COLUMN isRemindersEnabled INTEGER NOT NULL DEFAULT 1")
+                } catch (_: Exception) {}
+                try {
+                    db.execSQL("ALTER TABLE shields ADD COLUMN isStrictModeEnabled INTEGER NOT NULL DEFAULT 0")
+                } catch (_: Exception) {}
+                try {
+                    db.execSQL("ALTER TABLE shields ADD COLUMN isAutoQuitEnabled INTEGER NOT NULL DEFAULT 0")
+                } catch (_: Exception) {}
+                try {
+                    db.execSQL("ALTER TABLE shields ADD COLUMN remainingTimeMillis INTEGER NOT NULL DEFAULT 0")
+                } catch (_: Exception) {}
+                try {
+                    db.execSQL("ALTER TABLE shields ADD COLUMN lastUsedTimestamp INTEGER NOT NULL DEFAULT 0")
+                } catch (_: Exception) {}
+            }
+        }
+
+        private val MIGRATION_15_16 = object : Migration(15, 16) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                try {
+                    db.execSQL("ALTER TABLE shields ADD COLUMN isPaused INTEGER NOT NULL DEFAULT 0")
+                } catch (_: Exception) {}
+                try {
+                    db.execSQL("ALTER TABLE shields ADD COLUMN pauseEndTimestamp INTEGER NOT NULL DEFAULT 0")
+                } catch (_: Exception) {}
+            }
+        }
+
+        private val MIGRATION_16_17 = object : Migration(16, 17) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                try {
+                    db.execSQL("ALTER TABLE shields ADD COLUMN lastGoalReminderTimestamp INTEGER NOT NULL DEFAULT 0")
+                } catch (_: Exception) {}
+                try {
+                    db.execSQL("ALTER TABLE shields ADD COLUMN lastSessionEndTimestamp INTEGER NOT NULL DEFAULT 0")
+                } catch (_: Exception) {}
+            }
+        }
+
+        private val MIGRATION_17_18 = object : Migration(17, 18) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                try {
+                    db.execSQL("ALTER TABLE shields ADD COLUMN bestStreak INTEGER NOT NULL DEFAULT 0")
+                } catch (_: Exception) {}
+            }
+        }
+
+        private val MIGRATION_18_19 = object : Migration(18, 19) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("CREATE TABLE IF NOT EXISTS `daily_usage` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `date` TEXT NOT NULL, `packageName` TEXT NOT NULL, `usageTimeMillis` INTEGER NOT NULL, `lastUpdated` INTEGER NOT NULL)")
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_daily_usage_date_packageName` ON `daily_usage` (`date`, `packageName`)")
+
+                db.execSQL("CREATE TABLE IF NOT EXISTS `hourly_usage` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `date` TEXT NOT NULL, `hour` INTEGER NOT NULL, `packageName` TEXT NOT NULL, `usageTimeMillis` INTEGER NOT NULL, `lastUpdated` INTEGER NOT NULL)")
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_hourly_usage_date_hour_packageName` ON `hourly_usage` (`date`, `hour`, `packageName`)")
+            }
+        }
+
+        private val MIGRATION_19_20 = object : Migration(19, 20) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("CREATE TABLE IF NOT EXISTS `daily_usage` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `date` TEXT NOT NULL, `packageName` TEXT NOT NULL, `usageTimeMillis` INTEGER NOT NULL, `lastUpdated` INTEGER NOT NULL)")
+                db.execSQL("CREATE TABLE IF NOT EXISTS `hourly_usage` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `date` TEXT NOT NULL, `hour` INTEGER NOT NULL, `packageName` TEXT NOT NULL, `usageTimeMillis` INTEGER NOT NULL, `lastUpdated` INTEGER NOT NULL)")
+            }
+        }
+
+        private val MIGRATION_20_21 = object : Migration(20, 21) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                try {
+                    db.execSQL("ALTER TABLE schedules ADD COLUMN interceptNotifications INTEGER NOT NULL DEFAULT 0")
+                } catch (_: Exception) {}
+                db.execSQL("CREATE TABLE IF NOT EXISTS `intercepted_notifications` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `packageName` TEXT NOT NULL, `title` TEXT, `text` TEXT, `timestamp` INTEGER NOT NULL, `scheduleId` INTEGER NOT NULL)")
+            }
+        }
+
+        fun getDatabase(context: Context): ZenithDatabase {
+            return INSTANCE ?: synchronized(this) {
+                INSTANCE ?: run {
+                    if (com.etrisad.zenith.crash.SafeMode.isEnabled(context)) {
+                        DbLogBuffer.w("ZenithDB", "SAFE_MODE: using in-memory database (user data not loaded)")
+                        val instance = Room.inMemoryDatabaseBuilder(
+                            context.applicationContext,
+                            ZenithDatabase::class.java
+                        )
+                            .setQueryExecutor(Executors.newFixedThreadPool(4))
+                            .setTransactionExecutor(Executors.newSingleThreadExecutor())
+                            .build()
+                        INSTANCE = instance
+                        return@run instance
+                    }
+                    DbLogBuffer.d("ZenithDB", "Creating database instance (version=35, journal=WAL)")
+                    val instance = Room.databaseBuilder(
+                        context.applicationContext,
+                        ZenithDatabase::class.java,
+                        "zenith_database"
+                    )
+                        .addMigrations(
+                            MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6,
+                            MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9,
+                            MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12,
+                            MIGRATION_15_16, MIGRATION_16_17, MIGRATION_17_18,
+                            MIGRATION_18_19, MIGRATION_19_20, MIGRATION_20_21,
+                            MIGRATION_21_22, MIGRATION_22_23, MIGRATION_23_24, MIGRATION_24_25,                             MIGRATION_25_26, MIGRATION_26_27, MIGRATION_27_28, MIGRATION_28_29, MIGRATION_29_30, MIGRATION_30_31, MIGRATION_31_32, MIGRATION_32_33, MIGRATION_33_34, MIGRATION_34_35
+                        )
+                        .setQueryExecutor(Executors.newFixedThreadPool(4))
+                        .setTransactionExecutor(Executors.newSingleThreadExecutor())
+                        .setJournalMode(RoomDatabase.JournalMode.WRITE_AHEAD_LOGGING)
+                        .fallbackToDestructiveMigration()
+                        .fallbackToDestructiveMigrationOnDowngrade()
+                        .build()
+                    INSTANCE = instance
+                    instance
+                }
+            }
+        }
+
+
+        fun closeDatabase() {
+            try {
+                DbLogBuffer.w("ZenithDB", "DB_CLOSED: database instance closed (callers must rebind or restart)")
+            } catch (_: Exception) {}
+            INSTANCE?.close()
+            INSTANCE = null
+        }
+
+        fun verifyDatabase(database: ZenithDatabase) {
+            try {
+                val db = database.openHelper.readableDatabase
+                val tables = listOf("shields", "schedules", "daily_usage", "hourly_usage", "website_usage", "intercepted_notifications")
+                val counts = mutableMapOf<String, Int>()
+                for (table in tables) {
+                    try {
+                        val cursor = db.query("SELECT COUNT(*) FROM $table")
+                        if (cursor.moveToFirst()) {
+                            counts[table] = cursor.getInt(0)
+                        }
+                        cursor.close()
+                    } catch (e: Exception) {
+                        DbLogBuffer.e("ZenithDB", "TABLE_CHECK_FAILED: $table - ${e.message}")
+                        counts[table] = -1
+                    }
+                }
+                val totalRecords = counts.values.filter { it >= 0 }.sum()
+                val countMsg = "shields=${counts["shields"]} schedules=${counts["schedules"]} daily=${counts["daily_usage"]} hourly=${counts["hourly_usage"]} website=${counts["website_usage"]} intercepted=${counts["intercepted_notifications"]} TOTAL=$totalRecords"
+                DbLogBuffer.d("ZenithDB", "TABLE_COUNTS: $countMsg")
+
+                if ((counts["daily_usage"] ?: 0) == 0 && (counts["shields"] ?: 0) > 0) {
+                    DbLogBuffer.w("ZenithDB", "WARNING: shields exist (${counts["shields"]}) but daily_usage is EMPTY (0) - stats data may be lost!")
+                }
+                if ((counts["hourly_usage"] ?: 0) == 0 && (counts["shields"] ?: 0) > 0) {
+                    DbLogBuffer.w("ZenithDB", "WARNING: shields exist but hourly_usage is EMPTY (0) - hourly stats may be lost!")
+                }
+            } catch (e: Exception) {
+                DbLogBuffer.e("ZenithDB", "VERIFY_FAILED: ${e.message}")
+            }
+        }
+    }
+}

@@ -1,0 +1,285 @@
+package com.etrisad.zenith.service
+
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.usage.UsageStatsManager
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import androidx.core.app.NotificationCompat
+import androidx.work.*
+import com.etrisad.zenith.R
+import com.etrisad.zenith.data.local.database.ZenithDatabase
+import com.etrisad.zenith.data.local.database.DbLogBuffer
+import com.etrisad.zenith.data.local.entity.DailyUsageEntity
+import com.etrisad.zenith.data.local.entity.FocusType
+import com.etrisad.zenith.data.local.entity.HourlyUsageEntity
+import com.etrisad.zenith.data.preferences.UserPreferencesRepository
+import com.etrisad.zenith.util.DateTimeUtils
+import kotlinx.coroutines.flow.first
+import java.text.SimpleDateFormat
+import java.util.*
+import java.util.concurrent.TimeUnit
+
+class DailyUsageWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
+
+    override suspend fun doWork(): Result {
+        if (com.etrisad.zenith.crash.SafeMode.isEnabled(applicationContext)) return Result.success()
+        val prefsRepo = UserPreferencesRepository(applicationContext)
+        val prefs = prefsRepo.userPreferencesFlow.first()
+        val dayStartHour = prefs.dayStartHour
+        val dayStartMinute = prefs.dayStartMinute
+
+        val isBackup = inputData.getBoolean("is_backup", false)
+        val nowCal = Calendar.getInstance()
+        val currentHour = nowCal.get(Calendar.HOUR_OF_DAY)
+        val currentMinute = nowCal.get(Calendar.MINUTE)
+        val calendar = nowCal.clone() as Calendar
+
+        if (isBackup) {
+            val isLateNight = currentHour == 23
+            val isEarlyMorning = currentHour == 0 && currentMinute <= 30
+            if (!isLateNight && !isEarlyMorning) return Result.success()
+        }
+
+        val database = ZenithDatabase.getDatabase(applicationContext)
+        val dailyUsageDao = database.dailyUsageDao()
+        val hourlyUsageDao = database.hourlyUsageDao()
+        val usm = applicationContext.getSystemService(Context.USAGE_STATS_SERVICE) as android.app.usage.UsageStatsManager
+        val pm = applicationContext.packageManager
+
+        val now = System.currentTimeMillis()
+        val isBeforeDayStart = DateTimeUtils.isBeforeDayStart(now, dayStartHour, dayStartMinute)
+        val isProcessingYesterday = (!isBackup && isBeforeDayStart) || (isBackup && currentHour == 0)
+
+        val currentDayStart = DateTimeUtils.getDayStartTime(now, dayStartHour, dayStartMinute)
+        if (isProcessingYesterday) {
+            calendar.timeInMillis = currentDayStart - 1
+        } else {
+            calendar.timeInMillis = currentDayStart
+        }
+
+        val dayStartMinutes = dayStartHour * 60 + dayStartMinute
+        val nowMinutes = currentHour * 60 + currentMinute
+        val minutesSinceDayStart = if (nowMinutes >= dayStartMinutes) nowMinutes - dayStartMinutes else nowMinutes + (1440 - dayStartMinutes)
+        if (minutesSinceDayStart in 0..14) {
+            try {
+                database.shieldDao().resetDailyRemainingTimes()
+                val cal = Calendar.getInstance()
+                if (cal.get(Calendar.DAY_OF_WEEK) == Calendar.MONDAY) {
+                    database.shieldDao().resetWeeklyRemainingTimes()
+                }
+                prefsRepo.setIncentiveLockGoalsMetToday(false)
+                prefsRepo.resetIncentiveBonusUsesIfNeeded()
+            } catch (_: Exception) {}
+        }
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+        val dateString = DateTimeUtils.getDayStartDateString(now, dayStartHour, dayStartMinute)
+        val isDateToday = !isBeforeDayStart
+        DbLogBuffer.d("ZenithDB", "DAILY_WORKER_START: isBackup=$isBackup isDateToday=$isDateToday date=$dateString")
+
+        calendar.set(Calendar.HOUR_OF_DAY, 0); calendar.set(Calendar.MINUTE, 0); calendar.set(Calendar.SECOND, 0); calendar.set(Calendar.MILLISECOND, 0)
+        val startTime = calendar.timeInMillis
+        calendar.set(Calendar.HOUR_OF_DAY, 23); calendar.set(Calendar.MINUTE, 59); calendar.set(Calendar.SECOND, 59); calendar.set(Calendar.MILLISECOND, 999)
+        val endTime = calendar.timeInMillis
+
+        val existingDaily = dailyUsageDao.getUsagesForDate(dateString).associateBy { it.packageName }
+        val existingTotalVal = existingDaily["TOTAL"]?.usageTimeMillis ?: 0L
+
+        if (!isDateToday && existingTotalVal > 0) {
+            DbLogBuffer.d("ZenithDB", "DAILY_WORKER_SKIP: date=$dateString already has total=$existingTotalVal, skipping")
+            return Result.success()
+        }
+
+        val allShields = database.shieldDao().getAllShields().first()
+        val finalAppUsages = mutableMapOf<String, Long>()
+
+        val launcherApps = try {
+            pm.queryIntentActivities(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER), 0)
+                .map { it.activityInfo.packageName }.toSet()
+        } catch (_: Exception) { emptySet() }
+        val launcherPackage = try {
+            pm.resolveActivity(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME), PackageManager.MATCH_DEFAULT_ONLY)?.activityInfo?.packageName
+        } catch (_: Exception) { null }
+        val excludePackages = setOfNotNull(applicationContext.packageName, launcherPackage) + prefs.excludedFromTrackingPackages
+
+        val timeSinceMidnight = if (isDateToday) (System.currentTimeMillis() - startTime).coerceAtLeast(0L) else (24 * 60 * 60 * 1000L)
+
+        if (isDateToday) {
+            val detailedUsage = com.etrisad.zenith.util.ScreenUsageHelper.fetchDetailedUsageToday(usm, dayStartHour = dayStartHour, dayStartMinute = dayStartMinute)
+            detailedUsage.appUsageMap.forEach { (pkg, time) ->
+                if (pkg !in excludePackages && pkg in launcherApps && time > 0) {
+                    finalAppUsages[pkg] = time.coerceAtMost(timeSinceMidnight)
+                }
+            }
+        } else {
+            val stats = try {
+                usm.queryAndAggregateUsageStats(startTime, endTime)
+            } catch (e: Exception) {
+                null
+            }
+            stats?.forEach { (pkg, stat) ->
+                if (pkg !in excludePackages && pkg in launcherApps) {
+                    val time = stat.totalTimeVisible.coerceAtLeast(stat.totalTimeInForeground)
+                    if (time > 0) finalAppUsages[pkg] = time.coerceAtMost(timeSinceMidnight)
+                }
+            }
+        }
+
+        val events = try {
+            usm.queryEvents(startTime - 1800000L, System.currentTimeMillis().coerceAtMost(endTime))
+        } catch (e: Exception) {
+            null
+        }
+        val event = android.app.usage.UsageEvents.Event()
+        val androidTotals = mutableMapOf<String, Long>()
+        var activePkg: String? = null
+        var activeStartTime = 0L
+        var isScreenOn = true
+
+        while (events?.hasNextEvent() == true) {
+            events.getNextEvent(event)
+            val time = event.timeStamp
+            when (event.eventType) {
+                android.app.usage.UsageEvents.Event.SCREEN_INTERACTIVE -> isScreenOn = true
+                android.app.usage.UsageEvents.Event.SCREEN_NON_INTERACTIVE -> {
+                    isScreenOn = false
+                    activePkg?.let { pkg ->
+                        val segmentStart = maxOf(activeStartTime, startTime)
+                        val segmentEnd = minOf(time, endTime)
+                        if (segmentStart < segmentEnd) {
+                            val duration = segmentEnd - segmentStart
+                            if (duration > 1500) androidTotals[pkg] = (androidTotals[pkg] ?: 0L) + duration
+                        }
+                    }
+                    activePkg = null
+                }
+                android.app.usage.UsageEvents.Event.ACTIVITY_RESUMED -> {
+                    if (isScreenOn) {
+                        activePkg?.let { pkg ->
+                            val segmentStart = maxOf(activeStartTime, startTime)
+                            val segmentEnd = minOf(time, endTime)
+                            if (segmentStart < segmentEnd) {
+                                val duration = segmentEnd - segmentStart
+                                if (duration > 1500) androidTotals[pkg] = (androidTotals[pkg] ?: 0L) + duration
+                            }
+                        }
+                        activePkg = event.packageName
+                        activeStartTime = time
+                    }
+                }
+                android.app.usage.UsageEvents.Event.ACTIVITY_PAUSED -> {
+                    activePkg?.let { pkg ->
+                        if (pkg == event.packageName) {
+                            val segmentStart = maxOf(activeStartTime, startTime)
+                            val segmentEnd = minOf(time, endTime)
+                            if (segmentStart < segmentEnd) {
+                                val duration = segmentEnd - segmentStart
+                                if (duration > 1500) androidTotals[pkg] = (androidTotals[pkg] ?: 0L) + duration
+                            }
+                            activePkg = null
+                        }
+                    }
+                }
+            }
+        }
+
+        activePkg?.let { pkg ->
+            val segmentStart = maxOf(activeStartTime, startTime)
+            val segmentEnd = minOf(System.currentTimeMillis(), endTime)
+            if (segmentStart < segmentEnd) {
+                val duration = segmentEnd - segmentStart
+                if (duration > 1500) androidTotals[pkg] = (androidTotals[pkg] ?: 0L) + duration
+            }
+        }
+
+        androidTotals.forEach { (pkg, time) ->
+            if (pkg !in excludePackages && pkg in launcherApps) {
+                finalAppUsages[pkg] = maxOf(finalAppUsages[pkg] ?: 0L, time)
+            }
+        }
+
+        if (isDateToday) {
+            val todayStart = calendar.timeInMillis
+            allShields.forEach { shield ->
+                if (shield.lastUsedTimestamp >= todayStart) {
+                    val usageFromShield = (shield.timeLimitMinutes * 60 * 1000L - shield.remainingTimeMillis).coerceAtLeast(0L)
+                    if (usageFromShield > 0) {
+                        finalAppUsages[shield.packageName] = maxOf(finalAppUsages[shield.packageName] ?: 0L, usageFromShield)
+                    }
+                }
+            }
+        }
+
+        finalAppUsages.keys.forEach { pkg ->
+            finalAppUsages[pkg] = (finalAppUsages[pkg] ?: 0L).coerceAtMost(timeSinceMidnight)
+        }
+
+        if (finalAppUsages.isEmpty()) {
+            DbLogBuffer.w("ZenithDB", "DAILY_WORKER_NO_DATA: date=$dateString isDateToday=$isDateToday no usage stats found, keeping existing rows untouched")
+            return Result.success()
+        }
+        finalAppUsages.forEach { (pkg, time) ->
+            val existing = existingDaily[pkg]?.usageTimeMillis ?: 0L
+            if (existing > time) finalAppUsages[pkg] = existing
+        }
+
+        val calculatedSum = finalAppUsages.values.sum()
+
+        var totalUsage = maxOf(calculatedSum, existingTotalVal).coerceAtMost(timeSinceMidnight)
+
+        val usagesToInsert = mutableListOf<DailyUsageEntity>()
+        finalAppUsages.forEach { (pkg, time) ->
+            usagesToInsert.add(DailyUsageEntity(date = dateString, packageName = pkg, usageTimeMillis = time.coerceAtMost(timeSinceMidnight)))
+        }
+
+        usagesToInsert.add(DailyUsageEntity(date = dateString, packageName = "TOTAL", usageTimeMillis = totalUsage))
+
+        val shieldPkgs = allShields.asSequence().filter { it.type == FocusType.SHIELD }.map { it.packageName }.toSet()
+        val goalPkgs = allShields.asSequence().filter { it.type == FocusType.GOAL }.map { it.packageName }.toSet()
+        var sUsage = 0L; var gUsage = 0L
+        finalAppUsages.forEach { (pkg, time) ->
+            if (pkg in shieldPkgs) sUsage += time else if (pkg in goalPkgs) gUsage += time
+        }
+
+        usagesToInsert.add(DailyUsageEntity(date = dateString, packageName = "SHIELD_TOTAL", usageTimeMillis = maxOf(sUsage, existingDaily["SHIELD_TOTAL"]?.usageTimeMillis ?: 0L)))
+        usagesToInsert.add(DailyUsageEntity(date = dateString, packageName = "GOAL_TOTAL", usageTimeMillis = maxOf(gUsage, existingDaily["GOAL_TOTAL"]?.usageTimeMillis ?: 0L)))
+        usagesToInsert.add(DailyUsageEntity(date = dateString, packageName = "OTHER_TOTAL", usageTimeMillis = (totalUsage - (sUsage + gUsage)).coerceAtLeast(0L)))
+
+        dailyUsageDao.insertAll(usagesToInsert)
+        DbLogBuffer.d("ZenithDB", "DAILY_WORKER_SAVE: date=$dateString saved ${usagesToInsert.size} records totalUsage=${totalUsage}ms (apps=${finalAppUsages.size})")
+
+        if (!isBackup) {
+            sendDataSavedNotification()
+        }
+
+        return Result.success()
+    }
+
+    private fun sendDataSavedNotification() {
+        val channelId = "zenith_usage_sync"
+        val manager = applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O && manager.getNotificationChannel(channelId) == null) {
+            val channel = NotificationChannel(channelId, "Usage Sync", NotificationManager.IMPORTANCE_LOW).apply {
+                setShowBadge(false)
+            }
+            manager.createNotificationChannel(channel)
+        }
+        manager.notify(999, NotificationCompat.Builder(applicationContext, channelId)
+            .setContentTitle("Daily Report Prepared").setContentText("Your usage has been safely saved.")
+            .setSmallIcon(R.drawable.ic_calendar).setPriority(NotificationCompat.PRIORITY_LOW).setAutoCancel(true).setGroup("zenith_system").build())
+    }
+
+    companion object {
+        fun schedule(context: Context) {
+            val constraints = Constraints.Builder().setRequiresBatteryNotLow(true).build()
+            val calendar = Calendar.getInstance()
+            val now = calendar.timeInMillis
+            calendar.set(Calendar.HOUR_OF_DAY, 23); calendar.set(Calendar.MINUTE, 58); calendar.set(Calendar.SECOND, 0)
+            if (calendar.timeInMillis <= now) calendar.add(Calendar.DAY_OF_YEAR, 1)
+
+            WorkManager.getInstance(context).enqueueUniquePeriodicWork("DailyUsageSyncWorker", ExistingPeriodicWorkPolicy.UPDATE,
+                PeriodicWorkRequestBuilder<DailyUsageWorker>(1, TimeUnit.DAYS).setInitialDelay(calendar.timeInMillis - now, TimeUnit.MILLISECONDS).setConstraints(constraints).setInputData(workDataOf("is_backup" to false)).build())
+        }
+    }
+}

@@ -1,0 +1,25 @@
+*.iml
+.gradle
+/.kotlin/errors
+/local.properties
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+# build APK
+/app/release/
+/app/build/
+/app/full/
+/app/store/
+*.apk
+*.aab
+*.dm
+*.zip

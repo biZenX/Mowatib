@@ -1,0 +1,208 @@
+package com.etrisad.zenith.ui.widget
+
+import android.annotation.SuppressLint
+import android.content.Context
+import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Matrix
+import android.graphics.Paint
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.MaterialShapes
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.glance.ColorFilter
+import androidx.glance.GlanceId
+import androidx.glance.GlanceModifier
+import androidx.glance.GlanceTheme
+import androidx.glance.Image
+import androidx.glance.ImageProvider
+import androidx.glance.LocalSize
+import androidx.glance.action.clickable
+import androidx.glance.appwidget.GlanceAppWidget
+import androidx.glance.appwidget.SizeMode
+import androidx.glance.appwidget.action.actionStartActivity
+import androidx.glance.appwidget.cornerRadius
+import androidx.glance.appwidget.provideContent
+import androidx.glance.layout.Alignment
+import androidx.glance.layout.Box
+import androidx.glance.layout.Column
+import androidx.glance.layout.fillMaxSize
+import androidx.glance.layout.padding
+import androidx.glance.layout.size
+import androidx.glance.state.GlanceStateDefinition
+import androidx.glance.state.PreferencesGlanceStateDefinition
+import androidx.glance.text.FontWeight
+import androidx.glance.text.Text
+import androidx.glance.text.TextStyle
+import androidx.graphics.shapes.RoundedPolygon
+import androidx.graphics.shapes.toPath
+import com.etrisad.zenith.MainActivity
+import com.etrisad.zenith.R
+import com.etrisad.zenith.ZenithApplication
+import com.etrisad.zenith.util.DateTimeUtils
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withContext
+
+class PhoneFreeTimeWidget : GlanceAppWidget() {
+    override val sizeMode: SizeMode = SizeMode.Exact
+    override val stateDefinition: GlanceStateDefinition<*> = PreferencesGlanceStateDefinition
+
+    companion object {
+        private val bitmapCache = android.util.LruCache<String, Bitmap>(20)
+        @Volatile private var lastProvideMs = 0L
+        fun clearCache() { try { bitmapCache.evictAll() } catch (_: Exception) {} }
+    }
+
+    override suspend fun provideGlance(context: Context, id: GlanceId) {
+        val app = context.applicationContext as ZenithApplication
+        val repo = app.shieldRepository
+        val prefsRepo = app.userPreferencesRepository
+
+        val prefs = prefsRepo.userPreferencesFlow.first()
+        val now = System.currentTimeMillis()
+        val startOfDay = DateTimeUtils.getDayStartTime(now, prefs.dayStartHour, prefs.dayStartMinute)
+        val elapsedToday = (now - startOfDay).coerceAtLeast(0L)
+        val todayStr = DateTimeUtils.getDayStartDateString(now, prefs.dayStartHour, prefs.dayStartMinute)
+        val totalMillis = try {
+            val daily = withContext(Dispatchers.IO) { repo.getDailyUsagesForDateSync(todayStr) }
+            daily.find { it.packageName == "TOTAL" }?.usageTimeMillis
+                ?: daily.filter { it.packageName !in setOf("SHIELD_TOTAL","GOAL_TOTAL","OTHER_TOTAL") }.sumOf { it.usageTimeMillis }
+        } catch (_: Exception) { 0L }
+
+        provideContent {
+            val uiMode = context.resources.configuration.uiMode
+            val sunnyBitmap = remember(uiMode) { createShapeBitmap(context, 80, MaterialShapes.Flower) }
+            val backgroundBitmap = remember(uiMode) { createShapeBitmap(context, 120, MaterialShapes.Clover4Leaf) }
+
+            val idleMillis = (elapsedToday - totalMillis).coerceAtLeast(0L)
+
+            GlanceTheme {
+                val intent = Intent(context, MainActivity::class.java).apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK }
+                val action = actionStartActivity(intent)
+                Box(
+                    modifier = GlanceModifier.fillMaxSize().cornerRadius(100.dp).clickable(action),
+                    contentAlignment = Alignment.Center
+                ) {
+                    PhoneFreeContent(
+                        idleMillis = idleMillis,
+                        sunnyBitmap = sunnyBitmap,
+                        backgroundBitmap = backgroundBitmap
+                    )
+                }
+            }
+        }
+    }
+
+    @OptIn(ExperimentalMaterial3ExpressiveApi::class)
+    @SuppressLint("RestrictedApi")
+    @Composable
+    private fun PhoneFreeContent(
+        idleMillis: Long,
+        sunnyBitmap: Bitmap,
+        backgroundBitmap: Bitmap
+    ) {
+        val size = LocalSize.current
+        val squareSize = minOf(size.width, size.height)
+        val scaleFactor = squareSize.value / 100f
+
+        val contentPadding = (8 * scaleFactor).dp
+        val containerSize = (40 * scaleFactor).dp
+        val iconSize = (20 * scaleFactor).dp
+
+        val idleHours = idleMillis / 3600000
+        val idleMinutes = (idleMillis % 3600000) / 60000
+        val timeText = if (idleHours > 0) "${idleHours}h ${idleMinutes}m" else "${idleMinutes}m"
+
+        val mainFontSize = when {
+            timeText.length >= 7 -> (16 * scaleFactor).sp
+            timeText.length == 6 -> (18 * scaleFactor).sp
+            timeText.length == 5 -> (22 * scaleFactor).sp
+            timeText.length == 4 -> (26 * scaleFactor).sp
+            else -> (30 * scaleFactor).sp
+        }
+
+        val labelFontSize = (10 * scaleFactor).sp
+
+        val backgroundColor = GlanceTheme.colors.widgetBackground
+
+        Box(
+            modifier = GlanceModifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Box(
+                modifier = GlanceModifier.size(squareSize),
+                contentAlignment = Alignment.Center
+            ) {
+                Image(
+                    provider = ImageProvider(backgroundBitmap),
+                    contentDescription = null,
+                    modifier = GlanceModifier.fillMaxSize(),
+                    colorFilter = ColorFilter.tint(backgroundColor)
+                )
+
+                Box(
+                    modifier = GlanceModifier.fillMaxSize().padding(contentPadding),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Image(
+                                provider = ImageProvider(sunnyBitmap),
+                                contentDescription = null,
+                                modifier = GlanceModifier.size(containerSize),
+                                colorFilter = ColorFilter.tint(GlanceTheme.colors.primary)
+                            )
+                            Image(
+                                provider = ImageProvider(R.drawable.ic_snooze),
+                                contentDescription = null,
+                                modifier = GlanceModifier.size(iconSize),
+                                colorFilter = ColorFilter.tint(GlanceTheme.colors.primaryContainer)
+                            )
+                        }
+                        Text(
+                            text = timeText,
+                            style = TextStyle(
+                                fontSize = mainFontSize,
+                                fontWeight = FontWeight.Medium,
+                                color = GlanceTheme.colors.primary
+                            )
+                        )
+                        Text(
+                            text = "AWAY",
+                            style = TextStyle(
+                                fontSize = labelFontSize,
+                                fontWeight = FontWeight.Medium,
+                                color = GlanceTheme.colors.tertiary
+                            )
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    private fun createShapeBitmap(context: Context, sizeDp: Int, shape: RoundedPolygon, alpha: Int = 255): Bitmap {
+        val uiMode = context.resources.configuration.uiMode
+        val key = "free_${sizeDp}_${shape.hashCode()}_$uiMode"
+        bitmapCache.get(key)?.let { if (!it.isRecycled) return it }
+        val density = context.resources.displayMetrics.density
+        val sizePx = (sizeDp * density).toInt().coerceAtLeast(1)
+        val bitmap = Bitmap.createBitmap(sizePx, sizePx, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        val path = shape.toPath()
+        val matrix = Matrix().apply { setScale(sizePx.toFloat(), sizePx.toFloat()) }
+        path.transform(matrix)
+        val paint = Paint().apply { color = Color.WHITE; this.alpha = alpha; isAntiAlias = true; isFilterBitmap = true; style = Paint.Style.FILL }
+        canvas.drawPath(path, paint)
+        bitmapCache.put(key, bitmap)
+        return bitmap
+    }
+}

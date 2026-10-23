@@ -1,0 +1,135 @@
+package com.etrisad.zenith.service
+
+import com.etrisad.zenith.data.local.entity.ScheduleMode
+import com.etrisad.zenith.data.local.entity.ShieldEntity
+import com.etrisad.zenith.data.preferences.PerformanceConfig
+import com.etrisad.zenith.data.preferences.PerformanceLevel
+import com.etrisad.zenith.data.preferences.UserPreferences
+import com.etrisad.zenith.service.earlykick.EarlyKickManager
+import com.etrisad.zenith.util.DateTimeUtils
+import java.util.concurrent.ConcurrentHashMap
+
+class ParsedSchedule(
+    val id: Long,
+    val startMinutes: Int,
+    val endMinutes: Int,
+    val mode: ScheduleMode,
+    val packageNames: Set<String>,
+    val activeDays: Set<Int> = setOf(1, 2, 3, 4, 5, 6, 7)
+)
+
+object SharedMonitoringState {
+    @Volatile var allShieldsCache = emptyMap<String, ShieldEntity>()
+    @Volatile var goalShieldsCache = listOf<ShieldEntity>()
+    @Volatile var parsedSchedulesCache = listOf<ParsedSchedule>()
+    @Volatile var currentPreferences: UserPreferences? = null
+    @Volatile var whitelistedPackages = emptySet<String>()
+    @Volatile var bedtimeWhitelistedPackages = emptySet<String>()
+    @Volatile var excludedFromTrackingPackages = emptySet<String>()
+    @Volatile var restrictedPackages = emptySet<String>()
+    @Volatile var hasGlobalAllowSchedule = false
+    @Volatile var launcherAppsCache = emptySet<String>()
+    @Volatile var launcherPackages = emptySet<String>()
+    @Volatile var defaultLauncherPackage: String? = null
+    @Volatile var lastLauncherAppsRefreshTime = 0L
+    @Volatile var cachedBedtimeStartMinutes = -1
+    @Volatile var cachedBedtimeEndMinutes = -1
+    @Volatile var cachedGracePeriodStartMinutes = -1
+    @Volatile var cachedGracePeriodEndMinutes = -1
+    @Volatile var isGracePeriodActive = false
+    @Volatile var isBedtimeActive = false
+    @Volatile var isWindDownActive = false
+    @Volatile var isBedtimeBlockingActive = false
+    @Volatile var isPomodoroActive = false
+    @Volatile var isPomodoroBlockingActive = false
+    @Volatile var isPomodoroBreakActive = false
+    @Volatile var isPomodoroPaused = false
+    @Volatile var pomodoroPauseTimestamp: Long = 0L
+    @Volatile var pomodoroAllowedPackages = emptySet<String>()
+    @Volatile var pomodoroBlockAllowedApps = true
+    @Volatile var pomodoroNextBreakAllowedTimestamp: Long = 0L
+    const val POMODORO_BREAK_COOLDOWN_MINUTES = 30
+    @Volatile var lastBankingAppsCount = -1
+    val windDownUsedPackages = ConcurrentHashMap<String, Boolean>()
+    val systemAppCache = ConcurrentHashMap<String, Boolean>()
+    val dailyUsageCache = ConcurrentHashMap<String, Long>()
+    val notifiedGoals = ConcurrentHashMap.newKeySet<String>()
+    val lastKnownPackageUsage = ConcurrentHashMap<String, Long>()
+    @Volatile var activeSchedules = listOf<com.etrisad.zenith.data.local.entity.ScheduleEntity>()
+    @Volatile var performanceLevel: PerformanceLevel = PerformanceLevel.BALANCED
+    @Volatile var performanceConfig: PerformanceConfig = PerformanceConfig()
+
+    val earlyKickManager = EarlyKickManager()
+
+    @Volatile var disableTrackingAtUnusedHours: Boolean = false
+    @Volatile var disableTrackingStartHour: Int = 2
+    @Volatile var disableTrackingEndHour: Int = 4
+
+    @Volatile var cachedDayStartHour = 0
+    @Volatile var cachedDayStartMinute = 0
+    private var cachedStartOfDayTime = 0L
+    private var cachedStartOfDayValue = 0L
+    @Volatile var lastDailyUsageFetchTime = 0L
+
+    fun getStartOfDay(): Long {
+        val now = System.currentTimeMillis()
+        val cacheKey = cachedDayStartHour * 60 + cachedDayStartMinute
+        val currentSlot = now / 60000
+        if (currentSlot == cachedStartOfDayTime && cachedStartOfDayValue > 0) {
+            return cachedStartOfDayValue
+        }
+        val result = DateTimeUtils.getDayStartTime(now, cachedDayStartHour, cachedDayStartMinute)
+        cachedStartOfDayTime = currentSlot
+        cachedStartOfDayValue = result
+        return result
+    }
+
+    fun clearDailyCaches() {
+        dailyUsageCache.clear()
+        notifiedGoals.clear()
+    }
+
+    fun performPeriodicCleanup() {
+        val now = System.currentTimeMillis()
+        val startOfDay = getStartOfDay()
+        windDownUsedPackages.entries.removeIf { it.value && now - startOfDay > 86400000L }
+        if (dailyUsageCache.size > 100) dailyUsageCache.entries.removeIf { it.value <= 0L }
+        if (systemAppCache.size > 200) systemAppCache.clear()
+        if (notifiedGoals.size > 500) notifiedGoals.clear()
+        if (lastKnownPackageUsage.size > 500) lastKnownPackageUsage.clear()
+        if (windDownUsedPackages.size > 500) windDownUsedPackages.clear()
+    }
+
+    val CRITICAL_SYSTEM_PACKAGES = setOf(
+        "android", "com.android.systemui", "com.android.settings", "com.android.phone",
+        "com.android.server.telecom", "com.google.android.packageinstaller",
+        "com.android.packageinstaller", "com.google.android.permissioncontroller",
+        "com.samsung.android.systemui", "com.miui.systemui", "com.huawei.systemui",
+        "com.oppo.systemui", "com.coloros.safecenter", "com.vivo.systemui",
+        "com.oneplus.twspackage", "com.android.incallui"
+    )
+
+    val BLOCKABLE_SYSTEM_APPS = setOf(
+        "com.google.android.youtube", "com.android.chrome",
+        "com.google.android.apps.youtube.music", "com.android.vending"
+    )
+
+    val FINANCIAL_APPS = setOf(
+        "pl.mbank", "pl.pkobp.iko", "pl.ing.bmo", "pl.pekao.bm",
+        "pl.bzwbk.bm", "pl.millennium.czyngasie", "pl.aliorbank.aib",
+        "pl.bnpparibas.bgzbnp", "pl.creditagricole.lmpl", "pl.bosbank.bbm",
+        "pl.plusbank.mobile", "pl.nestbank.mobile", "pl.toyota.mobile",
+        "com.google.android.apps.walletnfcrel"
+    )
+
+    fun isFinancialApp(packageName: String): Boolean =
+        packageName in FINANCIAL_APPS
+
+    fun updateRestrictedPackages() {
+        val shieldPkgs = allShieldsCache.keys
+        val schedulePkgs = activeSchedules.asSequence().filter { it.mode == ScheduleMode.BLOCK }
+            .flatMap { it.packageNames }.toSet()
+        hasGlobalAllowSchedule = activeSchedules.any { it.mode == ScheduleMode.ALLOW }
+        restrictedPackages = shieldPkgs + schedulePkgs + BLOCKABLE_SYSTEM_APPS
+    }
+}

@@ -1,0 +1,2101 @@
+package com.etrisad.zenith.ui.components.focus
+
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.TrendingUp
+import androidx.compose.material.icons.automirrored.outlined.VolumeOff
+import androidx.compose.material.icons.automirrored.outlined.VolumeUp
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.graphics.painter.BitmapPainter
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.etrisad.zenith.ui.components.ZenithButton
+import com.etrisad.zenith.ui.components.ZenithButtonSize
+import com.etrisad.zenith.ui.components.ZenithButtonType
+import com.etrisad.zenith.ui.components.ZenithButtonWeighted
+import com.etrisad.zenith.ui.components.ZenithGroupedButton
+import com.etrisad.zenith.ui.viewmodel.AppInfo
+import com.etrisad.zenith.ui.viewmodel.FocusUiState
+import com.etrisad.zenith.ui.viewmodel.PickerTab
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import com.etrisad.zenith.data.model.AlarmItem
+import com.etrisad.zenith.ui.components.pausepoint.AlarmDismissTasks
+import com.etrisad.zenith.ui.components.pausepoint.PausePointTaskType
+import androidx.core.net.toUri
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AlarmItemSettingsBottomSheet(
+    alarmName: String,
+    soundUri: String?,
+    soundEnabled: Boolean,
+    autoRepeatEnabled: Boolean,
+    selectedDays: Set<Int>,
+    vibrateEnabled: Boolean,
+    snoozeDurationMinutes: Int = 5,
+    snoozeMaxCount: Int = 3,
+    gradualVolumeEnabled: Boolean = false,
+    gradualVolumeDurationSeconds: Int = 30,
+    mathChallengeEnabled: Boolean = false,
+    alarmVolume: Float = 1.0f,
+    ttsEnabled: Boolean = false,
+    ttsCustomPhrase: String? = null,
+    ttsLanguage: String? = null,
+    ttsTalkAfterSeconds: Int = 0,
+    ttsRepeatCount: Int = 0,
+    ttsIntervalSeconds: Int = 3,
+    preventVolumeDrop: Boolean = false,
+    wakeUpAppPackageNames: List<String> = emptyList(),
+    wakeUpAppDurationSeconds: Int = 120,
+    dismissTaskTypeNames: Set<String> = emptySet(),
+    pausePointQrCodeCount: Int = 0,
+    pausePointNfcTagCount: Int = 0,
+    initialAlarmId: Long = 0L,
+    onTestAlarm: (AlarmItem) -> Unit = {},
+    onDismiss: () -> Unit,
+    onSave: suspend (name: String, soundUri: String?, soundEnabled: Boolean, autoRepeatEnabled: Boolean, selectedDays: Set<Int>, vibrateEnabled: Boolean, snoozeDurationMinutes: Int, snoozeMaxCount: Int, gradualVolumeEnabled: Boolean, gradualVolumeDurationSeconds: Int, mathChallengeEnabled: Boolean, alarmVolume: Float, ttsEnabled: Boolean, ttsCustomPhrase: String?, ttsLanguage: String?, ttsTalkAfterSeconds: Int, ttsRepeatCount: Int, ttsIntervalSeconds: Int, preventVolumeDrop: Boolean, wakeUpAppPackageNames: List<String>, wakeUpAppDurationSeconds: Int, dismissTaskTypeNames: Set<String>) -> Unit,
+    onTimeClick: (() -> Unit)? = null,
+    alarmTimeText: String? = null
+) {
+    AlarmSettingsSheetContent(
+        initialAlarmName = alarmName,
+        initialSoundUri = soundUri,
+        initialSoundEnabled = soundEnabled,
+        initialAutoRepeatEnabled = autoRepeatEnabled,
+        initialSelectedDays = selectedDays,
+        initialVibrateEnabled = vibrateEnabled,
+        initialSnoozeDurationMinutes = snoozeDurationMinutes,
+        initialSnoozeMaxCount = snoozeMaxCount,
+        initialGradualVolumeEnabled = gradualVolumeEnabled,
+        initialGradualVolumeDurationSeconds = gradualVolumeDurationSeconds,
+        initialMathChallengeEnabled = mathChallengeEnabled,
+        initialAlarmVolume = alarmVolume,
+        initialTtsEnabled = ttsEnabled,
+        initialTtsCustomPhrase = ttsCustomPhrase,
+        initialTtsLanguage = ttsLanguage,
+        initialTtsTalkAfterSeconds = ttsTalkAfterSeconds,
+        initialTtsRepeatCount = ttsRepeatCount,
+        initialTtsIntervalSeconds = ttsIntervalSeconds,
+        initialPreventVolumeDrop = preventVolumeDrop,
+        initialWakeUpAppPackageNames = wakeUpAppPackageNames,
+        initialWakeUpAppDurationSeconds = wakeUpAppDurationSeconds,
+        initialDismissTaskTypeNames = dismissTaskTypeNames,
+        pausePointQrCodeCount = pausePointQrCodeCount,
+        pausePointNfcTagCount = pausePointNfcTagCount,
+        initialAlarmId = initialAlarmId,
+        onTestAlarm = onTestAlarm,
+        onDismiss = onDismiss,
+        onSave = onSave,
+        onTimeClick = onTimeClick,
+        alarmTimeText = alarmTimeText
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AlarmSettingsSheetContent(
+    initialAlarmName: String = "Alarm",
+    initialSoundUri: String?,
+    initialSoundEnabled: Boolean,
+    initialAutoRepeatEnabled: Boolean,
+    initialSelectedDays: Set<Int> = emptySet(),
+    initialVibrateEnabled: Boolean = true,
+    initialSnoozeDurationMinutes: Int = 5,
+    initialSnoozeMaxCount: Int = 3,
+    initialGradualVolumeEnabled: Boolean = false,
+    initialGradualVolumeDurationSeconds: Int = 30,
+    initialMathChallengeEnabled: Boolean = false,
+    initialAlarmVolume: Float = 1.0f,
+    initialTtsEnabled: Boolean = false,
+    initialTtsCustomPhrase: String? = null,
+    initialTtsLanguage: String? = null,
+    initialTtsTalkAfterSeconds: Int = 0,
+    initialTtsRepeatCount: Int = 0,
+    initialTtsIntervalSeconds: Int = 3,
+    initialPreventVolumeDrop: Boolean = false,
+    initialWakeUpAppPackageNames: List<String> = emptyList(),
+    initialWakeUpAppDurationSeconds: Int = 120,
+    initialDismissTaskTypeNames: Set<String> = emptySet(),
+    pausePointQrCodeCount: Int = 0,
+    pausePointNfcTagCount: Int = 0,
+    initialAlarmId: Long = 0L,
+    onTestAlarm: (AlarmItem) -> Unit = {},
+    onDismiss: () -> Unit,
+    onSave: suspend (name: String, soundUri: String?, soundEnabled: Boolean, autoRepeatEnabled: Boolean, selectedDays: Set<Int>, vibrateEnabled: Boolean, snoozeDurationMinutes: Int, snoozeMaxCount: Int, gradualVolumeEnabled: Boolean, gradualVolumeDurationSeconds: Int, mathChallengeEnabled: Boolean, alarmVolume: Float, ttsEnabled: Boolean, ttsCustomPhrase: String?, ttsLanguage: String?, ttsTalkAfterSeconds: Int, ttsRepeatCount: Int, ttsIntervalSeconds: Int, preventVolumeDrop: Boolean, wakeUpAppPackageNames: List<String>, wakeUpAppDurationSeconds: Int, dismissTaskTypeNames: Set<String>) -> Unit,
+    onTimeClick: (() -> Unit)?,
+    alarmTimeText: String?
+) {
+    val configuration = LocalConfiguration.current
+    val screenHeight = configuration.screenHeightDp.dp
+    val context = LocalContext.current
+
+    val scope = rememberCoroutineScope()
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    var currentTimeText by remember { mutableStateOf(alarmTimeText) }
+    LaunchedEffect(alarmTimeText) {
+        currentTimeText = alarmTimeText
+    }
+
+    val containerColor by animateColorAsState(
+        targetValue = MaterialTheme.colorScheme.surfaceContainerLow,
+        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+        label = "containerColor"
+    )
+
+    var alarmName by remember { mutableStateOf(initialAlarmName) }
+    var alarmSoundUri by remember { mutableStateOf(initialSoundUri) }
+    var alarmSoundEnabled by remember { mutableStateOf(initialSoundEnabled) }
+    var alarmAutoRepeatEnabled by remember { mutableStateOf(initialAutoRepeatEnabled) }
+    var selectedDays by remember { mutableStateOf(initialSelectedDays) }
+    var vibrateEnabled by remember { mutableStateOf(initialVibrateEnabled) }
+    var snoozeDurationMinutes by remember { mutableStateOf(initialSnoozeDurationMinutes) }
+    var snoozeMaxCount by remember { mutableStateOf(initialSnoozeMaxCount) }
+    var gradualVolumeEnabled by remember { mutableStateOf(initialGradualVolumeEnabled) }
+    var gradualVolumeDurationSeconds by remember { mutableStateOf(initialGradualVolumeDurationSeconds) }
+    var dismissTaskTypeNames by remember(initialDismissTaskTypeNames, initialMathChallengeEnabled) {
+        mutableStateOf(
+            if (initialDismissTaskTypeNames.isNotEmpty())
+                AlarmDismissTasks.toNames(AlarmDismissTasks.parseNames(initialDismissTaskTypeNames))
+            else if (initialMathChallengeEnabled) setOf(PausePointTaskType.MATH.name)
+            else emptySet()
+        )
+    }
+    var alarmVolume by remember { mutableFloatStateOf(initialAlarmVolume) }
+    var ttsEnabled by remember { mutableStateOf(initialTtsEnabled) }
+    var ttsCustomPhrase by remember { mutableStateOf(initialTtsCustomPhrase) }
+    var ttsLanguage by remember { mutableStateOf(initialTtsLanguage) }
+    var ttsTalkAfterSeconds by remember { mutableStateOf(initialTtsTalkAfterSeconds) }
+    var ttsRepeatCount by remember { mutableStateOf(initialTtsRepeatCount) }
+    var ttsIntervalSeconds by remember { mutableStateOf(initialTtsIntervalSeconds) }
+    var preventVolumeDrop by remember { mutableStateOf(initialPreventVolumeDrop) }
+    var wakeUpAppPackageNames by remember { mutableStateOf(initialWakeUpAppPackageNames) }
+    var wakeUpAppDurationSeconds by remember { mutableStateOf(initialWakeUpAppDurationSeconds) }
+    var useCertainAppEnabled by remember { mutableStateOf(initialWakeUpAppPackageNames.isNotEmpty()) }
+    var showWakeUpAppPicker by remember { mutableStateOf(false) }
+    var isSaving by remember { mutableStateOf(false) }
+    var isPlayingPreview by remember { mutableStateOf(false) }
+    val previewPlayer = remember {
+        android.media.MediaPlayer()
+    }
+
+    var ttsEngine by remember { mutableStateOf<android.speech.tts.TextToSpeech?>(null) }
+    var ttsEngineStatus by remember { mutableStateOf("") }
+    var availableLocales by remember { mutableStateOf<List<java.util.Locale>>(emptyList()) }
+    var selectedLocale by remember { mutableStateOf<java.util.Locale?>(null) }
+
+    LaunchedEffect(ttsEnabled) {
+        if (ttsEnabled) {
+            var engine: android.speech.tts.TextToSpeech? = null
+            engine = android.speech.tts.TextToSpeech(context) { status ->
+                if (status == android.speech.tts.TextToSpeech.SUCCESS) {
+                    engine?.let { e ->
+                        availableLocales = e.availableLanguages?.toList() ?: emptyList()
+                        val locale = ttsLanguage?.let { l ->
+                            val parts = l.split("_")
+                            if (parts.size == 2) java.util.Locale(parts[0], parts[1])
+                            else java.util.Locale(l)
+                        } ?: java.util.Locale.US
+                        selectedLocale = locale
+                        val result = e.setLanguage(locale)
+                        ttsEngineStatus = when (result) {
+                            android.speech.tts.TextToSpeech.LANG_COUNTRY_AVAILABLE,
+                            android.speech.tts.TextToSpeech.LANG_AVAILABLE -> "Ready"
+                            android.speech.tts.TextToSpeech.LANG_MISSING_DATA -> "Missing data"
+                            android.speech.tts.TextToSpeech.LANG_NOT_SUPPORTED -> "Not supported"
+                            else -> "Ready"
+                        }
+                    }
+                } else {
+                    ttsEngineStatus = "Init failed"
+                }
+            }
+            ttsEngine = engine
+        }
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            if (previewPlayer.isPlaying) previewPlayer.stop()
+            previewPlayer.release()
+            ttsEngine?.stop()
+            ttsEngine?.shutdown()
+            ttsEngine = null
+        }
+    }
+
+    val alarmDetail by remember(selectedDays, currentTimeText) {
+        derivedStateOf {
+            val isTomorrow = currentTimeText?.let { text ->
+                val parts = text.split(":")
+                if (parts.size == 2) {
+                    val h = parts[0].toIntOrNull()
+                    val m = parts[1].toIntOrNull()
+                    if (h != null && m != null) {
+                        val alarmTime = java.time.LocalTime.of(h, m)
+                        alarmTime <= java.time.LocalTime.now()
+                    } else null
+                } else null
+            }
+
+            val dayNames = listOf("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")
+            val recurrence = when {
+                selectedDays.isEmpty() -> null
+                selectedDays.size == 7 -> "Every day"
+                selectedDays == setOf(1, 7) -> "Weekends"
+                selectedDays == setOf(2, 3, 4, 5, 6) -> "Weekdays"
+                else -> selectedDays.sorted().joinToString(", ") { dayNames[it - 1] }
+            }
+
+            if (recurrence != null) recurrence
+            else {
+                val suffix = when (isTomorrow) {
+                    true -> "Tomorrow"
+                    false -> "Today"
+                    null -> ""
+                }
+                if (suffix.isEmpty()) "Once" else "Once $suffix"
+            }
+        }
+    }
+
+    val snoozeDurationOptions = listOf(1, 5, 10, 15, 30)
+    val snoozeCountOptions = listOf(1, 2, 3, 5, 10, Int.MAX_VALUE)
+
+    val ringtonePickerLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == android.app.Activity.RESULT_OK) {
+            val uri = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                result.data?.getParcelableExtra(android.media.RingtoneManager.EXTRA_RINGTONE_PICKED_URI, android.net.Uri::class.java)
+            } else {
+                @Suppress("DEPRECATION")
+                result.data?.getParcelableExtra(android.media.RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
+            }
+            uri?.let {
+                alarmSoundUri = it.toString()
+            }
+        }
+    }
+
+    val filePickerLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        uri?.let {
+            context.contentResolver.takePersistableUriPermission(
+                it,
+                android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
+            )
+            alarmSoundUri = it.toString()
+        }
+    }
+    suspend fun saveDraft() {
+        onSave(
+            alarmName,
+            alarmSoundUri,
+            alarmSoundEnabled,
+            alarmAutoRepeatEnabled,
+            selectedDays,
+            vibrateEnabled,
+            snoozeDurationMinutes,
+            snoozeMaxCount,
+            gradualVolumeEnabled,
+            gradualVolumeDurationSeconds,
+            PausePointTaskType.MATH.name in dismissTaskTypeNames,
+            alarmVolume,
+            ttsEnabled,
+            ttsCustomPhrase,
+            ttsLanguage,
+            ttsTalkAfterSeconds,
+            ttsRepeatCount,
+            ttsIntervalSeconds,
+            preventVolumeDrop,
+            if (useCertainAppEnabled && wakeUpAppPackageNames.isNotEmpty()) wakeUpAppPackageNames else emptyList(),
+            wakeUpAppDurationSeconds,
+            dismissTaskTypeNames
+        )
+    }
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = MaterialTheme.colorScheme.surface
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(max = screenHeight * 0.9f)
+        ) {
+            Column(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 16.dp, end = 16.dp, bottom = 24.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(72.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.primaryContainer),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Alarm,
+                                contentDescription = null,
+                                modifier = Modifier.size(36.dp),
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(12.dp))
+                        BasicTextField(
+                            value = alarmName,
+                            onValueChange = { alarmName = it },
+                            textStyle = MaterialTheme.typography.displayLarge.copy(
+                                fontSize = 24.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                textAlign = TextAlign.Center
+                            ),
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = alarmDetail,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+
+                    }
+                }
+
+                Box(modifier = Modifier.weight(1f)) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState())
+                            .padding(horizontal = 16.dp)
+                    ) {
+                        val topShape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp, bottomStart = 8.dp, bottomEnd = 8.dp)
+                        val middleShape = RoundedCornerShape(8.dp)
+                        val bottomShape = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp, bottomStart = 28.dp, bottomEnd = 28.dp)
+
+                        Spacer(modifier = Modifier.height(24.dp))
+
+                        val countdownHour = currentTimeText?.split(":")?.getOrNull(0)?.toIntOrNull() ?: 7
+                        val countdownMinute = currentTimeText?.split(":")?.getOrNull(1)?.toIntOrNull() ?: 0
+
+                        var countdownSubText by remember { mutableStateOf("calculating...") }
+
+                        LaunchedEffect(countdownHour, countdownMinute, selectedDays) {
+                            while (true) {
+                                val now = java.time.LocalDateTime.now()
+                                val alarmTime = java.time.LocalTime.of(countdownHour, countdownMinute)
+
+                                var nextAlarm = now.toLocalDate().atTime(alarmTime)
+                                if (!nextAlarm.isAfter(now)) {
+                                    nextAlarm = nextAlarm.plusDays(1)
+                                }
+
+                                if (selectedDays.isNotEmpty()) {
+                                    var found = false
+                                    for (i in 0..7) {
+                                        val dow = when (nextAlarm.dayOfWeek) {
+                                            java.time.DayOfWeek.SUNDAY -> 1
+                                            java.time.DayOfWeek.MONDAY -> 2
+                                            java.time.DayOfWeek.TUESDAY -> 3
+                                            java.time.DayOfWeek.WEDNESDAY -> 4
+                                            java.time.DayOfWeek.THURSDAY -> 5
+                                            java.time.DayOfWeek.FRIDAY -> 6
+                                            java.time.DayOfWeek.SATURDAY -> 7
+                                        }
+                                        if (selectedDays.contains(dow) && nextAlarm.isAfter(now)) {
+                                            found = true
+                                            break
+                                        }
+                                        nextAlarm = nextAlarm.plusDays(1)
+                                    }
+                                    if (!found) {
+                                        countdownSubText = "no upcoming schedule"
+                                        delay(60_000)
+                                        continue
+                                    }
+                                }
+
+                                val duration = java.time.Duration.between(now, nextAlarm)
+                                val totalMinutes = duration.toMinutes()
+                                val days = duration.toHours() / 24
+                                val hours = duration.toHours() % 24
+                                val minutes = totalMinutes % 60
+
+                                countdownSubText = when {
+                                    days > 0 && hours > 0 -> "in ${days}d ${hours}h"
+                                    days > 0 -> "in ${days}d"
+                                    hours > 0 && minutes > 0 -> "in ${hours}h ${minutes}m"
+                                    hours > 0 -> "in ${hours}h"
+                                    totalMinutes > 0 -> "in ${totalMinutes}m"
+                                    else -> "<1m"
+                                }
+
+                                val sleepMillis = when {
+                                    days > 0 -> 60_000L
+                                    hours > 0 -> 60_000L
+                                    else -> 10_000L
+                                }
+                                delay(sleepMillis)
+                            }
+                        }
+
+                        CardGroup(shape = topShape, containerColor = MaterialTheme.colorScheme.tertiary) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.HourglassTop,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onTertiary,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = countdownSubText,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onTertiary
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        Surface(
+                            onClick = { onTimeClick?.invoke() },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = middleShape,
+                            color = containerColor
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(16.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    text = "Alarm Time",
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = currentTimeText ?: "--:--",
+                                    style = MaterialTheme.typography.displayLarge.copy(
+                                        fontSize = 28.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        val dayNames = listOf("S", "M", "T", "W", "T", "F", "S")
+                        ZenithGroupedButton(size = ZenithButtonSize.Small) {
+                            dayNames.forEachIndexed { index, dayLabel ->
+                                val dayNum = index + 1
+                                val isSelected = dayNum in selectedDays
+                                val pShape = when (index) {
+                                    0 -> RoundedCornerShape(bottomStart = 28.dp, topStart = 8.dp, topEnd = 8.dp, bottomEnd = 8.dp)
+                                    dayNames.lastIndex -> RoundedCornerShape(bottomEnd = 28.dp, topEnd = 8.dp, topStart = 8.dp, bottomStart = 8.dp)
+                                    else -> RoundedCornerShape(8.dp)
+                                }
+                                ZenithButtonWeighted(
+                                    onClick = {
+                                        val newDays = if (isSelected) selectedDays - dayNum else selectedDays + dayNum
+                                        selectedDays = newDays
+                                    },
+                                    text = dayLabel,
+                                    type = if (isSelected) ZenithButtonType.Filled else ZenithButtonType.Tonal,
+                                    size = ZenithButtonSize.Small,
+                                    selected = isSelected,
+                                    shape = pShape,
+                                    isFirst = index == 0,
+                                    isLast = index == dayNames.lastIndex,
+                                    contentScaleEnabled = false
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(24.dp))
+
+                        PreferenceCategory(title = "Alarm Behavior")
+
+                        CardGroup(shape = topShape, containerColor = containerColor) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(40.dp)
+                                        .background(MaterialTheme.colorScheme.primaryContainer, CircleShape),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Outlined.Snooze,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(16.dp))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = "Snooze Duration",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Text(
+                                        text = "Minutes before alarm rings again",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                ZenithDropdown(
+                                    options = snoozeDurationOptions.map { "${it} min" to it },
+                                    selectedOption = snoozeDurationMinutes,
+                                    onOptionSelected = { snoozeDurationMinutes = it },
+                                    width = 120.dp
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        CardGroup(shape = middleShape, containerColor = containerColor) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(40.dp)
+                                        .background(MaterialTheme.colorScheme.secondaryContainer, CircleShape),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Outlined.FormatListNumbered,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(16.dp))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = "Max Snooze Count",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Text(
+                                        text = "Maximum times you can snooze",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                ZenithDropdown(
+                                    options = snoozeCountOptions.map { if (it == Int.MAX_VALUE) "Unlimited" to it else "${it}x" to it },
+                                    selectedOption = snoozeMaxCount,
+                                    onOptionSelected = { snoozeMaxCount = it },
+                                    width = 120.dp
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        CardGroup(shape = bottomShape, containerColor = containerColor) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { alarmAutoRepeatEnabled = !alarmAutoRepeatEnabled }
+                                    .padding(16.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(40.dp)
+                                        .background(MaterialTheme.colorScheme.tertiaryContainer, CircleShape),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Outlined.Repeat,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(16.dp))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = "Auto Repeat Alarm",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Text(
+                                        text = "Re-trigger alarm every 5 min if you don't use your phone within 1 min after dismissing",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(8.dp))
+                                AnimatedSwitch(
+                                    checked = alarmAutoRepeatEnabled,
+                                    onCheckedChange = { alarmAutoRepeatEnabled = it }
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(24.dp))
+
+                        PreferenceCategory(title = "Wake Mission")
+
+                        CardGroup(shape = topShape, containerColor = containerColor) {
+                            Column {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            useCertainAppEnabled = !useCertainAppEnabled
+                                            if (!useCertainAppEnabled) wakeUpAppPackageNames = emptyList()
+                                        }
+                                        .padding(16.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(40.dp)
+                                            .background(MaterialTheme.colorScheme.primaryContainer, CircleShape),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Outlined.Smartphone,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.width(16.dp))
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = "Use certain app for completion",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        Text(
+                                            text = "Wake up by using selected apps",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    AnimatedSwitch(
+                                        checked = useCertainAppEnabled,
+                                        onCheckedChange = {
+                                            useCertainAppEnabled = it
+                                            if (!it) wakeUpAppPackageNames = emptyList()
+                                        }
+                                    )
+                                }
+
+                                AnimatedVisibility(
+                                    visible = useCertainAppEnabled,
+                                    enter = expandVertically(
+                                        animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessLow)
+                                    ) + fadeIn(),
+                                    exit = shrinkVertically(
+                                        animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessLow)
+                                    ) + fadeOut()
+                                ) {
+                                    Column {
+                                        HorizontalDivider(
+                                            modifier = Modifier.padding(horizontal = 16.dp),
+                                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                                        )
+
+                                        Column(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(16.dp)
+                                        ) {
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .size(40.dp)
+                                                        .background(MaterialTheme.colorScheme.secondaryContainer, CircleShape),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    Icon(
+                                                        imageVector = Icons.Outlined.Apps,
+                                                        contentDescription = null,
+                                                        tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                                                        modifier = Modifier.size(20.dp)
+                                                    )
+                                                }
+                                                Spacer(modifier = Modifier.width(16.dp))
+                                                Column(modifier = Modifier.weight(1f)) {
+                                                    Text(
+                                                        text = "Select Apps",
+                                                        style = MaterialTheme.typography.titleMedium,
+                                                        fontWeight = FontWeight.Bold
+                                                    )
+                                                    Text(
+                                                        text = "Apps to open before alarm stops",
+                                                        style = MaterialTheme.typography.bodySmall,
+                                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                    )
+                                                }
+                                            }
+
+                                            Spacer(modifier = Modifier.height(12.dp))
+
+                                            AnimatedContent(
+                                                targetState = wakeUpAppPackageNames.isEmpty(),
+                                                transitionSpec = {
+                                                    fadeIn(animationSpec = spring(
+                                                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                                                        stiffness = Spring.StiffnessMediumLow
+                                                    )) + scaleIn(
+                                                        initialScale = 0.9f,
+                                                        animationSpec = spring(
+                                                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                                                            stiffness = Spring.StiffnessMediumLow
+                                                        )
+                                                    ) togetherWith fadeOut(animationSpec = spring(
+                                                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                                                        stiffness = Spring.StiffnessMediumLow
+                                                    )) + scaleOut(
+                                                        targetScale = 0.9f,
+                                                        animationSpec = spring(
+                                                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                                                            stiffness = Spring.StiffnessMediumLow
+                                                        )
+                                                    )
+                                                },
+                                                label = "appSelectionContainer"
+                                            ) { isEmpty ->
+                                                if (isEmpty) {
+                                                    ZenithButton(
+                                                        onClick = { showWakeUpAppPicker = true },
+                                                        text = "Choose Apps",
+                                                        type = ZenithButtonType.Outlined,
+                                                        size = ZenithButtonSize.Medium,
+                                                        fillMaxWidth = true
+                                                    )
+                                                } else {
+                                                    val selectedCount = wakeUpAppPackageNames.size
+                                                    val topAppNames = remember(wakeUpAppPackageNames) {
+                                                        wakeUpAppPackageNames.take(2).map { pkg ->
+                                                            try {
+                                                                context.packageManager.getApplicationLabel(
+                                                                    context.packageManager.getApplicationInfo(pkg, 0)
+                                                                ).toString()
+                                                            } catch (_: Exception) { pkg }
+                                                        }
+                                                    }
+
+                                                    Surface(
+                                                        onClick = { showWakeUpAppPicker = true },
+                                                        shape = RoundedCornerShape(20.dp),
+                                                        color = MaterialTheme.colorScheme.surface
+                                                    ) {
+                                                        Row(
+                                                            modifier = Modifier
+                                                                .fillMaxWidth()
+                                                                .padding(12.dp),
+                                                            verticalAlignment = Alignment.CenterVertically
+                                                        ) {
+                                                            MultiAppIconGroup(
+                                                                packageNames = wakeUpAppPackageNames.take(4),
+                                                                totalCount = selectedCount,
+                                                                size = 48.dp
+                                                            )
+                                                            Spacer(modifier = Modifier.width(16.dp))
+                                                            Column(modifier = Modifier.weight(1f)) {
+                                                                Text(
+                                                                    text = "$selectedCount selected",
+                                                                    style = MaterialTheme.typography.titleMedium,
+                                                                    fontWeight = FontWeight.Bold
+                                                                )
+                                                                Text(
+                                                                    text = buildString {
+                                                                        topAppNames.forEachIndexed { index, name ->
+                                                                            if (index > 0) append(", ")
+                                                                            append(name)
+                                                                        }
+                                                                        if (selectedCount > 2) append(" +${selectedCount - 2} Other Apps")
+                                                                    },
+                                                                    style = MaterialTheme.typography.bodySmall,
+                                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                                )
+                                                            }
+                                                            Spacer(modifier = Modifier.width(8.dp))
+                                                            Icon(
+                                                                Icons.Outlined.Edit,
+                                                                contentDescription = "Edit",
+                                                                tint = MaterialTheme.colorScheme.primary,
+                                                                modifier = Modifier.size(20.dp)
+                                                            )
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        HorizontalDivider(
+                                            modifier = Modifier.padding(horizontal = 16.dp),
+                                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                                        )
+
+                                        val durationOptions = listOf(30 to "30 sec", 60 to "1 min", 120 to "2 min", 180 to "3 min", 300 to "5 min")
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(16.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(40.dp)
+                                                    .background(MaterialTheme.colorScheme.tertiaryContainer, CircleShape),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Outlined.Timer,
+                                                    contentDescription = null,
+                                                    tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                                                    modifier = Modifier.size(20.dp)
+                                                )
+                                            }
+                                            Spacer(modifier = Modifier.width(16.dp))
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                Text(
+                                                    text = "Usage Duration",
+                                                    style = MaterialTheme.typography.titleMedium,
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                                Text(
+                                                    text = "Time needed on selected apps",
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                )
+                                            }
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            ZenithDropdown(
+                                                options = durationOptions.map { (sec, label) -> label to sec },
+                                                selectedOption = wakeUpAppDurationSeconds,
+                                                onOptionSelected = { wakeUpAppDurationSeconds = it },
+                                                width = 130.dp
+                                            )
+                                        }
+
+                                        Spacer(modifier = Modifier.height(12.dp))
+                                        val hasUsageAccessForWakeUp = remember(useCertainAppEnabled) {
+                                            hasWakeUpUsageAccess(context)
+                                        }
+                                        if (useCertainAppEnabled && !hasUsageAccessForWakeUp) {
+                                            Surface(
+                                                shape = RoundedCornerShape(16.dp),
+                                                color = MaterialTheme.colorScheme.errorContainer,
+                                                modifier = Modifier.fillMaxWidth()
+                                            ) {
+                                                Column(modifier = Modifier.padding(12.dp)) {
+                                                    Text(
+                                                        text = "Usage Access required",
+                                                        style = MaterialTheme.typography.titleSmall,
+                                                        fontWeight = FontWeight.Bold,
+                                                        color = MaterialTheme.colorScheme.onErrorContainer
+                                                    )
+                                                    Text(
+                                                        text = "Without this permission Zenith can't verify app usage.",
+                                                        style = MaterialTheme.typography.bodySmall,
+                                                        color = MaterialTheme.colorScheme.onErrorContainer
+                                                    )
+                                                    Spacer(modifier = Modifier.height(8.dp))
+                                                    ZenithButton(
+                                                        onClick = {
+                                                            try {
+                                                                context.startActivity(
+                                                                    android.content.Intent(
+                                                                        android.provider.Settings.ACTION_USAGE_ACCESS_SETTINGS
+                                                                    )
+                                                                )
+                                                            } catch (_: Exception) { }
+                                                        },
+                                                        text = "Grant Access",
+                                                        type = ZenithButtonType.Outlined,
+                                                        size = ZenithButtonSize.Small,
+                                                        fillMaxWidth = true
+                                                    )
+                                                }
+                                            }
+                                            Spacer(modifier = Modifier.height(8.dp))
+                                        }
+                                        if (useCertainAppEnabled && wakeUpAppPackageNames.isEmpty()) {
+                                            Surface(
+                                                shape = RoundedCornerShape(12.dp),
+                                                color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.5f),
+                                                modifier = Modifier.fillMaxWidth()
+                                            ) {
+                                                Row(
+                                                    modifier = Modifier.padding(12.dp),
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Icon(
+                                                        imageVector = Icons.Outlined.Info,
+                                                        contentDescription = null,
+                                                        tint = MaterialTheme.colorScheme.onErrorContainer,
+                                                        modifier = Modifier.size(20.dp)
+                                                    )
+                                                    Spacer(modifier = Modifier.width(8.dp))
+                                                    Text(
+                                                        text = "Select at least 1 app, or this is skipped on save.",
+                                                        style = MaterialTheme.typography.bodySmall,
+                                                        color = MaterialTheme.colorScheme.onErrorContainer
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        CardGroup(shape = bottomShape, containerColor = containerColor) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(40.dp)
+                                            .background(MaterialTheme.colorScheme.primaryContainer, CircleShape),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Outlined.Extension,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.width(16.dp))
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = "Dismiss Missions",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        Text(
+                                            text = "Finish a Pause Point task to dismiss the alarm",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                    if (dismissTaskTypeNames.isNotEmpty()) {
+                                        TextButton(onClick = { dismissTaskTypeNames = emptySet() }) {
+                                            Text("Clear")
+                                        }
+                                    }
+                                }
+
+                                Column(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    val missionRows = AlarmDismissTasks.availableTypes
+                                        .take(6).chunked(3) + AlarmDismissTasks.availableTypes.drop(6).chunked(2)
+                                    missionRows.forEach { row ->
+                                        ZenithGroupedButton(size = ZenithButtonSize.Small) {
+                                            row.forEachIndexed { index, type ->
+                                                val selected = type.name in dismissTaskTypeNames
+                                                val pShape = when (index) {
+                                                    0 -> RoundedCornerShape(topStart = 16.dp, bottomStart = 16.dp, topEnd = 8.dp, bottomEnd = 8.dp)
+                                                    row.lastIndex -> RoundedCornerShape(topStart = 8.dp, bottomStart = 8.dp, topEnd = 16.dp, bottomEnd = 16.dp)
+                                                    else -> RoundedCornerShape(8.dp)
+                                                }
+                                                ZenithButtonWeighted(
+                                                    onClick = {
+                                                        dismissTaskTypeNames =
+                                                            if (selected) dismissTaskTypeNames - type.name
+                                                            else dismissTaskTypeNames + type.name
+                                                    },
+                                                    text = type.displayName,
+                                                    icon = type.icon,
+                                                    type = if (selected) ZenithButtonType.Filled else ZenithButtonType.Tonal,
+                                                    size = ZenithButtonSize.Small,
+                                                    selected = selected,
+                                                    shape = pShape,
+                                                    isFirst = index == 0,
+                                                    isLast = index == row.lastIndex,
+                                                    contentScaleEnabled = false
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+
+                                Text(
+                                    text = if (dismissTaskTypeNames.isEmpty())
+                                        "No mission: the alarm dismisses directly, like before."
+                                    else "One random mission is picked each time the alarm fires. Missions reuse your global Pause Point setups (durations, QR codes, NFC tags).",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+
+                                if (PausePointTaskType.QR_SCAN.name in dismissTaskTypeNames && pausePointQrCodeCount == 0) {
+                                    Text(
+                                        text = "No saved QR codes yet. Register one under Settings > Features > Pause Point, otherwise QR missions fall back to waiting.",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.error
+                                    )
+                                }
+                                if (PausePointTaskType.NFC_SCAN.name in dismissTaskTypeNames && pausePointNfcTagCount == 0) {
+                                    Text(
+                                        text = "No saved NFC tags yet. Register one under Settings > Features > Pause Point, otherwise NFC missions fall back to waiting.",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.error
+                                    )
+                                }
+                                ZenithButton(
+                                    onClick = {
+                                        val parts = (currentTimeText ?: "07:00").split(":")
+                                        onTestAlarm(
+                                            AlarmItem(
+                                                id = initialAlarmId,
+                                                hour = parts.getOrNull(0)?.toIntOrNull() ?: 7,
+                                                minute = parts.getOrNull(1)?.toIntOrNull() ?: 0,
+                                                name = alarmName,
+                                                days = selectedDays,
+                                                soundUri = alarmSoundUri,
+                                                soundEnabled = alarmSoundEnabled,
+                                                autoRepeatEnabled = alarmAutoRepeatEnabled,
+                                                vibrateEnabled = vibrateEnabled,
+                                                snoozeDurationMinutes = snoozeDurationMinutes,
+                                                snoozeMaxCount = snoozeMaxCount,
+                                                gradualVolumeEnabled = gradualVolumeEnabled,
+                                                gradualVolumeDurationSeconds = gradualVolumeDurationSeconds,
+                                                mathChallengeEnabled = PausePointTaskType.MATH.name in dismissTaskTypeNames,
+                                                dismissTaskTypeNames = dismissTaskTypeNames,
+                                                alarmVolume = alarmVolume,
+                                                ttsEnabled = ttsEnabled,
+                                                ttsCustomPhrase = ttsCustomPhrase,
+                                                ttsLanguage = ttsLanguage,
+                                                ttsTalkAfterSeconds = ttsTalkAfterSeconds,
+                                                ttsRepeatCount = ttsRepeatCount,
+                                                ttsIntervalSeconds = ttsIntervalSeconds,
+                                                preventVolumeDrop = preventVolumeDrop,
+                                                wakeUpAppPackageNames = if (useCertainAppEnabled && wakeUpAppPackageNames.isNotEmpty()) wakeUpAppPackageNames else emptyList(),
+                                                wakeUpAppDurationSeconds = wakeUpAppDurationSeconds
+                                            )
+                                        )
+                                    },
+                                    text = "Test Alarm",
+                                    icon = Icons.Outlined.PlayArrow,
+                                    type = ZenithButtonType.Outlined,
+                                    size = ZenithButtonSize.Medium,
+                                    fillMaxWidth = true
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(24.dp))
+
+                        PreferenceCategory(title = "Settings")
+
+                        CardGroup(shape = topShape, containerColor = containerColor) {
+                            Column {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable { alarmSoundEnabled = !alarmSoundEnabled }
+                                        .padding(16.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(40.dp)
+                                            .background(MaterialTheme.colorScheme.primaryContainer, CircleShape),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = if (alarmSoundEnabled) Icons.AutoMirrored.Outlined.VolumeUp else Icons.AutoMirrored.Outlined.VolumeOff,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.width(16.dp))
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = "Alarm Sound",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        Text(
+                                            text = "Play sound when alarm rings",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    AnimatedSwitch(
+                                        checked = alarmSoundEnabled,
+                                        onCheckedChange = { alarmSoundEnabled = it }
+                                    )
+                                }
+
+                                AnimatedVisibility(
+                                    visible = alarmSoundEnabled,
+                                    enter = expandVertically(
+                                        animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessLow)
+                                    ) + fadeIn(),
+                                    exit = shrinkVertically(
+                                        animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessLow)
+                                    ) + fadeOut()
+                                ) {
+                                    Column {
+                                        HorizontalDivider(
+                                            modifier = Modifier.padding(horizontal = 16.dp),
+                                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                                        )
+
+                                        Column(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(16.dp)
+                                        ) {
+                                            Text(
+                                                text = "Sound Source",
+                                                style = MaterialTheme.typography.titleSmall,
+                                                fontWeight = FontWeight.Bold,
+                                                color = MaterialTheme.colorScheme.primary
+                                            )
+                                            Spacer(modifier = Modifier.height(12.dp))
+
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                val isDefault = alarmSoundUri == null
+                                                val isSystem = alarmSoundUri != null && alarmSoundUri?.startsWith("content://media") == true
+                                                val isFile = alarmSoundUri != null && alarmSoundUri?.startsWith("content://media") == false
+
+                                                GroupedOptionButton(
+                                                    label = "Default",
+                                                    selected = isDefault,
+                                                    onClick = { alarmSoundUri = null },
+                                                    isFirst = true,
+                                                    isLast = false
+                                                )
+                                                GroupedOptionButton(
+                                                    label = "System",
+                                                    selected = isSystem,
+                                                    onClick = {
+                                                        val intent = android.content.Intent(android.media.RingtoneManager.ACTION_RINGTONE_PICKER).apply {
+                                                            putExtra(android.media.RingtoneManager.EXTRA_RINGTONE_TYPE, android.media.RingtoneManager.TYPE_ALARM)
+                                                            putExtra(android.media.RingtoneManager.EXTRA_RINGTONE_TITLE, "Select Alarm Sound")
+                                                            putExtra(android.media.RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, alarmSoundUri?.toUri())
+                                                            putExtra(android.media.RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
+                                                            putExtra(android.media.RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, false)
+                                                        }
+                                                        ringtonePickerLauncher.launch(intent)
+                                                    },
+                                                    isFirst = false,
+                                                    isLast = false
+                                                )
+                                                GroupedOptionButton(
+                                                    label = "File",
+                                                    selected = isFile,
+                                                    onClick = { filePickerLauncher.launch(arrayOf("audio/*")) },
+                                                    isFirst = false,
+                                                    isLast = true
+                                                )
+                                            }
+
+                                            if (alarmSoundUri != null) {
+                                                Spacer(modifier = Modifier.height(8.dp))
+                                                Text(
+                                                    text = "Custom sound selected",
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    color = MaterialTheme.colorScheme.primary
+                                                )
+                                            }
+
+                                            Spacer(modifier = Modifier.height(12.dp))
+
+                                            val previewIcon = if (isPlayingPreview) Icons.Outlined.StopCircle else Icons.Outlined.PlayCircle
+                                            val previewText = if (isPlayingPreview) "Stop Preview" else "Preview Sound"
+                                            val previewColor = if (isPlayingPreview) MaterialTheme.colorScheme.error
+                                                               else MaterialTheme.colorScheme.primary
+
+                                            Surface(
+                                                onClick = {
+                                                    if (isPlayingPreview) {
+                                                        previewPlayer.stop()
+                                                        previewPlayer.reset()
+                                                        isPlayingPreview = false
+                                                    } else {
+                                                        try {
+                                                            val uri = if (alarmSoundUri != null) alarmSoundUri!!.toUri()
+                                                                       else android.media.RingtoneManager.getDefaultUri(android.media.RingtoneManager.TYPE_ALARM)
+                                                            previewPlayer.reset()
+                                                            previewPlayer.setDataSource(context, uri)
+                                                            previewPlayer.setAudioAttributes(
+                                                                android.media.AudioAttributes.Builder()
+                                                                    .setUsage(android.media.AudioAttributes.USAGE_ALARM)
+                                                                    .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                                                                    .build()
+                                                            )
+                                                            previewPlayer.setOnPreparedListener {
+                                                                it.setVolume(alarmVolume, alarmVolume)
+                                                                it.start()
+                                                                isPlayingPreview = true
+                                                            }
+                                                            previewPlayer.setOnCompletionListener {
+                                                                isPlayingPreview = false
+                                                                previewPlayer.reset()
+                                                            }
+                                                            previewPlayer.prepareAsync()
+                                                        } catch (e: Exception) {
+                                                            e.printStackTrace()
+                                                        }
+                                                    }
+                                                },
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .height(44.dp),
+                                                shape = RoundedCornerShape(22.dp),
+                                                color = previewColor.copy(alpha = 0.12f)
+                                            ) {
+                                                Row(
+                                                    modifier = Modifier.fillMaxSize(),
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.Center
+                                                ) {
+                                                    Icon(
+                                                        imageVector = previewIcon,
+                                                        contentDescription = null,
+                                                        tint = previewColor,
+                                                        modifier = Modifier.size(20.dp)
+                                                    )
+                                                    Spacer(modifier = Modifier.width(8.dp))
+                                                    Text(
+                                                        text = previewText,
+                                                        style = MaterialTheme.typography.labelLarge,
+                                                        fontWeight = FontWeight.Bold,
+                                                        color = previewColor
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        CardGroup(shape = middleShape, containerColor = containerColor) {
+                            val gradualVolumeOptions = listOf(
+                                "Off" to 0,
+                                "15 sec" to 15,
+                                "30 sec" to 30,
+                                "45 sec" to 45,
+                                "1 min" to 60,
+                                "2 min" to 120,
+                                "3 min" to 180,
+                                "5 min" to 300
+                            )
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(40.dp)
+                                        .background(MaterialTheme.colorScheme.tertiaryContainer, CircleShape),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Outlined.TrendingUp,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(16.dp))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = "Gradual Volume",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Text(
+                                        text = "Volume increases slowly from 0 to full",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                ZenithDropdown(
+                                    options = gradualVolumeOptions,
+                                    selectedOption = gradualVolumeDurationSeconds,
+                                    onOptionSelected = {
+                                        gradualVolumeDurationSeconds = it
+                                        gradualVolumeEnabled = it > 0
+                                    },
+                                    width = 120.dp
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        CardGroup(shape = middleShape, containerColor = containerColor) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(40.dp)
+                                        .background(MaterialTheme.colorScheme.primaryContainer, CircleShape),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Outlined.VolumeUp,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(16.dp))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = "Alarm Volume",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Text(
+                                        text = "Set the volume level for the alarm",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Outlined.VolumeOff,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Slider(
+                                    value = alarmVolume,
+                                    onValueChange = {
+                                        alarmVolume = it
+                                        if (isPlayingPreview) {
+                                            try { previewPlayer.setVolume(it, it) } catch (_: Exception) { }
+                                        }
+                                    },
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .padding(horizontal = 8.dp),
+                                    colors = SliderDefaults.colors(
+                                        thumbColor = MaterialTheme.colorScheme.primary,
+                                        activeTrackColor = MaterialTheme.colorScheme.primary
+                                    )
+                                )
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Outlined.VolumeUp,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(20.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = "${(alarmVolume * 100).toInt()}%",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        CardGroup(shape = middleShape, containerColor = containerColor) {
+                            Column {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable { ttsEnabled = !ttsEnabled }
+                                        .padding(16.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(40.dp)
+                                            .background(MaterialTheme.colorScheme.primaryContainer, CircleShape),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Outlined.RecordVoiceOver,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.width(16.dp))
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = "Text-to-Speech",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        Text(
+                                            text = "Announce alarm time when ringing",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    AnimatedSwitch(
+                                        checked = ttsEnabled,
+                                        onCheckedChange = { ttsEnabled = it }
+                                    )
+                                }
+
+                                AnimatedVisibility(
+                                    visible = ttsEnabled,
+                                    enter = expandVertically(
+                                        animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessLow)
+                                    ) + fadeIn(),
+                                    exit = shrinkVertically(
+                                        animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessLow)
+                                    ) + fadeOut()
+                                ) {
+                                    Column {
+                                        HorizontalDivider(
+                                            modifier = Modifier.padding(horizontal = 16.dp),
+                                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                                        )
+                                        Column(
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            Row(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(16.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .size(40.dp)
+                                                        .background(MaterialTheme.colorScheme.primaryContainer, CircleShape),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    Icon(
+                                                        imageVector = if (ttsEngineStatus == "Ready") Icons.Outlined.CheckCircle else Icons.Outlined.Warning,
+                                                        contentDescription = null,
+                                                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                                        modifier = Modifier.size(20.dp)
+                                                    )
+                                                }
+                                                Spacer(modifier = Modifier.width(16.dp))
+                                                Column(modifier = Modifier.weight(1f)) {
+                                                    Text(
+                                                        text = "TTS Engine",
+                                                        style = MaterialTheme.typography.titleMedium,
+                                                        fontWeight = FontWeight.Bold
+                                                    )
+                                                    Text(
+                                                        text = if (ttsEngineStatus == "Ready" && selectedLocale != null) "Ready (${selectedLocale!!.displayName})" else ttsEngineStatus,
+                                                        style = MaterialTheme.typography.bodySmall,
+                                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                    )
+                                                }
+                                            }
+                                            if (!ttsEngineStatus.startsWith("Ready")) {
+                                                Spacer(modifier = Modifier.height(12.dp))
+                                                Text(
+                                                    modifier = Modifier.padding(horizontal = 16.dp),
+                                                    text = "Zenith uses your device's built-in Text-to-Speech engine. If a language is missing, consider installing Google Speech Services from the Play Store.",
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                )
+                                                Spacer(modifier = Modifier.height(8.dp))
+                                                Surface(
+                                                    modifier = Modifier.padding(horizontal = 16.dp),
+                                                    onClick = {
+                                                        context.startActivity(
+                                                            android.content.Intent(android.speech.tts.TextToSpeech.Engine.ACTION_CHECK_TTS_DATA)
+                                                        )
+                                                    },
+                                                    shape = RoundedCornerShape(12.dp),
+                                                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                                                ) {
+                                                    Row(
+                                                        modifier = Modifier.fillMaxWidth().padding(12.dp),
+                                                        verticalAlignment = Alignment.CenterVertically
+                                                    ) {
+                                                        Icon(
+                                                            imageVector = Icons.Outlined.Settings,
+                                                            contentDescription = null,
+                                                            tint = MaterialTheme.colorScheme.primary,
+                                                            modifier = Modifier.size(20.dp)
+                                                        )
+                                                        Spacer(modifier = Modifier.width(8.dp))
+                                                        Text(
+                                                            text = "Open TTS Settings",
+                                                            style = MaterialTheme.typography.labelLarge,
+                                                            fontWeight = FontWeight.Bold,
+                                                            color = MaterialTheme.colorScheme.primary
+                                                        )
+                                                    }
+                                                }
+                                                Spacer(modifier = Modifier.height(16.dp))
+                                            }
+                                        }
+                                        if (availableLocales.isNotEmpty()) {
+                                            HorizontalDivider(
+                                                modifier = Modifier.padding(horizontal = 16.dp),
+                                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                                            )
+                                            val localeOptions = remember(availableLocales) {
+                                                availableLocales
+                                                    .distinctBy { it.language }
+                                                    .sortedBy { it.displayName }
+                                                    .map { it.displayName to it.toLanguageTag() }
+                                            }
+                                            Row(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(16.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .size(40.dp)
+                                                        .background(MaterialTheme.colorScheme.secondaryContainer, CircleShape),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    Icon(
+                                                        imageVector = Icons.Outlined.Language,
+                                                        contentDescription = null,
+                                                        tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                                                        modifier = Modifier.size(20.dp)
+                                                    )
+                                                }
+                                                Spacer(modifier = Modifier.width(16.dp))
+                                                Column(modifier = Modifier.weight(1f)) {
+                                                    Text(
+                                                        text = "Voice Language",
+                                                        style = MaterialTheme.typography.titleMedium,
+                                                        fontWeight = FontWeight.Bold
+                                                    )
+                                                    Text(
+                                                        text = "Language for spoken alarm alerts",
+                                                        style = MaterialTheme.typography.bodySmall,
+                                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                    )
+                                                }
+                                                Spacer(modifier = Modifier.width(8.dp))
+                                                ZenithDropdown(
+                                                    options = localeOptions,
+                                                    selectedOption = selectedLocale?.toLanguageTag() ?: "en_US",
+                                                    onOptionSelected = { tag ->
+                                                        val locale = java.util.Locale.forLanguageTag(tag)
+                                                        selectedLocale = locale
+                                                        ttsLanguage = tag
+                                                        ttsEngine?.setLanguage(locale)
+                                                        ttsEngineStatus = "Ready"
+                                                    },
+                                                    width = 200.dp
+                                                )
+                                            }
+                                        }
+
+                                        HorizontalDivider(
+                                            modifier = Modifier.padding(horizontal = 16.dp),
+                                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                                        )
+                                        Column(
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            val ttsTalkAfterOptions = listOf(
+                                                "Immediately" to 0,
+                                                "3 sec" to 3,
+                                                "5 sec" to 5,
+                                                "10 sec" to 10,
+                                                "15 sec" to 15,
+                                                "30 sec" to 30
+                                            )
+                                            val ttsRepeatOptions = listOf(
+                                                "Once" to 1,
+                                                "2 times" to 2,
+                                                "3 times" to 3,
+                                                "5 times" to 5,
+                                                "10 times" to 10,
+                                                "Unlimited" to 0
+                                            )
+
+                                            Row(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(16.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .size(40.dp)
+                                                        .background(MaterialTheme.colorScheme.tertiaryContainer, CircleShape),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    Icon(
+                                                        imageVector = Icons.Outlined.Timer,
+                                                        contentDescription = null,
+                                                        tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                                                        modifier = Modifier.size(20.dp)
+                                                    )
+                                                }
+                                                Spacer(modifier = Modifier.width(16.dp))
+                                                Column(modifier = Modifier.weight(1f)) {
+                                                    Text(
+                                                        text = "Talk After",
+                                                        style = MaterialTheme.typography.titleMedium,
+                                                        fontWeight = FontWeight.Bold
+                                                    )
+                                                    Text(
+                                                        text = "Delay before TTS starts after alarm",
+                                                        style = MaterialTheme.typography.bodySmall,
+                                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                    )
+                                                }
+                                                ZenithDropdown(
+                                                    options = ttsTalkAfterOptions,
+                                                    selectedOption = ttsTalkAfterSeconds,
+                                                    onOptionSelected = { ttsTalkAfterSeconds = it },
+                                                    width = 120.dp
+                                                )
+                                            }
+
+                                            HorizontalDivider(
+                                                modifier = Modifier.padding(horizontal = 16.dp),
+                                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                                            )
+
+                                            Row(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(16.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .size(40.dp)
+                                                        .background(MaterialTheme.colorScheme.secondaryContainer, CircleShape),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    Icon(
+                                                        imageVector = Icons.Outlined.Repeat,
+                                                        contentDescription = null,
+                                                        tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                                                        modifier = Modifier.size(20.dp)
+                                                    )
+                                                }
+                                                Spacer(modifier = Modifier.width(16.dp))
+                                                Column(modifier = Modifier.weight(1f)) {
+                                                    Text(
+                                                        text = "Repeat",
+                                                        style = MaterialTheme.typography.titleMedium,
+                                                        fontWeight = FontWeight.Bold
+                                                    )
+                                                    Text(
+                                                        text = "How many times TTS repeats",
+                                                        style = MaterialTheme.typography.bodySmall,
+                                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                    )
+                                                }
+                                                ZenithDropdown(
+                                                    options = ttsRepeatOptions,
+                                                    selectedOption = ttsRepeatCount,
+                                                    onOptionSelected = { ttsRepeatCount = it },
+                                                    width = 120.dp
+                                                )
+                                            }
+
+                                            HorizontalDivider(
+                                                modifier = Modifier.padding(horizontal = 16.dp),
+                                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                                            )
+
+                                            val ttsIntervalOptions = listOf(
+                                                "3 sec" to 3,
+                                                "5 sec" to 5,
+                                                "8 sec" to 8,
+                                                "10 sec" to 10,
+                                                "15 sec" to 15
+                                            )
+
+                                            Row(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(16.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .size(40.dp)
+                                                        .background(MaterialTheme.colorScheme.secondaryContainer, CircleShape),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    Icon(
+                                                        imageVector = Icons.Outlined.Speed,
+                                                        contentDescription = null,
+                                                        tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                                                        modifier = Modifier.size(20.dp)
+                                                    )
+                                                }
+                                                Spacer(modifier = Modifier.width(16.dp))
+                                                Column(modifier = Modifier.weight(1f)) {
+                                                    Text(
+                                                        text = "TTS Interval",
+                                                        style = MaterialTheme.typography.titleMedium,
+                                                        fontWeight = FontWeight.Bold
+                                                    )
+                                                    Text(
+                                                        text = "Pause between TTS repeats",
+                                                        style = MaterialTheme.typography.bodySmall,
+                                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                    )
+                                                }
+                                                ZenithDropdown(
+                                                    options = ttsIntervalOptions,
+                                                    selectedOption = ttsIntervalSeconds,
+                                                    onOptionSelected = { ttsIntervalSeconds = it },
+                                                    width = 120.dp
+                                                )
+                                            }
+
+                                            HorizontalDivider(
+                                                modifier = Modifier.padding(horizontal = 16.dp),
+                                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                                            )
+                                            Column(
+                                                modifier = Modifier.fillMaxWidth()
+                                            ) {
+                                                Row(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .padding(16.dp),
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .size(40.dp)
+                                                            .background(MaterialTheme.colorScheme.tertiaryContainer, CircleShape),
+                                                        contentAlignment = Alignment.Center
+                                                    ) {
+                                                        Icon(
+                                                            imageVector = Icons.Outlined.TextFields,
+                                                            contentDescription = null,
+                                                            tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                                                            modifier = Modifier.size(20.dp)
+                                                        )
+                                                    }
+                                                    Spacer(modifier = Modifier.width(16.dp))
+                                                    Column(modifier = Modifier.weight(1f)) {
+                                                        Text(
+                                                            text = "Custom Phrase",
+                                                            style = MaterialTheme.typography.titleMedium,
+                                                            fontWeight = FontWeight.Bold
+                                                        )
+                                                        Text(
+                                                            text = "Default: \"Wake up, it's {time}\". Use {time} to include current time.",
+                                                            style = MaterialTheme.typography.bodySmall,
+                                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                        )
+                                                    }
+                                                }
+                                                OutlinedTextField(
+                                                    value = ttsCustomPhrase ?: "",
+                                                    onValueChange = { ttsCustomPhrase = it.ifEmpty { null } },
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .padding(horizontal = 16.dp)
+                                                        .padding(bottom = 16.dp),
+                                                    singleLine = true,
+                                                    placeholder = { Text("Wake up, it's {time}") },
+                                                    shape = RoundedCornerShape(16.dp)
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        CardGroup(shape = middleShape, containerColor = containerColor) {
+                            SettingsToggle(
+                                title = "Vibrate",
+                                description = "Vibrate device when alarm rings",
+                                checked = vibrateEnabled,
+                                onCheckedChange = { vibrateEnabled = it },
+                                icon = Icons.Outlined.NotificationsActive,
+                                shape = middleShape
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        CardGroup(shape = bottomShape, containerColor = containerColor) {
+                            SettingsToggle(
+                                title = "Prevent Volume Drop",
+                                description = "Keep alarm volume from being lowered by the system",
+                                checked = preventVolumeDrop,
+                                onCheckedChange = { preventVolumeDrop = it },
+                                icon = Icons.AutoMirrored.Outlined.VolumeUp,
+                                shape = bottomShape
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(120.dp))
+                    }
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(24.dp)
+                            .align(Alignment.TopCenter)
+                            .background(
+                                Brush.verticalGradient(
+                                    listOf(MaterialTheme.colorScheme.surface, Color.Transparent)
+                                )
+                            )
+                    )
+                }
+            }
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.BottomCenter)
+                    .background(
+                        Brush.verticalGradient(
+                            listOf(Color.Transparent, MaterialTheme.colorScheme.surface),
+                            startY = 0f,
+                            endY = 40f
+                        )
+                    )
+                    .padding(16.dp)
+                    .navigationBarsPadding()
+            ) {
+                ZenithButton(
+                    onClick = {
+                        scope.launch {
+                            isSaving = true
+                            try {
+                                val tSaveStart = System.currentTimeMillis()
+                                saveDraft()
+                                val tHide = System.currentTimeMillis()
+                                sheetState.hide()
+                                onDismiss()
+                            } finally {
+                                isSaving = false
+                            }
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    text = "Save Settings",
+                    isLoading = isSaving
+                )
+            }
+        }
+    }
+
+    if (showWakeUpAppPicker) {
+        WakeUpAppPickerSheet(
+            selectedPackages = wakeUpAppPackageNames.toSet(),
+            onPackagesSelected = { selected ->
+                wakeUpAppPackageNames = selected.toList()
+                showWakeUpAppPicker = false
+            },
+            onDismiss = { showWakeUpAppPicker = false }
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
+@Composable
+private fun WakeUpAppPickerSheet(
+    selectedPackages: Set<String>,
+    onPackagesSelected: (Set<String>) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val pm = LocalContext.current.packageManager
+    val installedApps = remember {
+        val intent = android.content.Intent(android.content.Intent.ACTION_MAIN).apply {
+            addCategory(android.content.Intent.CATEGORY_LAUNCHER)
+        }
+        val activities = pm.queryIntentActivities(intent, 0)
+        activities.map { resolveInfo ->
+            AppInfo(
+                packageName = resolveInfo.activityInfo.packageName,
+                appName = resolveInfo.loadLabel(pm).toString()
+            )
+        }
+            .distinctBy { it.packageName }
+            .sortedBy { it.appName }
+    }
+
+    var searchQuery by remember { mutableStateOf("") }
+    var tempSelection by remember { mutableStateOf(selectedPackages) }
+
+    val uiState = remember(installedApps, searchQuery, tempSelection) {
+        FocusUiState(
+            installedApps = installedApps,
+            topApps = emptyList(),
+            searchQuery = searchQuery,
+            selectedAppsForSchedule = tempSelection,
+            pickerTab = PickerTab.APPS
+        )
+    }
+
+    MultiAppPickerBottomSheet(
+        uiState = uiState,
+        onDismiss = onDismiss,
+        onAppToggled = { pkg ->
+            tempSelection = if (pkg in tempSelection) tempSelection - pkg else tempSelection + pkg
+        },
+        onConfirm = { onPackagesSelected(tempSelection) },
+        onSearchQueryChange = { searchQuery = it },
+        showTabs = false
+    )
+}
+
+@Composable
+private fun AnimatedSwitch(
+    checked: Boolean,
+    onCheckedChange: ((Boolean) -> Unit)?,
+    enabled: Boolean = true
+) {
+    Switch(
+        checked = checked,
+        onCheckedChange = onCheckedChange,
+        enabled = enabled,
+        thumbContent = {
+            val thumbSize by animateDpAsState(
+                targetValue = if (checked) 28.dp else 24.dp,
+                animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMediumLow),
+                label = "thumb_size"
+            )
+            val iconColor by animateColorAsState(
+                targetValue = if (checked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHighest,
+                animationSpec = spring(stiffness = Spring.StiffnessMedium),
+                label = "switch_icon_color"
+            )
+            Box(modifier = Modifier.size(thumbSize), contentAlignment = Alignment.Center) {
+                AnimatedContent(
+                    targetState = checked,
+                    transitionSpec = {
+                        (fadeIn(animationSpec = spring(stiffness = Spring.StiffnessMediumLow)) +
+                            scaleIn(initialScale = 0.5f, animationSpec = spring(dampingRatio = Spring.DampingRatioHighBouncy, stiffness = Spring.StiffnessMediumLow)))
+                            .togetherWith(fadeOut(animationSpec = spring(stiffness = Spring.StiffnessMediumLow)) +
+                                scaleOut(targetScale = 0.5f, animationSpec = spring(stiffness = Spring.StiffnessMediumLow)))
+                    },
+                    label = "switch_icon_anim"
+                ) { isChecked ->
+                    Icon(
+                        imageVector = if (isChecked) Icons.Filled.Check else Icons.Filled.Close,
+                        contentDescription = null,
+                        modifier = Modifier.size(if (isChecked) 18.dp else 16.dp),
+                        tint = iconColor
+                    )
+                }
+            }
+        },
+        colors = SwitchDefaults.colors(
+            checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
+            checkedTrackColor = MaterialTheme.colorScheme.primary,
+            disabledUncheckedThumbColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
+            disabledUncheckedTrackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.06f)
+        )
+    )
+}
+
+private fun hasWakeUpUsageAccess(context: android.content.Context): Boolean {
+    return try {
+        val appOps = context.getSystemService(android.content.Context.APP_OPS_SERVICE) as android.app.AppOpsManager
+        appOps.unsafeCheckOpNoThrow(
+            android.app.AppOpsManager.OPSTR_GET_USAGE_STATS,
+            android.os.Process.myUid(), context.packageName
+        ) == android.app.AppOpsManager.MODE_ALLOWED
+    } catch (_: Exception) {
+        true
+    }
+}

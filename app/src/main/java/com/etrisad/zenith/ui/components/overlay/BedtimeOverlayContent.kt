@@ -1,0 +1,390 @@
+package com.etrisad.zenith.ui.components.overlay
+
+import android.content.res.Configuration
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Bedtime
+import androidx.compose.material.icons.outlined.Language
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.core.graphics.drawable.toBitmap
+import coil.compose.SubcomposeAsyncImage
+import coil.request.ImageRequest
+import com.etrisad.zenith.data.preferences.UserPreferences
+import com.etrisad.zenith.data.preferences.UserPreferencesRepository
+import com.etrisad.zenith.data.website.WebsiteRepository
+import com.etrisad.zenith.ui.components.ZenithButtonSize
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import java.util.*
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+fun BedtimeOverlayContent(
+    packageName: String,
+    appName: String,
+    userPreferences: UserPreferences,
+    onCloseApp: () -> Unit
+) {
+    val context = LocalContext.current
+    val isWebsite = WebsiteRepository.isWebsitePackageName(packageName)
+    val appIcon = remember(packageName) {
+        if (isWebsite) null
+        else try {
+            val drawable = context.packageManager.getApplicationIcon(packageName)
+            drawable.toBitmap(width = 120, height = 120).asImageBitmap()
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    var showContent by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    
+    var startExitTimer by remember { mutableStateOf(false) }
+    val exitProgress by animateFloatAsState(
+        targetValue = if (startExitTimer) 1f else 0f,
+        animationSpec = tween(durationMillis = 5000, easing = LinearEasing),
+        label = "exitProgress"
+    )
+
+    LaunchedEffect(startExitTimer) {
+        if (startExitTimer) {
+            delay(5000)
+            showContent = false
+            delay(300)
+            onCloseApp()
+        }
+    }
+
+    val bedtimeUiState by produceState(
+        initialValue = Triple(0f, "0m", ""),
+        key1 = userPreferences
+    ) {
+        val cal = Calendar.getInstance()
+        while (true) {
+            cal.timeInMillis = System.currentTimeMillis()
+            val currentMinutes = cal.get(Calendar.HOUR_OF_DAY) * 60 + cal.get(Calendar.MINUTE)
+            
+            val startParts = userPreferences.bedtimeStartTime.split(":")
+            val endParts = userPreferences.bedtimeEndTime.split(":")
+            val startMinutes = (startParts.getOrNull(0)?.toIntOrNull() ?: 22) * 60 + (startParts.getOrNull(1)?.toIntOrNull() ?: 0)
+            val endMinutes = (endParts.getOrNull(0)?.toIntOrNull() ?: 7) * 60 + (endParts.getOrNull(1)?.toIntOrNull() ?: 0)
+
+            val totalDuration = if (endMinutes > startMinutes) {
+                endMinutes - startMinutes
+            } else {
+                (1440 - startMinutes) + endMinutes
+            }
+
+            val elapsed = if (startMinutes <= endMinutes) {
+                (currentMinutes - startMinutes).coerceAtLeast(0)
+            } else {
+                if (currentMinutes >= startMinutes) {
+                    currentMinutes - startMinutes
+                } else {
+                    (1440 - startMinutes) + currentMinutes
+                }
+            }
+
+            val progress = (elapsed.toFloat() / totalDuration.toFloat()).coerceIn(0f, 1f)
+            val remaining = (totalDuration - elapsed).coerceAtLeast(0)
+            val h = remaining / 60
+            val m = remaining % 60
+            
+            val formattedTime = if (h > 0) "${h}h ${m}m" else "${m}m"
+            
+            value = Triple(progress, formattedTime, userPreferences.bedtimeEndTime)
+            delay(60_000L)
+        }
+    }
+
+    val backgroundAlphaState = animateFloatAsState(
+        targetValue = if (showContent) 0.6f else 0f,
+        animationSpec = tween(durationMillis = 250, delayMillis = 120),
+        label = "backgroundAlpha"
+    )
+
+    LaunchedEffect(Unit) {
+        showContent = true
+        startExitTimer = true
+    }
+
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+
+    InterceptBottomSheet(
+        visible = showContent,
+        backgroundAlpha = backgroundAlphaState.value,
+        isLandscape = isLandscape,
+        maxWidthLandscape = 720.dp,
+        userPreferences = userPreferences,
+        maxHeightFraction = if (isLandscape) 0.95f else 0.9f,
+        showBedtimePill = false,
+        onCloseApp = {
+            scope.launch {
+                showContent = false
+                delay(300)
+                onCloseApp()
+            }
+        }
+    ) { _ ->
+        if (isLandscape) {
+            LandscapeBedtimeLayout(
+                appName = appName,
+                appIcon = appIcon,
+                bedtimeUiState = bedtimeUiState,
+                exitProgress = exitProgress,
+                userPrefs = userPreferences,
+                onCloseApp = {
+                    scope.launch {
+                        showContent = false
+                        delay(300)
+                        onCloseApp()
+                    }
+                },
+                isWebsite = isWebsite,
+                packageName = packageName
+            )
+        } else {
+            PortraitBedtimeLayout(
+                appName = appName,
+                appIcon = appIcon,
+                bedtimeUiState = bedtimeUiState,
+                exitProgress = exitProgress,
+                userPrefs = userPreferences,
+                onCloseApp = {
+                    scope.launch {
+                        showContent = false
+                        delay(300)
+                        onCloseApp()
+                    }
+                },
+                isWebsite = isWebsite,
+                packageName = packageName
+            )
+        }
+    }
+}
+
+@Composable
+fun PortraitBedtimeLayout(
+    appName: String,
+    appIcon: androidx.compose.ui.graphics.ImageBitmap?,
+    bedtimeUiState: Triple<Float, String, String>,
+    exitProgress: Float,
+    userPrefs: com.etrisad.zenith.data.preferences.UserPreferences? = null,
+    onCloseApp: () -> Unit,
+    isWebsite: Boolean = false,
+    packageName: String = ""
+) {
+    val isFullScreen = exitProgress > 0f || userPrefs?.overlayFullScreen == true
+
+    Column(
+        modifier = Modifier
+            .then(
+                if (isFullScreen) Modifier.fillMaxSize() 
+                else Modifier.fillMaxWidth().wrapContentHeight()
+            )
+            .padding(bottom = 24.dp, start = 24.dp, end = 24.dp)
+            .navigationBarsPadding(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(32.dp)
+    ) {
+        Column(
+            modifier = if (isFullScreen) Modifier.weight(1f).fillMaxWidth() 
+                      else Modifier.fillMaxWidth().wrapContentHeight(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(24.dp, Alignment.CenterVertically)
+        ) {
+            BedtimeHeader(appName = appName, appIcon = appIcon, isWebsite = isWebsite, packageName = packageName)
+
+            BedtimeProgress(bedtimeUiState, isFullScreen = isFullScreen)
+
+            BedtimeDescription()
+        }
+
+        CloseAppTextButton(
+            onCloseApp = onCloseApp,
+            autoKickProgress = { exitProgress },
+            size = ZenithButtonSize.ExtraLarge
+        )
+    }
+}
+
+@Composable
+fun LandscapeBedtimeLayout(
+    appName: String,
+    appIcon: androidx.compose.ui.graphics.ImageBitmap?,
+    bedtimeUiState: Triple<Float, String, String>,
+    exitProgress: Float,
+    userPrefs: com.etrisad.zenith.data.preferences.UserPreferences? = null,
+    onCloseApp: () -> Unit,
+    isWebsite: Boolean = false,
+    packageName: String = ""
+) {
+    val isFullScreen = exitProgress > 0f || userPrefs?.overlayFullScreen == true
+
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Row(
+            modifier = Modifier
+                .weight(1f)
+                .displayCutoutPadding()
+                .padding(start = 24.dp, end = 24.dp, bottom = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(32.dp)
+        ) {
+            Column(
+                modifier = Modifier.weight(1f),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                BedtimeHeader(appName = appName, appIcon = appIcon, isSmall = !isFullScreen, isWebsite = isWebsite, packageName = packageName)
+                Spacer(modifier = Modifier.height(20.dp))
+                BedtimeDescription()
+            }
+
+            Column(
+                modifier = Modifier.weight(1.2f),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                BedtimeProgress(bedtimeUiState, isSmall = !isFullScreen, isFullScreen = isFullScreen)
+                Spacer(modifier = Modifier.height(24.dp))
+                CloseAppTextButton(
+                    onCloseApp = onCloseApp,
+                    autoKickProgress = { exitProgress },
+                    size = ZenithButtonSize.Large
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun BedtimeHeader(appName: String, appIcon: androidx.compose.ui.graphics.ImageBitmap?, isSmall: Boolean = false, isWebsite: Boolean = false, packageName: String = "") {
+    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Box(
+            modifier = Modifier
+                .size(if (isSmall) 64.dp else 80.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant),
+            contentAlignment = Alignment.Center
+        ) {
+            if (isWebsite) {
+                SubcomposeAsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data("app-icon://$packageName")
+                        .crossfade(500)
+                        .build(),
+                    contentDescription = null,
+                    modifier = Modifier.size(if (isSmall) 48.dp else 60.dp).clip(CircleShape),
+                    contentScale = ContentScale.Crop,
+                    error = {
+                        Icon(Icons.Outlined.Language, null, modifier = Modifier.size(if (isSmall) 36.dp else 48.dp), tint = MaterialTheme.colorScheme.primary)
+                    }
+                )
+            } else if (appIcon != null) {
+                Image(
+                    bitmap = appIcon,
+                    contentDescription = null,
+                    modifier = Modifier.size(if (isSmall) 48.dp else 60.dp).clip(CircleShape),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Icon(
+                    Icons.Outlined.Bedtime,
+                    contentDescription = null,
+                    modifier = Modifier.size(if (isSmall) 36.dp else 48.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
+
+        Text(
+            text = "Bedtime Mode",
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.primary,
+            fontWeight = FontWeight.Bold
+        )
+
+        Text(
+            text = appName,
+            style = if (isSmall) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun BedtimeProgress(bedtimeUiState: Triple<Float, String, String>, isSmall: Boolean = false, isFullScreen: Boolean = false) {
+    val size = when {
+        isFullScreen -> 220.dp
+        isSmall -> 160.dp
+        else -> 220.dp
+    }
+    val waveLen = when {
+        isFullScreen -> 58.dp
+        isSmall -> 40.dp
+        else -> 58.dp
+    }
+
+    Box(contentAlignment = Alignment.Center) {
+        CircularWavyProgressIndicator(
+            progress = { bedtimeUiState.first },
+            modifier = Modifier.size(size),
+            color = MaterialTheme.colorScheme.tertiary,
+            amplitude = { 1f },
+            wavelength = waveLen,
+            trackColor = MaterialTheme.colorScheme.surfaceVariant,
+        )
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = bedtimeUiState.second,
+                style = if (isSmall && !isFullScreen) MaterialTheme.typography.headlineLarge else MaterialTheme.typography.displaySmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.tertiary
+            )
+            Text(
+                text = "Until ${bedtimeUiState.third}",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun BedtimeDescription() {
+    Text(
+        text = "Rest is productive too. This app is restricted until your bedtime ends.",
+        style = MaterialTheme.typography.bodyLarge,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        textAlign = TextAlign.Center,
+        modifier = Modifier.padding(horizontal = 16.dp)
+    )
+}
+

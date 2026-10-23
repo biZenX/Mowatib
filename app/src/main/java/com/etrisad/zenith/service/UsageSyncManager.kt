@@ -1,0 +1,449 @@
+package com.etrisad.zenith.service
+
+import android.app.usage.UsageEvents
+import android.app.usage.UsageStatsManager
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import com.etrisad.zenith.data.local.entity.HourlyUsageEntity
+import com.etrisad.zenith.data.preferences.UserPreferencesRepository
+import com.etrisad.zenith.data.repository.ShieldRepository
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import java.text.SimpleDateFormat
+import java.util.*
+
+class UsageSyncManager(
+    private val context: Context,
+    private val repository: ShieldRepository,
+    private val preferencesRepository: UserPreferencesRepository
+) {
+    companion object {
+        private val syncMutex = Mutex()
+        @Volatile
+        private var cachedLastSyncTimestamp = 0L
+        private var cachedLauncherPackage: String? = null
+        private var cachedLauncherApps: Set<String>? = null
+        private var lastLauncherRefresh = 0L
+    }
+
+    private val usageStatsManager = context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
+    private val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+
+    private data class UsageChunk(val packageName: String, var duration: Long)
+
+    suspend fun syncUsageData() = syncMutex.withLock {
+        val currentTime = System.currentTimeMillis()
+        if (cachedLastSyncTimestamp == 0L) {
+            cachedLastSyncTimestamp = preferencesRepository.userPreferencesFlow.first().lastSyncTimestamp
+        }
+        val lastSyncTime = cachedLastSyncTimestamp
+
+        if (currentTime - lastSyncTime < 20000) return@withLock
+
+        val pm = context.packageManager
+        
+        if (currentTime - lastLauncherRefresh > 3600000L || cachedLauncherApps == null) {
+            val launcherIntent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
+            cachedLauncherPackage = pm.resolveActivity(launcherIntent, PackageManager.MATCH_DEFAULT_ONLY)
+                ?.activityInfo?.packageName
+            cachedLauncherApps = pm.queryIntentActivities(
+                Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER), 0
+            )?.map { it.activityInfo.packageName }?.toSet() ?: emptySet()
+            lastLauncherRefresh = currentTime
+        }
+
+        val launcherPackage = cachedLauncherPackage
+        val launcherApps = cachedLauncherApps ?: emptySet()
+        val excludedFromTracking = preferencesRepository.userPreferencesFlow.first().excludedFromTrackingPackages
+        val excludePackages = setOfNotNull(context.packageName, launcherPackage) + excludedFromTracking
+
+        val startOfToday = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+
+        val queryStart = maxOf(startOfToday, lastSyncTime - 600000L) 
+        val events = try {
+            usageStatsManager.queryEvents(queryStart, currentTime)
+        } catch (e: Exception) {
+            null
+        }
+        val event = UsageEvents.Event()
+
+        val activeSessions = mutableMapOf<String, Long>()
+        val hourlyBuckets = mutableMapOf<String, MutableMap<Int, MutableList<UsageChunk>>>()
+
+        while (events?.hasNextEvent() == true) {
+            events.getNextEvent(event)
+            val pkg = event.packageName
+            val time = event.timeStamp
+            val type = event.eventType
+
+            when (type) {
+                UsageEvents.Event.SCREEN_NON_INTERACTIVE -> {
+                    activeSessions.forEach { (p, start) ->
+                        val segmentStart = maxOf(start, lastSyncTime)
+                        val segmentEnd = minOf(time, currentTime)
+                        if (segmentStart < segmentEnd) {
+                            processSession(p, segmentStart, segmentEnd, hourlyBuckets)
+                        }
+                    }
+                    activeSessions.clear()
+                }
+                UsageEvents.Event.MOVE_TO_FOREGROUND, UsageEvents.Event.ACTIVITY_RESUMED -> {
+                    if (pkg in excludePackages || pkg !in launcherApps) {
+                        activeSessions.forEach { (p, start) ->
+                            val segmentStart = maxOf(start, lastSyncTime)
+                            val segmentEnd = minOf(time, currentTime)
+                            if (segmentStart < segmentEnd) {
+                                processSession(p, segmentStart, segmentEnd, hourlyBuckets)
+                            }
+                        }
+                        activeSessions.clear()
+                    } else {
+                        val className = event.className ?: ""
+                        if (!className.contains("Notification", ignoreCase = true) &&
+                            !className.contains("Toast", ignoreCase = true)) {
+
+                            activeSessions.keys.filter { it != pkg }.forEach { p ->
+                                val start = activeSessions.remove(p) ?: return@forEach
+                                val segmentStart = maxOf(start, lastSyncTime)
+                                val segmentEnd = minOf(time, currentTime)
+                                if (segmentStart < segmentEnd) {
+                                    processSession(p, segmentStart, segmentEnd, hourlyBuckets)
+                                }
+                            }
+
+                            val previousStart = activeSessions[pkg]
+                            if (previousStart != null) {
+                                val segmentStart = maxOf(previousStart, lastSyncTime)
+                                val segmentEnd = minOf(time, currentTime)
+                                if (segmentStart < segmentEnd) {
+                                    processSession(pkg, segmentStart, segmentEnd, hourlyBuckets)
+                                }
+                            }
+                            activeSessions[pkg] = time
+                        }
+                    }
+                }
+                UsageEvents.Event.MOVE_TO_BACKGROUND, UsageEvents.Event.ACTIVITY_PAUSED -> {
+                    val startTime = activeSessions.remove(pkg) ?: continue
+                    val segmentStart = maxOf(startTime, lastSyncTime)
+                    val segmentEnd = minOf(time, currentTime)
+                    if (segmentStart < segmentEnd) {
+                        processSession(pkg, segmentStart, segmentEnd, hourlyBuckets)
+                    }
+                }
+            }
+        }
+
+        activeSessions.forEach { (pkg, startTime) ->
+            val segmentStart = maxOf(startTime, lastSyncTime)
+            val segmentEnd = currentTime
+            if (segmentStart < segmentEnd) {
+                processSession(pkg, segmentStart, segmentEnd, hourlyBuckets)
+            }
+        }
+
+        repository.isShieldsLoaded.first { it }
+        val allShields = repository.allShields.first()
+
+        saveBucketsToDatabase(hourlyBuckets, allShields)
+        preferencesRepository.setLastSyncTimestamp(currentTime)
+    }
+
+    private fun processSession(
+        pkg: String,
+        start: Long,
+        end: Long,
+        buckets: MutableMap<String, MutableMap<Int, MutableList<UsageChunk>>>
+    ) {
+        val cal = Calendar.getInstance()
+        var current = start
+
+        while (current < end) {
+            cal.timeInMillis = current
+            val dateStr = dateFormat.format(cal.time)
+            val hour = cal.get(Calendar.HOUR_OF_DAY)
+            val nextHourStart = ((current / 3600000) + 1) * 3600000
+
+            val chunkEnd = minOf(end, nextHourStart)
+            val duration = chunkEnd - current
+
+            if (duration > 0) {
+                buckets.getOrPut(dateStr) { hashMapOf() }
+                    .getOrPut(hour) { mutableListOf() }
+                    .add(UsageChunk(pkg, duration))
+            }
+
+            if (chunkEnd <= current) break
+            current = chunkEnd
+        }
+    }
+
+    private suspend fun saveBucketsToDatabase(
+        buckets: MutableMap<String, MutableMap<Int, MutableList<UsageChunk>>>,
+        allShields: List<com.etrisad.zenith.data.local.entity.ShieldEntity>
+    ) {
+        val now = System.currentTimeMillis()
+        val calendarNow = Calendar.getInstance().apply { timeInMillis = now }
+        val currentHour = calendarNow.get(Calendar.HOUR_OF_DAY)
+        val currentDateStr = dateFormat.format(calendarNow.time)
+
+        val limit = 3600000L
+        val finalEntities = mutableListOf<HourlyUsageEntity>()
+        val carryOver = mutableListOf<UsageChunk>()
+
+        val sortedDates = buckets.keys.sorted().toMutableList()
+        if (sortedDates.isEmpty() && carryOver.isEmpty()) return
+
+        val initialDates = sortedDates.toList()
+        val existingByDate = if (initialDates.isNotEmpty()) {
+            repository.getHourlyUsageForDatesSync(initialDates).groupBy { it.date }
+        } else {
+            emptyMap()
+        }
+
+        var dateIdx = 0
+        while (dateIdx < sortedDates.size || (carryOver.isNotEmpty() && dateIdx < 3)) {
+            val date = if (dateIdx < sortedDates.size) {
+                sortedDates[dateIdx]
+            } else {
+                val lastDate = sortedDates.lastOrNull() ?: break
+                calendarNow.time = try { dateFormat.parse(lastDate) } catch (_: Exception) { null } ?: break
+                calendarNow.add(Calendar.DAY_OF_YEAR, 1)
+                val nextDate = dateFormat.format(calendarNow.time)
+
+                if (nextDate > currentDateStr) {
+                    carryOver.clear()
+                    break
+                }
+
+                sortedDates.add(nextDate)
+                nextDate
+            }
+            dateIdx++
+
+            val existingRecords = existingByDate[date] ?: emptyList()
+            val existingMap = existingRecords.associateBy { it.hour to it.packageName }
+            val dayBuckets = buckets[date] ?: hashMapOf()
+
+            for (hour in 0..23) {
+                if (date == currentDateStr && hour > currentHour) {
+                    carryOver.clear()
+                    break
+                }
+
+                val newChunks = dayBuckets[hour] ?: mutableListOf()
+                val isPastHour = date < currentDateStr || (date == currentDateStr && hour < currentHour)
+
+                if (newChunks.isEmpty() && carryOver.isEmpty()) {
+                    continue
+                }
+
+                val combined = mutableListOf<UsageChunk>()
+                combined.addAll(carryOver)
+                carryOver.clear()
+                combined.addAll(newChunks)
+
+                val existingHourRecords = existingRecords.filter { it.hour == hour && it.packageName != "TOTAL" }
+                val currentHourAppState = existingHourRecords.associate { it.packageName to it.usageTimeMillis }.toMutableMap()
+
+                combined.forEach { chunk ->
+                    currentHourAppState[chunk.packageName] = (currentHourAppState[chunk.packageName] ?: 0L) + chunk.duration
+                }
+
+                val totalInHour = currentHourAppState.values.sum()
+                val isToday = date == currentDateStr
+
+                if (isPastHour && totalInHour > limit) {
+                    var excess = totalInHour - limit
+                    val sortedEntries = currentHourAppState.entries.sortedByDescending { it.value }
+
+                    for (entry in sortedEntries) {
+                        if (excess <= 0) break
+                        val pkg = entry.key
+                        val currentValue = currentHourAppState[pkg] ?: 0L
+                        val toMove = minOf(currentValue, excess)
+
+                        currentHourAppState[pkg] = currentValue - toMove
+                        if (toMove > 0) {
+                            carryOver.add(UsageChunk(pkg, toMove))
+                        }
+                        excess -= toMove
+                    }
+                } else if (isToday && totalInHour > limit) {
+                    var excess = totalInHour - limit
+                    val sortedEntries = currentHourAppState.entries.sortedByDescending { it.value }
+                    for (entry in sortedEntries) {
+                        if (excess <= 0) break
+                        val pkg = entry.key
+                        val currentValue = currentHourAppState[pkg] ?: 0L
+                        val toRemove = minOf(currentValue, excess)
+                        currentHourAppState[pkg] = currentValue - toRemove
+                        excess -= toRemove
+                    }
+                }
+
+                var finalHourTotal = 0L
+                currentHourAppState.forEach { (pkg, duration) ->
+                    val existing = existingMap[hour to pkg]
+                    if (existing == null || existing.usageTimeMillis != duration) {
+                        finalEntities.add(
+                            HourlyUsageEntity(
+                                id = existing?.id ?: 0,
+                                date = date,
+                                hour = hour,
+                                packageName = pkg,
+                                usageTimeMillis = duration,
+                                lastUpdated = now
+                            )
+                        )
+                    }
+                    finalHourTotal += duration
+                }
+
+                val finalTotalCapped = minOf(finalHourTotal, limit)
+                val existingTotalRec = existingMap[hour to "TOTAL"]
+                if (existingTotalRec == null || existingTotalRec.usageTimeMillis != finalTotalCapped) {
+                    finalEntities.add(
+                        HourlyUsageEntity(
+                            id = existingTotalRec?.id ?: 0,
+                            date = date,
+                            hour = hour,
+                            packageName = "TOTAL",
+                            usageTimeMillis = finalTotalCapped,
+                            lastUpdated = now
+                        )
+                    )
+                }
+            }
+            if (dateIdx > 50) break
+        }
+
+        if (finalEntities.isNotEmpty()) {
+            repository.insertHourlyUsage(finalEntities)
+        }
+
+        syncDailyFromHourly(buckets.keys, allShields)
+        cachedLastSyncTimestamp = System.currentTimeMillis()
+        preferencesRepository.setLastSyncTimestamp(System.currentTimeMillis())
+    }
+
+    private suspend fun syncDailyFromHourly(dates: Set<String>, allShields: List<com.etrisad.zenith.data.local.entity.ShieldEntity>) {
+        val now = System.currentTimeMillis()
+        val dailyEntities = mutableListOf<com.etrisad.zenith.data.local.entity.DailyUsageEntity>()
+
+        val shieldPkgs = allShields.asSequence().filter { it.type == com.etrisad.zenith.data.local.entity.FocusType.SHIELD }.map { it.packageName }.toSet()
+        val goalPkgs = allShields.asSequence().filter { it.type == com.etrisad.zenith.data.local.entity.FocusType.GOAL }.map { it.packageName }.toSet()
+
+        dates.forEach { date ->
+            val todayDateStr = dateFormat.format(Date(now))
+            val isToday = date == todayDateStr
+
+            val existingDaily = repository.getDailyUsagesForDateSync(date)
+            val existingDailyMap = existingDaily.associateBy { it.packageName }
+
+            if (!isToday && existingDailyMap["TOTAL"]?.usageTimeMillis ?: 0L > 0) {
+                return@forEach
+            }
+
+            val hourlyData = repository.getHourlyUsageForDateSync(date)
+            if (hourlyData.isEmpty()) return@forEach
+
+            val appTotals = hourlyData.filter { it.packageName != "TOTAL" }
+                .groupBy { it.packageName }
+                .mapValues { it.value.sumOf { h -> h.usageTimeMillis } }
+            if (appTotals.isEmpty()) return@forEach
+
+            var totalTime = appTotals.values.sum()
+
+            val timeSinceMidnight = if (date == todayDateStr) {
+                val cal = Calendar.getInstance().apply { timeInMillis = now }
+                (cal.get(Calendar.HOUR_OF_DAY) * 3600000L) +
+                        (cal.get(Calendar.MINUTE) * 60000L) +
+                        (cal.get(Calendar.SECOND) * 1000L) +
+                        cal.get(Calendar.MILLISECOND)
+            } else 86400000L
+
+            totalTime = totalTime.coerceAtMost(timeSinceMidnight)
+
+            val existingTotal = existingDailyMap["TOTAL"]?.usageTimeMillis ?: 0L
+
+            var shieldTime = 0L
+            var goalTime = 0L
+            val allPackages = (appTotals.keys + existingDailyMap.keys)
+                .filter { it !in setOf("TOTAL", "SHIELD_TOTAL", "GOAL_TOTAL", "OTHER_TOTAL") }
+            val pkgFinals = mutableMapOf<String, Long>()
+            allPackages.forEach { pkg ->
+                val newTime = (appTotals[pkg] ?: 0L).coerceAtMost(timeSinceMidnight)
+                val existingPkgTime = existingDailyMap[pkg]?.usageTimeMillis ?: 0L
+                val finalPkgTime = maxOf(newTime, existingPkgTime)
+
+                pkgFinals[pkg] = finalPkgTime
+                if (pkg in shieldPkgs) shieldTime += finalPkgTime
+                else if (pkg in goalPkgs) goalTime += finalPkgTime
+            }
+
+            val finalTotal = maxOf(totalTime, existingTotal, pkgFinals.values.sum())
+
+            allPackages.forEach { pkg ->
+                val finalPkgTime = pkgFinals[pkg] ?: return@forEach
+                if (finalPkgTime != (existingDailyMap[pkg]?.usageTimeMillis ?: 0L)) {
+                    dailyEntities.add(
+                        com.etrisad.zenith.data.local.entity.DailyUsageEntity(
+                            id = existingDailyMap[pkg]?.id ?: 0,
+                            date = date,
+                            packageName = pkg,
+                            usageTimeMillis = finalPkgTime,
+                            lastUpdated = now
+                        )
+                    )
+                }
+            }
+
+            val finalShieldTotal = shieldTime.coerceAtMost(finalTotal)
+            val finalGoalTotal = goalTime.coerceAtMost(finalTotal)
+            val otherTime = (finalTotal - (finalShieldTotal + finalGoalTotal)).coerceAtMost(finalTotal).coerceAtLeast(0L)
+            if (finalTotal != existingTotal) {
+                dailyEntities.add(com.etrisad.zenith.data.local.entity.DailyUsageEntity(id = existingDailyMap["TOTAL"]?.id ?: 0, date = date, packageName = "TOTAL", usageTimeMillis = finalTotal, lastUpdated = now))
+            }
+            if (finalShieldTotal != (existingDailyMap["SHIELD_TOTAL"]?.usageTimeMillis ?: 0L)) {
+                dailyEntities.add(com.etrisad.zenith.data.local.entity.DailyUsageEntity(id = existingDailyMap["SHIELD_TOTAL"]?.id ?: 0, date = date, packageName = "SHIELD_TOTAL", usageTimeMillis = finalShieldTotal, lastUpdated = now))
+            }
+            if (finalGoalTotal != (existingDailyMap["GOAL_TOTAL"]?.usageTimeMillis ?: 0L)) {
+                dailyEntities.add(com.etrisad.zenith.data.local.entity.DailyUsageEntity(id = existingDailyMap["GOAL_TOTAL"]?.id ?: 0, date = date, packageName = "GOAL_TOTAL", usageTimeMillis = finalGoalTotal, lastUpdated = now))
+            }
+            if (otherTime != (existingDailyMap["OTHER_TOTAL"]?.usageTimeMillis ?: 0L)) {
+                dailyEntities.add(com.etrisad.zenith.data.local.entity.DailyUsageEntity(id = existingDailyMap["OTHER_TOTAL"]?.id ?: 0, date = date, packageName = "OTHER_TOTAL", usageTimeMillis = otherTime, lastUpdated = now))
+            }
+        }
+
+        if (dailyEntities.isNotEmpty()) {
+            repository.insertAllDailyUsage(dailyEntities)
+        }
+        val prefs = preferencesRepository.userPreferencesFlow.first()
+        if (prefs.incentiveLockEnabled && !prefs.incentiveLockGoalsMetToday) {
+            val todayDateStr = dateFormat.format(Date(now))
+            if (dates.contains(todayDateStr)) {
+                val goals = allShields.filter { it.type == com.etrisad.zenith.data.local.entity.FocusType.GOAL }
+                if (goals.isNotEmpty()) {
+                    val currentUsages = repository.getDailyUsagesForDateSync(todayDateStr).associateBy { it.packageName }
+                    val allMet = goals.all { goal ->
+                        val usage = currentUsages[goal.packageName]?.usageTimeMillis ?: 0L
+                        usage >= goal.timeLimitMinutes * 60000L
+                    }
+                    if (allMet) {
+                        preferencesRepository.setIncentiveLockGoalsMetToday(true)
+                        preferencesRepository.setIncentiveLockGoalsMetDate(todayDateStr)
+                    }
+                }
+            }
+        }
+    }
+
+}

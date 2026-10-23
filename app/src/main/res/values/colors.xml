@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="purple_200">#FFBB86FC</color>
+    <color name="purple_500">#FF6200EE</color>
+    <color name="purple_700">#FF3700B3</color>
+    <color name="teal_200">#FF03DAC5</color>
+    <color name="teal_700">#FF018786</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="zenith_primary">#4D568D</color>
+    <color name="zenith_on_primary">#FFFFFF</color>
+    <color name="zenith_primary_container">#DEE0FF</color>
+    <color name="zenith_on_primary_container">#06114E</color>
+
+    <color name="zenith_secondary">#5B5D72</color>
+    <color name="zenith_on_secondary">#FFFFFF</color>
+    <color name="zenith_secondary_container">#E0E1F9</color>
+    <color name="zenith_on_secondary_container">#181A2C</color>
+
+    <color name="zenith_tertiary">#77536D</color>
+    <color name="zenith_on_tertiary">#FFFFFF</color>
+    <color name="zenith_tertiary_container">#FFD7F1</color>
+    <color name="zenith_on_tertiary_container">#2D1228</color>
+
+    <color name="zenith_background">#FBF8FF</color>
+    <color name="zenith_surface">#FBF8FF</color>
+    <color name="zenith_surface_variant">#E3E1EC</color>
+    <color name="zenith_on_surface">#1B1B21</color>
+    <color name="zenith_on_surface_variant">#46464F</color>
+</resources>
