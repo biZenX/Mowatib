@@ -2,13 +2,36 @@
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
-    android:viewportWidth="108"
-    android:viewportHeight="108">
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M54,24L24,74h60L54,24z M54,40l18,30H36L54,40z" />
-    <path
-        android:fillColor="#FFCCBC"
-        android:pathData="M54,40l18,30H36L54,40z"
-        android:alpha="0.5" />
+    android:viewportWidth="512"
+    android:viewportHeight="512">
+    <group
+        android:translateX="0"
+        android:translateY="63">
+        <path
+            android:pathData="M64,64 L256,256"
+            android:strokeColor="#1B5549"
+            android:strokeWidth="100"
+            android:strokeLineCap="round"/>
+        <path
+            android:pathData="M64,64 L64,322"
+            android:strokeColor="#173E37"
+            android:strokeWidth="100"
+            android:strokeLineCap="round"/>
+        <path
+            android:pathData="M448,64 L256,256"
+            android:strokeColor="#6E824F"
+            android:strokeWidth="100"
+            android:strokeLineCap="round"/>
+        <path
+            android:pathData="M448,64 L448,322"
+            android:strokeColor="#8EA06A"
+            android:strokeWidth="100"
+            android:strokeLineCap="round"/>
+        <path
+            android:pathData="M170,184 L256,270 L366,158"
+            android:strokeColor="#FFFFFF"
+            android:strokeWidth="48"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round"/>
+    </group>
 </vector>

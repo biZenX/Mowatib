@@ -130,8 +130,8 @@ object CrashHandler {
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
             val notification = NotificationCompat.Builder(context, CRASH_CHANNEL_ID)
-                .setSmallIcon(R.drawable.ic_zenith)
-                .setContentTitle("Zenith stopped unexpectedly")
+                .setSmallIcon(R.drawable.ic_mowatib)
+                .setContentTitle("Mowatib stopped unexpectedly")
                 .setContentText("Tap to view the error details and send a report")
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setAutoCancel(true)

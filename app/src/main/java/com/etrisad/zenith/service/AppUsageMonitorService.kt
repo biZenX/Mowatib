@@ -2524,11 +2524,11 @@ class AppUsageMonitorService : Service() {
     }
 
     private fun createNotification(statusText: String? = null): Notification {
-        val channelId = "zenith_monitor_channel"
+        val channelId = "mowatib_monitor_channel"
         return NotificationCompat.Builder(this, channelId)
-            .setContentTitle("Zenith is active")
+            .setContentTitle("Mowatib is active")
             .setContentText(statusText ?: createNotificationStatusText())
-            .setSmallIcon(R.drawable.ic_zenith)
+            .setSmallIcon(R.drawable.ic_mowatib)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
             .setOngoing(true)

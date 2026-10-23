@@ -184,6 +184,12 @@ fun PomodoroScreen(
                 }
             }
 
+            item(key = "ambient_sound") {
+                AmbientSoundCard(
+                    containerColor = containerColor
+                )
+            }
+
             if (!uiState.isSessionActive) {
                 item(key = "settings") {
                     TimeSettingsCard(
