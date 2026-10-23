@@ -906,9 +906,9 @@ fun UpdateBottomSheetPreview() {
                         ## New Features
                         * ✨ **Material 3 Expressive**: New floating tab bar.
                         * 🚀 **GitHub Update Checker**: Fast updates.
-                        ![Preview Image](https://raw.githubusercontent.com/1372Slash/Zenith/master/art/preview.png)
+                        ![Preview Image](https://raw.githubusercontent.com/biZenX/Mowatib/main/fastlane/metadata/android/en-US/images/featureGraphic.png)
                         
-                        <img src="https://raw.githubusercontent.com/1372Slash/Zenith/master/art/banner.png" alt="Banner" />
+                        <img src="https://raw.githubusercontent.com/biZenX/Mowatib/main/fastlane/metadata/android/en-US/images/featureGraphic.png" alt="Banner" />
 
                         ## Improvements
                         ### Performance
@@ -918,7 +918,7 @@ fun UpdateBottomSheetPreview() {
                         
                         This version is the result of many weeks of work.
                     """.trimIndent(),
-                    htmlUrl = "https://github.com/1372Slash/Zenith",
+                    htmlUrl = "https://github.com/biZenX/Mowatib",
                     assets = emptyList()
                 ),
                 containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,

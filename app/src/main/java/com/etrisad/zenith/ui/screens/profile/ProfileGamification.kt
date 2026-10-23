@@ -212,7 +212,7 @@ val LEVEL_TITLES = listOf(
     LevelTitle("sentinel", "Sentinel", 15),
     LevelTitle("paragon", "Paragon", 20),
     LevelTitle("luminary", "Luminary", 25),
-    LevelTitle("zenith", "Zenith", 30),
+    LevelTitle("mowatib", "Mowatib Master", 30),
     LevelTitle("celestial", "Celestial", 35),
     LevelTitle("eternal", "Eternal", 40),
     LevelTitle("mythic", "Mythic", 45),
@@ -840,7 +840,7 @@ fun buildAchievementDefs(): List<AchievementDef> = listOf(
     ),
     AchievementDef(
         id = "auto_quitter", title = "Auto Quitter",
-        desc = "Let Zenith auto-quit an app", icon = Icons.Outlined.ExitToApp,
+        desc = "Let Mowatib auto-quit an app", icon = Icons.Outlined.ExitToApp,
         category = AchievementCategory.EXPLORER,
         thresholds = listOf(TierThreshold(ProfileTier.I, 1, "Enabled once"))
     ),
@@ -1085,7 +1085,7 @@ fun buildAchievementDefs(): List<AchievementDef> = listOf(
     ),
     AchievementDef(
         id = "widget_wielder", title = "Widget Wielder",
-        desc = "Pin Zenith widgets to home",
+        desc = "Pin Mowatib widgets to home",
         icon = Icons.Outlined.Widgets, category = AchievementCategory.ACCUMULATION,
         thresholds = listOf(
             TierThreshold(ProfileTier.I, 1, "1 widget"),
@@ -1392,7 +1392,7 @@ fun buildAchievementDefs(): List<AchievementDef> = listOf(
     ),
     AchievementDef(
         id = "loyal_tracker", title = "Loyal Tracker",
-        desc = "Total time tracked by Zenith",
+        desc = "Total time tracked by Mowatib",
         icon = Icons.Outlined.History, category = AchievementCategory.ACCUMULATION,
         thresholds = listOf(
             TierThreshold(ProfileTier.I, 36_000_000L, "10h"),
@@ -1405,7 +1405,7 @@ fun buildAchievementDefs(): List<AchievementDef> = listOf(
         ),
         tierNames = listOf(
             "Newcomer", "Loyal Tracker", "Loyal Regular", "Loyal Veteran",
-            "Loyal Pillar", "Loyal Legend", "Zenith Soul"
+            "Loyal Pillar", "Loyal Legend", "Mowatib Soul"
         )
     ),
     AchievementDef(

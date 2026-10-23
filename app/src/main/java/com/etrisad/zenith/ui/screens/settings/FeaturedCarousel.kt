@@ -183,12 +183,12 @@ fun FeaturedCarousel(
         
         list.add(
             FeaturedItem(
-                title = "Support Development",
-                description = "Fuel our mission with a tip on Ko-fi",
-                icon = Icons.Outlined.Favorite,
+                title = "Mowatib on GitHub",
+                description = "Explore Mowatib open-source code and updates",
+                icon = Icons.Outlined.Code,
                 isTertiary = true,
                 onClick = {
-                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://ko-fi.com/1372slash"))
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/biZenX/Mowatib"))
                     context.startActivity(intent)
                 }
             )
@@ -196,11 +196,11 @@ fun FeaturedCarousel(
         list.add(
             FeaturedItem(
                 title = "Star on GitHub",
-                description = "Love Zenith? Give us a star on GitHub!",
+                description = "Love Mowatib? Give us a star on GitHub!",
                 icon = Icons.Outlined.Star,
                 isTertiary = true,
                 onClick = {
-                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/1372Slash/Zenith"))
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/biZenX/Mowatib"))
                     context.startActivity(intent)
                 }
             )

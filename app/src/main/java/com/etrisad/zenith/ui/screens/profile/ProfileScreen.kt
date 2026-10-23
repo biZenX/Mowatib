@@ -1948,9 +1948,9 @@ private fun renderAndShareProfile(
             )
             y += rowH.toFloat()
         }
-        canvas.drawText("Tracked 100% offline with Zenith", 64f, height - 64f, faint)
+        canvas.drawText("Tracked 100% offline with Mowatib", 64f, height - 64f, faint)
 
-        val file = File(context.cacheDir, "zenith-profile.png")
+        val file = File(context.cacheDir, "mowatib-profile.png")
         file.outputStream().use { out -> bitmap.compress(Bitmap.CompressFormat.PNG, 100, out) }
         val uri = FileProvider.getUriForFile(
             context, "${context.packageName}.fileprovider", file
@@ -1960,7 +1960,7 @@ private fun renderAndShareProfile(
             putExtra(Intent.EXTRA_STREAM, uri)
             putExtra(
                 Intent.EXTRA_TEXT,
-                "$userName${if (userTitle.isNotBlank()) " ($userTitle)" else ""} - Zenith Level $level ($xpTotal XP), best streak $streakBest days"
+                "$userName${if (userTitle.isNotBlank()) " ($userTitle)" else ""} - Mowatib Level $level ($xpTotal XP), best streak $streakBest days"
             )
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }

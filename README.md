@@ -26,28 +26,7 @@
   </a>
 </p>
 
-<div align="center">
 
-<table>
-  <tr>
-    <th align="center">IzzyOnDroid</th>
-    <th align="center">OpenAPK</th>
-  </tr>
-  <tr>
-    <td align="center">
-      <a href="https://apt.izzysoft.de/packages/com.etrisad.zenith">
-        <img src="https://gitlab.com/IzzyOnDroid/repo/-/raw/master/assets/IzzyOnDroidButtonGreyBorder_nofont.png" height="55" alt="Get it at IzzyOnDroid">
-      </a>
-    </td>
-    <td align="center">
-      <a href="https://www.openapk.net/zenith/com.etrisad.zenith/">
-        <img src="https://www.openapk.net/images/openapk-badge.png" height="80" alt="Get it on OpenAPK">
-      </a>
-    </td>
-  </tr>
-</table>
-
-</div>
 
 ## Screenshots
 
@@ -117,50 +96,38 @@ In short: use Full if you download from GitHub and want self-update; use Store i
 
 ## Required Permissions
 
-To help you stay focused and break mindless habits, Zenith needs a few permissions.
+To help you stay focused and break mindless habits, Mowatib needs a few permissions.
 
 ### Required
-Without these, Zenith won't be able to track your usage or help you stay mindful.
+Without these, Mowatib won't be able to track your usage or help you stay mindful.
 
-1. **Usage Stats (`PACKAGE_USAGE_STATS`)**: This lets Zenith see how much time you spend in your apps so it can help you stick to your limits.
-2. **System Overlay (`SYSTEM_ALERT_WINDOW`)**: This allows Zenith to show a "Shield" or a timer over other apps when you've reached your limit or need a mindful pause.
-   - **Note for Android Go users**: Some Android Go devices do not allow granting this permission through settings. Grant it from Settings > Apps > Zenith > Display over other apps (`Settings.ACTION_MANAGE_OVERLAY_PERMISSION`).
-3. **App List (`QUERY_ALL_PACKAGES`)**: Zenith needs this to show you a list of your apps so you can choose which ones you want to track or block.
+1. **Usage Stats (`PACKAGE_USAGE_STATS`)**: This lets Mowatib see how much time you spend in your apps so it can help you stick to your limits.
+2. **System Overlay (`SYSTEM_ALERT_WINDOW`)**: This allows Mowatib to show a "Shield" or a timer over other apps when you've reached your limit or need a mindful pause.
+   - **Note for Android Go users**: Some Android Go devices do not allow granting this permission through settings. Grant it from Settings > Apps > Mowatib > Display over other apps (`Settings.ACTION_MANAGE_OVERLAY_PERMISSION`).
+3. **App List (`QUERY_ALL_PACKAGES`)**: Mowatib needs this to show you a list of your apps so you can choose which ones you want to track or block.
 4. **Notifications (`POST_NOTIFICATIONS`)**: Used to send you goal reminders and keep you updated on your focus progress throughout the day.
 5. **Do Not Disturb (`ACCESS_NOTIFICATION_POLICY`)**: This allows Bedtime Mode to automatically silence your phone so you can get a better night's sleep.
 6. **Foreground Service (`FOREGROUND_SERVICE`)**: Required for the AppUsageMonitorService that continuously tracks your app usage, and for alarm playback.
-7. **Full Screen Intent (`USE_FULL_SCREEN_INTENT`)**: Allows Zenith to show full-screen overlays for alarms and goal reminders over the lock screen.
+7. **Full Screen Intent (`USE_FULL_SCREEN_INTENT`)**: Allows Mowatib to show full-screen overlays for alarms and goal reminders over the lock screen.
 8. **Wake Lock (`WAKE_LOCK`)**: Keeps the screen on during alarm display so you can see and dismiss it.
-9. **Boot Completed (`RECEIVE_BOOT_COMPLETED`)**: Restarts Zenith's monitoring services and re-schedules alarms after your device reboots.
+9. **Boot Completed (`RECEIVE_BOOT_COMPLETED`)**: Restarts Mowatib's monitoring services and re-schedules alarms after your device reboots.
 
 ### Optional
-These are optional, but they make Zenith much more reliable and powerful.
+These are optional, but they make Mowatib much more reliable and powerful.
 
-10. **Accessibility Service (`BIND_ACCESSIBILITY_SERVICE`)**: An optional service that helps Zenith catch when you open a restricted app instantly, making your "Shields" feel much more responsive.
-11. **Notification Intercept (`BIND_NOTIFICATION_LISTENER_SERVICE`)**: This lets Zenith hide distracting notifications during your scheduled Focus sessions or Bedtime.
-12. **Battery Optimization**: This tells Android not to close Zenith in the background, ensuring your focus time is always tracked accurately.
+10. **Accessibility Service (`BIND_ACCESSIBILITY_SERVICE`)**: An optional service that helps Mowatib catch when you open a restricted app instantly, making your "Shields" feel much more responsive.
+11. **Notification Intercept (`BIND_NOTIFICATION_LISTENER_SERVICE`)**: This lets Mowatib hide distracting notifications during your scheduled Focus sessions or Bedtime.
+12. **Battery Optimization**: This tells Android not to close Mowatib in the background, ensuring your focus time is always tracked accurately.
 13. **Precise Timing (`SCHEDULE_EXACT_ALARM`)**: Makes sure your daily resets, bedtime schedules, and reminders happen exactly when they're supposed to.
 14. **Storage Access (`READ_EXTERNAL_STORAGE`)**: Only used if you want to use the Backup & Restore feature to save or load your settings.
-15. **Internet Access (`INTERNET`)**: Full variant only. Used to check for app updates via GitHub API and to let you visit our GitHub or community pages from the settings. The Store variant (`Zenith-store-*.apk` for IzzyOnDroid/OpenAPK) removes this permission and hides the in-app update UI — updates come from the store instead.
-16. **Calendar Access (`READ_CALENDAR`)**: Enables the "Show Current Event" feature, which displays your current calendar event (title, description, and progress) during the app-opening delay in the intercept overlay.
-17. **Camera (`CAMERA`)**: Only needed if you use QR Scan tasks in Pause Point, so you can scan one of your saved QR codes to continue. You can grant it from Settings > Features > Pause Point > QR Scan, or from the permission sheet under Optional Service.
-18. **NFC (`NFC`)**: Only needed if you use NFC Scan tasks in Pause Point, so you can tap one of your registered NFC tags to continue. Turn on NFC in Android Settings, register tags from Settings > Features > Pause Point > NFC Scan, or check status from the permission sheet under Optional Service.
+15. **Internet Access (`INTERNET`)**: Used to check for app updates via GitHub API.
+16. **Calendar Access (`READ_CALENDAR`)**: Enables the "Show Current Event" feature, which displays your current calendar event during the app-opening delay in the intercept overlay.
+17. **Camera (`CAMERA`)**: Only needed if you use QR Scan tasks in Pause Point, so you can scan one of your saved QR codes to continue.
+18. **NFC (`NFC`)**: Only needed if you use NFC Scan tasks in Pause Point.
 
-## Support the Project
+## Author & Maintainer
 
-If you find Zenith helpful and would like to support its development, you can support me on Ko-fi. Your contribution helps keep the project alive and improving!
-
-<p align="left">
-  <a href="https://ko-fi.com/1372slash">
-    <img src="https://img.shields.io/badge/Support%20me%20on%20Ko--fi-F16061?style=for-the-badge&logo=ko-fi&logoColor=white" alt="Support me on Ko-fi">
-  </a>
-</p>
-
-## Credits & Special Thanks
-
-- **[biZenX](https://github.com/biZenX)** - Maintainer & developer of Mowatib.
-- **[Zenith](https://github.com/1372Slash/Zenith)** by **[1372Slash](https://github.com/1372Slash)** - The open-source architecture that Mowatib is based on.
-- **[Tomato](https://github.com/nsh07/Tomato)** - Interface inspiration.
+- **[biZenX (Abdelrahman Karim)](https://github.com/biZenX)** - Maintainer & Lead Developer of Mowatib.
 
 ## License
 
