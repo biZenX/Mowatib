@@ -6,4 +6,6 @@
     <string name="total_screen_time_widget_description">Shows total screen time today.</string>
     <string name="remaining_target_widget_description">Shows remaining time before daily screen time target.</string>
     <string name="phone_free_time_widget_description">Shows phone-free time today - how long you haven\'t used your phone, resets daily.</string>
+    <string name="mowatib_focus_widget_name">Mowatib Focus</string>
+    <string name="mowatib_focus_widget_description">Shows quick focus actions, streaks, and smart tasks.</string>
 </resources>

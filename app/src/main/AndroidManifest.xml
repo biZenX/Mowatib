@@ -255,6 +255,19 @@
                 android:resource="@xml/phone_free_time_widget_info" />
         </receiver>
 
+        <receiver
+            android:name=".ui.widget.MowatibFocusWidgetReceiver"
+            android:label="@string/mowatib_focus_widget_name"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/mowatib_focus_widget_info" />
+        </receiver>
+
         <meta-data
             android:name="preloaded_fonts"
             android:resource="@array/preloaded_fonts" />

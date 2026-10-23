@@ -78,6 +78,7 @@ class ZenithApplication : Application(), ImageLoaderFactory {
     override fun onCreate() {
         super.onCreate()
         CrashHandler.install(this)
+        com.etrisad.zenith.data.local.MowatibTaskManager.init(this)
 
         lastUiMode = resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
 

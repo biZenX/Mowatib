@@ -22,3 +22,7 @@ class RemainingTargetWidgetReceiver : GlanceAppWidgetReceiver() {
 class PhoneFreeTimeWidgetReceiver : GlanceAppWidgetReceiver() {
     override val glanceAppWidget: GlanceAppWidget = PhoneFreeTimeWidget()
 }
+
+class MowatibFocusWidgetReceiver : GlanceAppWidgetReceiver() {
+    override val glanceAppWidget: GlanceAppWidget = MowatibFocusWidget()
+}
