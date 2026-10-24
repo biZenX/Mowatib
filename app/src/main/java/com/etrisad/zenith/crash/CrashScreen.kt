@@ -95,7 +95,7 @@ fun CrashScreen(
 
         Spacer(Modifier.height(16.dp))
         Text(
-            text = "Zenith stopped unexpectedly",
+            text = "Mowatib stopped unexpectedly",
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center
@@ -189,7 +189,7 @@ fun CrashScreen(
         }
         Spacer(Modifier.height(4.dp))
         Text(
-            text = "Starts Zenith without loading your data. Recommended when the " +
+            text = "Starts Mowatib without loading your data. Recommended when the " +
                 "crash keeps coming back; your saved data is not modified.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -231,7 +231,7 @@ fun CrashScreen(
                     if (shareText.isNotBlank()) {
                         val intent = Intent(Intent.ACTION_SEND).apply {
                             type = "text/plain"
-                            putExtra(Intent.EXTRA_SUBJECT, "Zenith crash report")
+                            putExtra(Intent.EXTRA_SUBJECT, "Mowatib crash report")
                             putExtra(Intent.EXTRA_TEXT, shareText)
                         }
                         context.startActivity(Intent.createChooser(intent, "Share crash report"))
@@ -273,7 +273,7 @@ fun CrashScreen(
                 modifier = Modifier.size(18.dp)
             )
             Spacer(Modifier.width(8.dp))
-            Text("Exit Zenith", color = MaterialTheme.colorScheme.error)
+            Text("Exit Mowatib", color = MaterialTheme.colorScheme.error)
         }
 
         Spacer(Modifier.height(8.dp))

@@ -619,7 +619,7 @@ class ZenithService : AccessibilityService() {
             val channel = NotificationChannel(
                 channelId, "Banking App Safety", NotificationManager.IMPORTANCE_HIGH
             ).apply {
-                description = "Reminders to turn off Zenith accessibility before using banking apps"
+                description = "Reminders to turn off Mowatib accessibility before using banking apps"
             }
             notificationManager.createNotificationChannel(channel)
         }
@@ -630,7 +630,7 @@ class ZenithService : AccessibilityService() {
 
         val notification = NotificationCompat.Builder(this, channelId)
             .setContentTitle("Banking Apps Detected")
-            .setContentText("Turn off Zenith accessibility before opening banking apps for safety.")
+            .setContentText("Turn off Mowatib accessibility before opening banking apps for safety.")
             .setSmallIcon(R.drawable.ic_warning)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setAutoCancel(true)
@@ -656,7 +656,7 @@ class ZenithService : AccessibilityService() {
             val channel = NotificationChannel(
                 channelId, "Banking App Safety", NotificationManager.IMPORTANCE_HIGH
             ).apply {
-                description = "Reminders to turn off Zenith accessibility before using banking apps"
+                description = "Reminders to turn off Mowatib accessibility before using banking apps"
             }
             notificationManager.createNotificationChannel(channel)
         }
@@ -667,7 +667,7 @@ class ZenithService : AccessibilityService() {
 
         val notification = NotificationCompat.Builder(this, channelId)
             .setContentTitle("Banking App in Use")
-            .setContentText("$appName is open. Turn off Zenith accessibility for safety.")
+            .setContentText("$appName is open. Turn off Mowatib accessibility for safety.")
             .setSmallIcon(R.drawable.ic_warning)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setAutoCancel(true)

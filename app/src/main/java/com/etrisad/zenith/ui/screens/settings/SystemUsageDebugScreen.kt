@@ -105,7 +105,7 @@ fun SystemUsageDebugScreen(
                             )
                             Spacer(modifier = Modifier.width(16.dp))
                             Text(
-                                text = "Zenith's regular history uses a combination of database records and system snapshots. This debug view is 'stateless' and re-processes system events every time.",
+                                text = "Mowatib's regular history uses a combination of database records and system snapshots. This debug view is 'stateless' and re-processes system events every time.",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )

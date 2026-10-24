@@ -40,7 +40,7 @@ object FeatureInfoRegistry {
 
     private val home = FeatureInfo(
         title = "Home",
-        summary = "Your daily dashboard for screen time, streaks, and quick access to everything Zenith offers.",
+        summary = "Your daily dashboard for screen time, streaks, and quick access to everything Mowatib offers.",
         sections = listOf(
             FeatureInfoSections.whatItDoes(
                 "Shows today's screen time against your daily target with a live progress bar and current streak.",
@@ -84,7 +84,7 @@ object FeatureInfoRegistry {
 
     private val settings = FeatureInfo(
         title = "Settings",
-        summary = "Global preferences and the entry point to every category of Zenith's configuration.",
+        summary = "Global preferences and the entry point to every category of Mowatib's configuration.",
         sections = listOf(
             FeatureInfoSections.whatItDoes(
                 "Controls global behavior: screen-time target, emergency recharge, delay-app duration, day start time, and permissions.",
@@ -148,7 +148,7 @@ object FeatureInfoRegistry {
 
     private val alarm = FeatureInfo(
         title = "Alarm",
-        summary = "A full alarm clock built to get you out of bed, integrated with Zenith's anti-oversleep tooling.",
+        summary = "A full alarm clock built to get you out of bed, integrated with Mowatib's anti-oversleep tooling.",
         sections = listOf(
             FeatureInfoSections.whatItDoes(
                 "Fires alarms with rich wake-up enforcement: pause-point dismiss missions, spoken phrases, gradual volume, and snooze limits.",
@@ -169,7 +169,7 @@ object FeatureInfoRegistry {
 
     private val gracePeriod = FeatureInfo(
         title = "Grace Period",
-        summary = "A scheduled daily window (up to 2 hours) in which every Zenith restriction is lifted, making blocking sustainable instead of absolute.",
+        summary = "A scheduled daily window (up to 2 hours) in which every Mowatib restriction is lifted, making blocking sustainable instead of absolute.",
         sections = listOf(
             FeatureInfoSections.whatItDoes(
                 "During the window, shields, schedules, and bedtime will not block any app.",
@@ -304,7 +304,7 @@ object FeatureInfoRegistry {
             ),
             FeatureInfoSections.whatYoullSee(
                 "Activity heatmap, screen time streak, and an XP level that rewards staying under shield limits and hitting goal targets.",
-                "Explorer badges for trying Zenith features and tiered accumulation badges (star, moon, sun, comet, crown, diamond, trophy).",
+                "Explorer badges for trying Mowatib features and tiered accumulation badges (star, moon, sun, comet, crown, diamond, trophy).",
                 "A Share button that renders your profile to an image you can send anywhere."
             ),
             FeatureInfoSections.tips(
@@ -396,14 +396,14 @@ object FeatureInfoRegistry {
 
     private val gsFlexCustomizer = FeatureInfo(
         title = "GS Flex Designer",
-        summary = "Live-tune Zenith's variable Google Sans Flex typography, style by style.",
+        summary = "Live-tune Mowatib's variable Google Sans Flex typography, style by style.",
         sections = listOf(
             FeatureInfoSections.whatItDoes(
                 "Adjusts font axes (weight, width, etc.) per text style and previews the result instantly."
             ),
             FeatureInfoSections.whatYoullSee(
                 "A preview card with wordmark, headline, and body samples.",
-                "Preset chips (Zenith / Neo / Impact / Airy) and a custom switch unlocking fine-grained axis sliders."
+                "Preset chips (Mowatib / Neo / Impact / Airy) and a custom switch unlocking fine-grained axis sliders."
             ),
             FeatureInfoSections.tips(
                 "Start from a preset, then flip 'Use Custom Variable' to fine-tune individual axes.",
@@ -414,7 +414,7 @@ object FeatureInfoRegistry {
 
     private val featuresCategory = FeatureInfo(
         title = "Features",
-        summary = "Toggle Zenith's behavioral modules: interface overlays, notifications, entry control, triggers, and tracking.",
+        summary = "Toggle Mowatib's behavioral modules: interface overlays, notifications, entry control, triggers, and tracking.",
         sections = listOf(
             FeatureInfoSections.whatItDoes(
                 "Interface Overlays: total usage pill, session HUD, usage glimpse, and current calendar event.",
@@ -433,7 +433,7 @@ object FeatureInfoRegistry {
 
     private val appearanceCategory = FeatureInfo(
         title = "Appearance",
-        summary = "Make Zenith yours: theme, fonts, dynamic color, expressive colors, and navigation layout.",
+        summary = "Make Mowatib yours: theme, fonts, dynamic color, expressive colors, and navigation layout.",
         sections = listOf(
             FeatureInfoSections.whatItDoes(
                 "Chooses light/dark theme, app font (including the GS Flex customizer), Dynamic Color on Android 12+, and the expressive color set.",
@@ -454,7 +454,7 @@ object FeatureInfoRegistry {
         summary = "Balance responsiveness vs battery: preset profiles, overnight monitoring pauses, and detection tuning.",
         sections = listOf(
             FeatureInfoSections.whatItDoes(
-                "Performance Profile sets how aggressively Zenith detects app opens (higher = snappier, more battery).",
+                "Performance Profile sets how aggressively Mowatib detects app opens (higher = snappier, more battery).",
                 "Unused Hours pauses monitoring overnight; Instant Detection uses the Accessibility Service for immediate checks.",
                 "Custom Tuning exposes polling-delay sliders per context."
             ),
@@ -471,7 +471,7 @@ object FeatureInfoRegistry {
 
     private val dataManagementCategory = FeatureInfo(
         title = "Data Management",
-        summary = "Back up and restore your entire Zenith setup so nothing is lost between devices or reinstalls.",
+        summary = "Back up and restore your entire Mowatib setup so nothing is lost between devices or reinstalls.",
         sections = listOf(
             FeatureInfoSections.whatItDoes(
                 "Auto Backup saves periodic snapshots (3–24h interval) to a folder you choose.",
@@ -509,7 +509,7 @@ object FeatureInfoRegistry {
 
     private val databaseDebug = FeatureInfo(
         title = "Database Records",
-        summary = "Raw view of every recorded daily usage row stored by Zenith.",
+        summary = "Raw view of every recorded daily usage row stored by Mowatib.",
         sections = listOf(
             FeatureInfoSections.whatItDoes(
                 "Lists all daily usage records so you can inspect exactly what the tracker has collected."
@@ -548,14 +548,14 @@ object FeatureInfoRegistry {
         summary = "Diagnostic ground truth pulled straight from Android's UsageStatsManager using Digital Wellbeing logic.",
         sections = listOf(
             FeatureInfoSections.whatItDoes(
-                "Fetches usage events directly from the OS to compare against Zenith's own database."
+                "Fetches usage events directly from the OS to compare against Mowatib's own database."
             ),
             FeatureInfoSections.whatYoullSee(
                 "A 'System Usage (21 Days)' chart with explanatory text about the calculation method."
             ),
             FeatureInfoSections.tips(
                 "Read-only by design, nothing here modifies your data.",
-                "Use it to verify whether a mismatch comes from Android itself or from Zenith's storage."
+                "Use it to verify whether a mismatch comes from Android itself or from Mowatib's storage."
             )
         )
     )

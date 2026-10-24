@@ -310,7 +310,7 @@ fun HomeScreenContent(
                             withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
                                 append("inaccurate")
                             }
-                            append(" because Zenith is still collecting your usage patterns. We recommend using Zenith for at least ")
+                            append(" because Mowatib is still collecting your usage patterns. We recommend using Mowatib for at least ")
                             withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
                                 append("3 days")
                             }

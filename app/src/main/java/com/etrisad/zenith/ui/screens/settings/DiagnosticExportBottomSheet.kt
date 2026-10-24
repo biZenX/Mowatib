@@ -202,7 +202,7 @@ fun DiagnosticExportBottomSheet(
 
                     Text(
                         text = buildAnnotatedString {
-                            withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append("Zenith keeps everything on your device. ") }
+                            withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append("Mowatib keeps everything on your device. ") }
                             append("This creates a ")
                             withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append("diagnostic ZIP on your device") }
                             append(" so you can attach it to a GitHub issue. ")

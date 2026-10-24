@@ -408,7 +408,7 @@ fun DeveloperSettings(
             SettingsActionItem(
                 title = "Open Last Crash Report",
                 summary = if (com.etrisad.zenith.crash.CrashStore.hasAnyCrash(crashContext)) {
-                    "View the most recent crash caught by Zenith"
+                    "View the most recent crash caught by Mowatib"
                 } else {
                     "No crash has been caught yet"
                 },
@@ -912,7 +912,7 @@ private fun TtsTestBottomSheet(
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
-    var textInput by remember { mutableStateOf("Welcome to Zenith. This is a Text-to-Speech test.") }
+    var textInput by remember { mutableStateOf("Welcome to Mowatib. This is a Text-to-Speech test.") }
     var tts by remember { mutableStateOf<android.speech.tts.TextToSpeech?>(null) }
     var ttsStatus by remember { mutableStateOf("Initializing...") }
     var availableLocales by remember { mutableStateOf<List<java.util.Locale>>(emptyList()) }
@@ -1026,7 +1026,7 @@ private fun TtsTestBottomSheet(
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(
                             modifier = Modifier.padding(horizontal = 16.dp),
-                            text = "Zenith uses your device's built-in Text-to-Speech engine. If a language is missing, consider installing Google Speech Services from the Play Store.",
+                            text = "Mowatib uses your device's built-in Text-to-Speech engine. If a language is missing, consider installing Google Speech Services from the Play Store.",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

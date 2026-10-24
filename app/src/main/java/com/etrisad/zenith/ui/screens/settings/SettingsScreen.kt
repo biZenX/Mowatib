@@ -95,7 +95,7 @@ fun SettingsScreen(
                         showUpdateSheet = true
                     }
                     is GitHubUpdateManager.UpdateResult.NoUpdate -> {
-                        Toast.makeText(context, "Zenith is up to date!", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "Mowatib is up to date!", Toast.LENGTH_SHORT).show()
                     }
                     is GitHubUpdateManager.UpdateResult.Error -> {
                         Toast.makeText(context, "Update check failed: ${result.message}", Toast.LENGTH_SHORT).show()

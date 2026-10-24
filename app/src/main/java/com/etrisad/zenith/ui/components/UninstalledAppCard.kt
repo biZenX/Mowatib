@@ -63,7 +63,7 @@ fun UninstalledAppCard(
                 )
                 ZenithButtonWeighted(
                     onClick = onDelete,
-                    text = "Remove from Zenith",
+                    text = "Remove from Mowatib",
                     icon = Icons.Outlined.Delete,
                     size = ZenithButtonSize.Small,
                     type = ZenithButtonType.Tonal,

@@ -86,7 +86,7 @@ fun PermissionScreen(
             Spacer(modifier = Modifier.height(12.dp))
             
             Text(
-                text = "To help you stay focused, Zenith needs a few permissions to monitor and shield your apps.",
+                text = "To help you stay focused, Mowatib needs a few permissions to monitor and shield your apps.",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,

@@ -152,7 +152,7 @@ fun WhitelistBottomSheet(
                         modifier = Modifier.padding(bottom = 16.dp)
                     )
                     Text(
-                        text = "Whitelisted apps will bypass all Zenith restrictions (Schedules, Shields, and Goals).",
+                        text = "Whitelisted apps will bypass all Mowatib restrictions (Schedules, Shields, and Goals).",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(bottom = 12.dp)

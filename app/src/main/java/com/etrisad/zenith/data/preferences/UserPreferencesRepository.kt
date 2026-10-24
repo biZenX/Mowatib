@@ -466,7 +466,7 @@ val ACHIEVEMENT_BANNERS_SEEN = stringPreferencesKey("achievement_banners_seen")
     ) { settings, runtime ->
         UserPreferences(
             themeConfig = ThemeConfig.valueOf(settings[PreferencesKeys.THEME_CONFIG] ?: ThemeConfig.FOLLOW_SYSTEM.name),
-            fontOption = runCatching { FontOption.valueOf(settings[PreferencesKeys.FONT_OPTION] ?: FontOption.THMANYAH.name) }.getOrDefault(FontOption.THMANYAH),
+            fontOption = runCatching { FontOption.valueOf(settings[PreferencesKeys.FONT_OPTION] ?: FontOption.GOOGLE_SANS_FLEX.name) }.getOrDefault(FontOption.GOOGLE_SANS_FLEX),
             dynamicColor = settings[PreferencesKeys.DYNAMIC_COLOR] ?: true,
             accessibilityDisabled = settings[PreferencesKeys.ACCESSIBILITY_DISABLED] ?: false,
             accessibilityRequired = settings[PreferencesKeys.ACCESSIBILITY_REQUIRED] ?: false,

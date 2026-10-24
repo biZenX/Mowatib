@@ -90,8 +90,8 @@ fun OnboardingStatsContent(
 
         OptionCard(
             title = "Start Fresh (Recommended)",
-            description = "Only show data recorded by Zenith. Previous days will appear empty.",
-            pros = listOf("Accurate Zenith tracking", "Clean visualization"),
+            description = "Only show data recorded by Mowatib. Previous days will appear empty.",
+            pros = listOf("Accurate Mowatib tracking", "Clean visualization"),
             cons = listOf("No history for past days", "Needs more usage for better stats"),
             icon = Icons.Outlined.AutoAwesome,
             isHighlighted = true,
@@ -105,7 +105,7 @@ fun OnboardingStatsContent(
             title = "Populate with System Data",
             description = "Use Android system usage to fill history for previous days.",
             pros = listOf("Instant historical data", "Complete overview"),
-            cons = listOf("Might not be accurate", "May include background usage", "Less precise than Zenith"),
+            cons = listOf("Might not be accurate", "May include background usage", "Less precise than Mowatib"),
             icon = Icons.Outlined.History,
             isHighlighted = false,
             onClick = { onSelection(true) },

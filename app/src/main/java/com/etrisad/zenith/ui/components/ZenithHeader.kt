@@ -168,7 +168,7 @@ fun ZenithHeader(
                     }.ifEmpty { "Settings" }
                 }
                 currentRoute?.startsWith("app_detail") == true -> "App Detail"
-                else -> "Zenith"
+                else -> "Mowatib"
             }
 
             AnimatedContent(
@@ -209,7 +209,7 @@ fun ZenithHeader(
                             text = when (currentStage) {
                                 0 -> greeting
                                 1 -> userName
-                                else -> "Zenith"
+                                else -> "Mowatib"
                             },
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = if (currentStage == 2) FontWeight.ExtraBold else FontWeight.Bold,

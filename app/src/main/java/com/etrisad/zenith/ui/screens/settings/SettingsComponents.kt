@@ -351,13 +351,42 @@ fun FontSelector(
                 FontOption.NUNITO to "Nunito"
             )
 
-            ZenithToggleButtonGroup(
-                options = fontOptions.map { ZenithToggleOption(text = it.second) },
-                selectedIndices = setOf(fontOptions.indexOfFirst { it.first == selectedFont }),
-                onToggle = { index -> onFontChange(fontOptions[index].first) },
-                size = ZenithButtonSize.Medium,
-                isInsideContainer = true
-            )
+            @OptIn(ExperimentalLayoutApi::class)
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                fontOptions.forEach { (option, label) ->
+                    val isSelected = option == selectedFont
+                    FilterChip(
+                        selected = isSelected,
+                        onClick = { onFontChange(option) },
+                        label = {
+                            Text(
+                                text = label,
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = if (isSelected) androidx.compose.ui.text.font.FontWeight.Bold else androidx.compose.ui.text.font.FontWeight.Medium
+                            )
+                        },
+                        leadingIcon = if (isSelected) {
+                            {
+                                Icon(
+                                    imageVector = Icons.Filled.Check,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        } else null,
+                        shape = RoundedCornerShape(12.dp),
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                            selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                        )
+                    )
+                }
+            }
 
             if (selectedFont == FontOption.GOOGLE_SANS_FLEX) {
                 Spacer(modifier = Modifier.height(12.dp))

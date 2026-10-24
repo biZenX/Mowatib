@@ -448,7 +448,7 @@ private fun WakeUpAppBottomSheet(
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "Zenith can't track usage without this permission. Progress stays at 0.",
+                            text = "Mowatib can't track usage without this permission. Progress stays at 0.",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onErrorContainer
                         )

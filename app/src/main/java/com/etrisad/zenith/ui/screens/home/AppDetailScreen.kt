@@ -1466,7 +1466,7 @@ fun DeleteShieldCard(
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
                     Text(
-                        "Remove from Zenith",
+                        "Remove from Mowatib",
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.error

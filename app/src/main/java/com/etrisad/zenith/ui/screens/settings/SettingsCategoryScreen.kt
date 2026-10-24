@@ -253,7 +253,7 @@ fun SettingsCategoryScreen(
                                 Toast.makeText(context, "Backup started...", Toast.LENGTH_SHORT).show()
                             }
                         },
-                        onBackup = { backupLauncher.launch("zenith_backup_${System.currentTimeMillis()}.db") },
+                        onBackup = { backupLauncher.launch("mowatib_backup_${System.currentTimeMillis()}.db") },
                         onRefreshOnOpenUsageStatsChange = { enabled -> coroutineScope.launch { preferencesRepository.setRefreshOnOpenUsageStats(enabled) } },
                         onRestore = { restoreLauncher.launch(arrayOf("application/octet-stream", "*/*")) }
                     )

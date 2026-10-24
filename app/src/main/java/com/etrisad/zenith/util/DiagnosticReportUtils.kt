@@ -42,7 +42,7 @@ object DiagnosticReportUtils {
 
     fun defaultFileName(): String {
         val sdf = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US)
-        return "zenith_diagnostic_${sdf.format(Date())}.zip"
+        return "mowatib_diagnostic_${sdf.format(Date())}.zip"
     }
 
     fun getDisplayName(context: Context, uri: Uri): String? {

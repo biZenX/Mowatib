@@ -31,7 +31,7 @@ fun FontTestScreen(
     innerPadding: PaddingValues
 ) {
     var settings by remember { mutableStateOf(GSFlexSettings(preset = GSFlexPreset.ZENITH)) }
-    var customText by remember { mutableStateOf("Zenith") }
+    var customText by remember { mutableStateOf("Mowatib") }
     var selectedTab by remember { mutableIntStateOf(0) }
 
     val dynamicTypography = VariableFontFactory.createTypography(settings)
@@ -142,7 +142,7 @@ fun ZenithProposeContent(
     typography: Typography
 ) {
     val presetOptions = listOf(
-        GSFlexPreset.ZENITH to "Zenith",
+        GSFlexPreset.ZENITH to "Mowatib",
         GSFlexPreset.NEO to "Neo",
         GSFlexPreset.COMPACT to "Impact",
         GSFlexPreset.AIRY to "Airy"
@@ -175,7 +175,7 @@ fun ZenithProposeContent(
                 }
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    text = "Material 3 Expressive preset optimized for the Zenith design system.",
+                    text = "Material 3 Expressive preset optimized for the Mowatib design system.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -211,7 +211,7 @@ fun ZenithProposeItem(
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(text = level, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.secondary, fontWeight = FontWeight.Bold)
         Text(
-            text = "Zenith Design",
+            text = "Mowatib Design",
             style = style
         )
         Text(text = description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.outline)

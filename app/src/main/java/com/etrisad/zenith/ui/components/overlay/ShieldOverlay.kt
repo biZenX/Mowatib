@@ -668,7 +668,7 @@ fun PortraitInterceptLayout(
                 )
 
                 Text(
-                    text = if (shield != null) "Zenith Shield is active for this app." else "Mindful Gateway is guarding your focus.",
+                    text = if (shield != null) "Mowatib Shield is active for this app." else "Mindful Gateway is guarding your focus.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -897,7 +897,7 @@ fun LandscapeInterceptLayout(
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
-                    text = if (shield != null) "Zenith Shield is active for this app." else "Mindful Gateway is guarding your focus.",
+                    text = if (shield != null) "Mowatib Shield is active for this app." else "Mindful Gateway is guarding your focus.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center

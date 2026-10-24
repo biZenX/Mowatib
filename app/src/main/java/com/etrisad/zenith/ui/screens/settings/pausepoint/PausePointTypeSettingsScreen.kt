@@ -71,7 +71,7 @@ fun PausePointTypeSettingsScreen(
             val manager = InterceptOverlayManager(context.applicationContext, preferencesRepository)
             manager.showOverlay(
                 packageName = context.packageName,
-                appName = "Zenith",
+                appName = "Mowatib",
                 shield = null,
                 totalUsageToday = 0,
                 totalGlobalUsageToday = 0,

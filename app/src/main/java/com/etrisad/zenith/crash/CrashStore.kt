@@ -33,7 +33,7 @@ data class CrashRecord(
     fun toReportText(): String {
         val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
         return buildString {
-            appendLine("==== Zenith Crash Report ====")
+            appendLine("==== Mowatib Crash Report ====")
             appendLine("Time    : ${sdf.format(Date(timestamp))}")
             appendLine("Version : $versionName ($versionCode) [$flavor]")
             appendLine("Device  : $device")

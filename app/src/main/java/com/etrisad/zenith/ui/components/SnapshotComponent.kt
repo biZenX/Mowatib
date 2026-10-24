@@ -245,7 +245,7 @@ fun SnapshotInsightCard(
         } else {
             Triple(
                 Icons.Outlined.Camera,
-                "Not enough data yet for a snapshot insight. Keep using Zenith!",
+                "Not enough data yet for a snapshot insight. Keep using Mowatib!",
                 MaterialTheme.colorScheme.outline
             )
         }

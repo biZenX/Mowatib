@@ -422,7 +422,7 @@ fun ForegroundNotificationStatusSelector(
                         fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
                     )
                     Text(
-                        text = "Choose what Zenith shows while monitoring is active",
+                        text = "Choose what Mowatib shows while monitoring is active",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

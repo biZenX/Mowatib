@@ -957,7 +957,7 @@ private fun AlarmSettingsSheetContent(
                                                         color = MaterialTheme.colorScheme.onErrorContainer
                                                     )
                                                     Text(
-                                                        text = "Without this permission Zenith can't verify app usage.",
+                                                        text = "Without this permission Mowatib can't verify app usage.",
                                                         style = MaterialTheme.typography.bodySmall,
                                                         color = MaterialTheme.colorScheme.onErrorContainer
                                                     )
@@ -1584,7 +1584,7 @@ private fun AlarmSettingsSheetContent(
                                                 Spacer(modifier = Modifier.height(12.dp))
                                                 Text(
                                                     modifier = Modifier.padding(horizontal = 16.dp),
-                                                    text = "Zenith uses your device's built-in Text-to-Speech engine. If a language is missing, consider installing Google Speech Services from the Play Store.",
+                                                    text = "Mowatib uses your device's built-in Text-to-Speech engine. If a language is missing, consider installing Google Speech Services from the Play Store.",
                                                     style = MaterialTheme.typography.bodySmall,
                                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                                 )

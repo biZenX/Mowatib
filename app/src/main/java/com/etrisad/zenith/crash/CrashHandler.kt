@@ -118,7 +118,7 @@ object CrashHandler {
                     "Crash reports",
                     NotificationManager.IMPORTANCE_HIGH
                 ).apply {
-                    description = "Shown when Zenith stops unexpectedly"
+                    description = "Shown when Mowatib stops unexpectedly"
                 }
                 manager.createNotificationChannel(channel)
             } catch (_: Throwable) {

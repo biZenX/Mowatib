@@ -783,7 +783,7 @@ class AppUsageMonitorService : Service() {
             val testPackageName = packageName
         val testAppName = try {
             packageManager.getApplicationLabel(packageManager.getApplicationInfo(testPackageName, 0)).toString()
-        } catch (_: Exception) { "Zenith" }
+        } catch (_: Exception) { "Mowatib" }
 
         val intent = Intent(this, AppGoalOverlayActivity::class.java).apply {
             putStringArrayListExtra(
@@ -2515,9 +2515,9 @@ class AppUsageMonitorService : Service() {
     }
 
     private fun createMonitorNotificationChannel() {
-        val channelId = "zenith_monitor_channel"
+        val channelId = "mowatib_monitor_channel"
         val channel = NotificationChannel(
-            channelId, "Zenith Monitor Service", NotificationManager.IMPORTANCE_LOW
+            channelId, "Mowatib Monitor Service", NotificationManager.IMPORTANCE_LOW
         ).apply { setShowBadge(false) }
         val manager = getSystemService(NotificationManager::class.java)
         manager.createNotificationChannel(channel)

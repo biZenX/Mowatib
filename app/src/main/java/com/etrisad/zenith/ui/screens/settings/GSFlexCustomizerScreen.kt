@@ -68,7 +68,7 @@ fun GSFlexCustomizerScreen(
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
-                        text = "Zenith", 
+                        text = "Mowatib", 
                         style = previewTypography.displayLarge.copy(
                             fontSize = 64.sp,
                             lineHeight = 64.sp,
@@ -77,16 +77,16 @@ fun GSFlexCustomizerScreen(
                         color = MaterialTheme.colorScheme.primary
                     )
                     Text("Headline Treatment", style = previewTypography.headlineMedium, color = MaterialTheme.colorScheme.onSurface)
-                    Text("Standard body text for optimized reading experience in the Zenith app.", style = previewTypography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(horizontal = 16.dp), textAlign = TextAlign.Center)
+                    Text("Standard body text for optimized reading experience in the Mowatib app.", style = previewTypography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(horizontal = 16.dp), textAlign = TextAlign.Center)
                 }
             }
 
             Column(modifier = Modifier.padding(horizontal = 24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 Text("Design System Presets", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                val presetOptions = listOf(GSFlexPreset.ZENITH to "Zenith", GSFlexPreset.NEO to "Neo", GSFlexPreset.COMPACT to "Impact", GSFlexPreset.AIRY to "Airy")
+                val presetOptions = listOf(GSFlexPreset.ZENITH to "Mowatib", GSFlexPreset.NEO to "Neo", GSFlexPreset.COMPACT to "Impact", GSFlexPreset.AIRY to "Airy")
                 ZenithToggleButtonGroup(
                     options = presetOptions.map { ZenithToggleOption(text = it.second) },
-                    selectedIndices = setOf(presetOptions.indexOfFirst { it.first == lastNonCustomPreset }),
+                    selectedIndices = setOf(presetOptions.indexOfFirst { it.first == lastNonCustomPreset }.coerceAtLeast(0)),
                     onToggle = {
                         val newPreset = presetOptions[it].first
                         lastNonCustomPreset = newPreset

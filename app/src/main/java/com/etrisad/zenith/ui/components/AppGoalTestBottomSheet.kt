@@ -77,7 +77,7 @@ fun AppGoalTestBottomSheet(
             Spacer(modifier = Modifier.height(24.dp))
 
             val options = listOf(
-                Triple("Test with Zenith", "Single app scenario using the current app", Icons.Outlined.FilterCenterFocus) to {
+                Triple("Test with Mowatib", "Single app scenario using the current app", Icons.Outlined.FilterCenterFocus) to {
                     scope.launch {
                         AppGoalOverlayActivity.start(context, listOf(context.packageName))
                         sheetState.hide()
@@ -88,7 +88,7 @@ fun AppGoalTestBottomSheet(
                 Triple("Test with selected app", "Pick an app to test the overlay", Icons.Outlined.AppRegistration) to {
                     showAppPicker = true
                 },
-                Triple("Test more than 2 Apps", "Multiple apps scenario (Zenith, Settings, and Phone)", Icons.Outlined.Apps) to {
+                Triple("Test more than 2 Apps", "Multiple apps scenario (Mowatib, Settings, and Phone)", Icons.Outlined.Apps) to {
                     scope.launch {
                         AppGoalOverlayActivity.start(
                             context, 

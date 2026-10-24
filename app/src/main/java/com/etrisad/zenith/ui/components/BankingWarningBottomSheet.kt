@@ -91,7 +91,7 @@ fun BankingWarningBottomSheet(
 
             Text(
                 text = buildAnnotatedString {
-                    withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append("Zenith is safe. ") }
+                    withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append("Mowatib is safe. ") }
                     append("All data is ")
                     withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append("processed entirely on your device") }
                     append(" and ")
@@ -150,7 +150,7 @@ fun BankingWarningBottomSheet(
                         )
                         Text(
                             text = buildAnnotatedString {
-                                append("After enabling Zenith, ")
+                                append("After enabling Mowatib, ")
                                 withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append("disable it before opening any mobile banking app") }
                                 append(".")
                             },
@@ -174,7 +174,7 @@ fun BankingWarningBottomSheet(
                                 append("If a banking app ")
                                 withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append("blocks your access") }
                                 append(" or shows a security warning, go to ")
-                                withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append("Settings > Accessibility > Zenith") }
+                                withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append("Settings > Accessibility > Mowatib") }
                                 append(" and turn it off.")
                             },
                             style = MaterialTheme.typography.bodyMedium,
@@ -195,7 +195,7 @@ fun BankingWarningBottomSheet(
                         Text(
                             text = buildAnnotatedString {
                                 append("You can safely ")
-                                withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append("re-enable Zenith afterwards") }
+                                withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append("re-enable Mowatib afterwards") }
                                 append(" no data was collected or shared during the time it was off.")
                             },
                             style = MaterialTheme.typography.bodyMedium,
@@ -215,7 +215,7 @@ fun BankingWarningBottomSheet(
                     Text(
                         text = buildAnnotatedString {
                             withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append("Why does this happen?") }
-                            append(" Some banking apps detect third-party accessibility services as a security measure. This is unrelated to Zenith. The same block happens with any accessibility service.")
+                            append(" Some banking apps detect third-party accessibility services as a security measure. This is unrelated to Mowatib. The same block happens with any accessibility service.")
                         },
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f)
@@ -299,7 +299,7 @@ fun BankingWarningBottomSheet(
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = buildAnnotatedString {
-                            append("I have read and understand the above. I accept the risks of using Zenith alongside my banking apps.")
+                            append("I have read and understand the above. I accept the risks of using Mowatib alongside my banking apps.")
                             append(" ")
                             withStyle(SpanStyle(color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)) { append("*") }
                         },

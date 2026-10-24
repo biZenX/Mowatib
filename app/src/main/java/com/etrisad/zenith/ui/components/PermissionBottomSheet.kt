@@ -260,7 +260,7 @@ fun PermissionBottomSheet(
                 fontWeight = FontWeight.Bold
             )
             Text(
-                text = "Zenith needs these permissions to function properly and help you stay focused.",
+                text = "Mowatib needs these permissions to function properly and help you stay focused.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
@@ -449,7 +449,7 @@ fun PermissionBottomSheet(
                 Column {
                     PermissionItemRow(
                         title = "Battery Optimization",
-                        description = "Prevent system from killing Zenith",
+                        description = "Prevent system from killing Mowatib",
                         isGranted = !isBatteryOptimized,
                         icon = Icons.Outlined.BatteryStd,
                         onClick = {

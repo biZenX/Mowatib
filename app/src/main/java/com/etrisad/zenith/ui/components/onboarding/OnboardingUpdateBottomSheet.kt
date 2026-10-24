@@ -64,7 +64,7 @@ fun OnboardingUpdateBottomSheet(
                 fontWeight = FontWeight.Bold
             )
             Text(
-                text = "Keep Zenith updated with the latest features and stability improvements.",
+                text = "Keep Mowatib updated with the latest features and stability improvements.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,

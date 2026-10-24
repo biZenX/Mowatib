@@ -1912,7 +1912,7 @@ private fun renderAndShareProfile(
         canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), bg)
         canvas.drawRect(0f, 0f, width.toFloat(), 300f, banner)
         var y = 140f
-        canvas.drawText("ZENITH PROFILE", 64f, y, accent)
+        canvas.drawText("MOWATIB PROFILE", 64f, y, accent)
         y += 100f
         canvas.drawText(userName.take(24), 64f, y, title)
         y += 70f

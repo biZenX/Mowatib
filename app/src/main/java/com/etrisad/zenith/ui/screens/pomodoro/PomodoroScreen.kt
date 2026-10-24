@@ -184,6 +184,44 @@ fun PomodoroScreen(
                 }
             }
 
+            if (!uiState.isSessionActive) {
+                item(key = "settings") {
+                    TimeSettingsCard(
+                        sessionDuration = uiState.sessionDurationMinutes,
+                        breakDuration = uiState.breakDurationMinutes,
+                        longBreakDuration = uiState.longBreakDurationMinutes,
+                        sessionCount = uiState.sessionCount,
+                        sessionsBeforeLongBreak = uiState.sessionsBeforeLongBreak,
+                        onSessionDurationChange = { viewModel.setSessionDurationMinutes(it) },
+                        onBreakDurationChange = { viewModel.setBreakDurationMinutes(it) },
+                        onLongBreakDurationChange = { viewModel.setLongBreakDurationMinutes(it) },
+                        onSessionCountChange = { viewModel.setSessionCount(it) },
+                        onSessionsBeforeLongBreakChange = { viewModel.setSessionsBeforeLongBreak(it) },
+                        containerColor = containerColor
+                    )
+                }
+
+                item(key = "app_selection") {
+                    AppSelectionCard(
+                        allowedPackages = uiState.allowedPackages,
+                        maxSelection = uiState.maxSelection,
+                        blockAllowedApps = uiState.blockAllowedApps,
+                        pauseable = uiState.pauseable,
+                        presetsJson = uiState.presetsJson,
+                        onAppPickerClick = { showAppPicker = true },
+                        onBlockAllowedAppsChange = { viewModel.setBlockAllowedApps(it) },
+                        onPauseableChange = { viewModel.setPauseable(it) },
+                        onMaxSelectionChange = { viewModel.setMaxSelection(it) },
+                        onSavePreset = { presetNameInput = ""; showPresetSaveSheet = true },
+                        onApplyPreset = { showPresetApplySheet = true },
+                        onDeletePreset = { pendingDeletePreset = it },
+                        onApplyPresetPackages = { viewModel.applyPreset(it) },
+                        containerColor = containerColor,
+                        viewModel = viewModel
+                    )
+                }
+            }
+
             item(key = "ambient_sound") {
                 AmbientSoundCard(
                     containerColor = containerColor
@@ -203,49 +241,11 @@ fun PomodoroScreen(
             }
 
             if (!uiState.isSessionActive) {
-                item(key = "settings") {
-                    TimeSettingsCard(
-                        sessionDuration = uiState.sessionDurationMinutes,
-                        breakDuration = uiState.breakDurationMinutes,
-                        longBreakDuration = uiState.longBreakDurationMinutes,
-                        sessionCount = uiState.sessionCount,
-                        sessionsBeforeLongBreak = uiState.sessionsBeforeLongBreak,
-                        onSessionDurationChange = { viewModel.setSessionDurationMinutes(it) },
-                        onBreakDurationChange = { viewModel.setBreakDurationMinutes(it) },
-                        onLongBreakDurationChange = { viewModel.setLongBreakDurationMinutes(it) },
-                        onSessionCountChange = { viewModel.setSessionCount(it) },
-                        onSessionsBeforeLongBreakChange = { viewModel.setSessionsBeforeLongBreak(it) },
-                        containerColor = containerColor
-                    )
-                }
-
                 item(key = "stats") {
                     Column {
                         PreferenceCategory(title = "Statistics")
                         PomodoroStatsSection(viewModel = viewModel)
                     }
-                }
-            }
-
-            if (!uiState.isSessionActive) {
-                item(key = "app_selection") {
-                    AppSelectionCard(
-                        allowedPackages = uiState.allowedPackages,
-                        maxSelection = uiState.maxSelection,
-                        blockAllowedApps = uiState.blockAllowedApps,
-                        pauseable = uiState.pauseable,
-                        presetsJson = uiState.presetsJson,
-                        onAppPickerClick = { showAppPicker = true },
-                        onBlockAllowedAppsChange = { viewModel.setBlockAllowedApps(it) },
-                        onPauseableChange = { viewModel.setPauseable(it) },
-                        onMaxSelectionChange = { viewModel.setMaxSelection(it) },
-                        onSavePreset = { presetNameInput = ""; showPresetSaveSheet = true },
-                        onApplyPreset = { showPresetApplySheet = true },
-                        onDeletePreset = { pendingDeletePreset = it },
-                        onApplyPresetPackages = { viewModel.applyPreset(it) },
-                        containerColor = containerColor,
-                        viewModel = viewModel
-                    )
                 }
             }
         }

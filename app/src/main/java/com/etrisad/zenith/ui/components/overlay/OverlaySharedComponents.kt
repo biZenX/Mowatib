@@ -60,7 +60,7 @@ val PREDEFINED_PALETTES = listOf(
     OverlayColorPalette("dynamic", Color.Transparent, "Dynamic", isDynamic = true),
     OverlayColorPalette("custom", Color.Transparent, "Custom"),
     OverlayColorPalette("monochrome", Color(0xFF616161), "Monochrome"),
-    OverlayColorPalette("zenith", Color(0xFF4D568D), "Zenith"),
+    OverlayColorPalette("mowatib", Color(0xFF3D5622), "Mowatib"),
     OverlayColorPalette("ocean", Color(0xFF0061A4), "Ocean"),
     OverlayColorPalette("forest", Color(0xFF386B01), "Forest"),
     OverlayColorPalette("rose", Color(0xFF9C4146), "Rose"),

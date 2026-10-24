@@ -65,7 +65,7 @@ fun InterceptBottomSheet(
         val paletteId = userPreferences.overlayPaletteId
         val customHue = userPreferences.overlayCustomHue
 
-        val selectedPalette = PREDEFINED_PALETTES.find { it.id == paletteId }
+        val selectedPalette = PREDEFINED_PALETTES.find { it.id == paletteId || (it.id == "mowatib" && paletteId == "zenith") }
 
         when {
             paletteId == "dynamic" -> {
