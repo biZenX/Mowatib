@@ -131,6 +131,8 @@ fun ZenithTheme(
             FontOption.SYSTEM -> SystemTypography
             FontOption.GOOGLE_SANS_FLEX -> VariableFontFactory.createTypography(gsFlexSettings)
             FontOption.NUNITO -> NunitoTypography
+            FontOption.THMANYAH -> ThmanyahTypography
+            FontOption.IBM_PLEX_SANS_ARABIC -> IbmPlexSansArabicTypography
         }
     }
 

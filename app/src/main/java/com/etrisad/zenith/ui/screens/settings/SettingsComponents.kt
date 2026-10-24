@@ -345,6 +345,8 @@ fun FontSelector(
             
             val fontOptions = listOf(
                 FontOption.SYSTEM to "System",
+                FontOption.THMANYAH to "ثمانية",
+                FontOption.IBM_PLEX_SANS_ARABIC to "IBM Plex",
                 FontOption.GOOGLE_SANS_FLEX to "GS Flex",
                 FontOption.NUNITO to "Nunito"
             )

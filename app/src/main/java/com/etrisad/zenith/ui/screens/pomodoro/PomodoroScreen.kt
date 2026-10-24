@@ -196,6 +196,12 @@ fun PomodoroScreen(
                 )
             }
 
+            item(key = "mowatib_habits") {
+                MowatibHabitsCard(
+                    containerColor = containerColor
+                )
+            }
+
             if (!uiState.isSessionActive) {
                 item(key = "settings") {
                     TimeSettingsCard(

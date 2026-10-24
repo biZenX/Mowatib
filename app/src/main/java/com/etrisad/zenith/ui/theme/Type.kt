@@ -43,5 +43,22 @@ private fun createBasicTypography(fontFamily: FontFamily): Typography {
     )
 }
 
+val ThmanyahFontFamily = FontFamily(
+    androidx.compose.ui.text.font.Font(R.font.thmanyah_sans_regular, FontWeight.Normal),
+    androidx.compose.ui.text.font.Font(R.font.thmanyah_sans_medium, FontWeight.Medium),
+    androidx.compose.ui.text.font.Font(R.font.thmanyah_sans_bold, FontWeight.Bold)
+)
+
+val ibmPlexSansArabicName = GoogleFont("IBM Plex Sans Arabic")
+val IbmPlexSansArabicFontFamily = FontFamily(
+    GoogleFontSource(googleFont = ibmPlexSansArabicName, fontProvider = provider, weight = FontWeight.Normal),
+    GoogleFontSource(googleFont = ibmPlexSansArabicName, fontProvider = provider, weight = FontWeight.Medium),
+    GoogleFontSource(googleFont = ibmPlexSansArabicName, fontProvider = provider, weight = FontWeight.SemiBold),
+    GoogleFontSource(googleFont = ibmPlexSansArabicName, fontProvider = provider, weight = FontWeight.Bold)
+)
+
 val NunitoTypography = createBasicTypography(NunitoFontFamily)
+val ThmanyahTypography = createBasicTypography(ThmanyahFontFamily)
+val IbmPlexSansArabicTypography = createBasicTypography(IbmPlexSansArabicFontFamily)
 val SystemTypography = createBasicTypography(FontFamily.Default)
+

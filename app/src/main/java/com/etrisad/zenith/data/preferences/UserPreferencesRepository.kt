@@ -90,7 +90,7 @@ enum class ThemeConfig {
 }
 
 enum class FontOption {
-    SYSTEM, GOOGLE_SANS_FLEX, NUNITO
+    SYSTEM, GOOGLE_SANS_FLEX, NUNITO, THMANYAH, IBM_PLEX_SANS_ARABIC
 }
 
 enum class GSFlexPreset {
@@ -466,7 +466,7 @@ val ACHIEVEMENT_BANNERS_SEEN = stringPreferencesKey("achievement_banners_seen")
     ) { settings, runtime ->
         UserPreferences(
             themeConfig = ThemeConfig.valueOf(settings[PreferencesKeys.THEME_CONFIG] ?: ThemeConfig.FOLLOW_SYSTEM.name),
-            fontOption = FontOption.valueOf(settings[PreferencesKeys.FONT_OPTION] ?: FontOption.GOOGLE_SANS_FLEX.name),
+            fontOption = runCatching { FontOption.valueOf(settings[PreferencesKeys.FONT_OPTION] ?: FontOption.THMANYAH.name) }.getOrDefault(FontOption.THMANYAH),
             dynamicColor = settings[PreferencesKeys.DYNAMIC_COLOR] ?: true,
             accessibilityDisabled = settings[PreferencesKeys.ACCESSIBILITY_DISABLED] ?: false,
             accessibilityRequired = settings[PreferencesKeys.ACCESSIBILITY_REQUIRED] ?: false,
