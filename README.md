@@ -77,7 +77,7 @@
 2. Open it in Android Studio Ladybug (2024.2.1) or a newer version.
 3. Ensure Android SDK 33+ is installed.
 4. Build and run on a physical device (recommended for proper permission handling).
-5. Pick a flavor: `fullRelease` (`Zenith-full-<version>.apk`) or `storeRelease` (`Zenith-store-<version>.apk`).
+5. Pick a flavor: `fullRelease` (`Mowatib-full-<version>.apk`) or `storeRelease` (`Mowatib-store-<version>.apk`).
 
 ## Download Variants: Full vs Store
 
@@ -85,7 +85,7 @@ Same app ID (`com.etrisad.zenith`), same features. Only distribution and update 
 
 | | Full | Store |
 | --- | --- | --- |
-| File | `Zenith-full-<version>.apk` | `Zenith-store-<version>.apk` |
+| File | `Mowatib-full-<version>.apk` | `Mowatib-store-<version>.apk` |
 | Get it at | GitHub Releases | IzzyOnDroid / OpenAPK |
 | `INTERNET` permission | Yes (`app/src/main/AndroidManifest.xml`) | Removed (`app/src/store/AndroidManifest.xml` uses `tools:node="remove"`) |
 | `BuildConfig.SHOW_UPDATES` | `true` (`app/build.gradle.kts`) | `false` |

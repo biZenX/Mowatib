@@ -65,7 +65,7 @@ androidComponents {
         variant.outputs.forEach { output ->
             val flavor = variant.flavorName ?: ""
             val versionName = android.defaultConfig.versionName
-            output.outputFileName.set("Zenith-${flavor}-${versionName}.apk")
+            output.outputFileName.set("Mowatib-${flavor}-${versionName}.apk")
         }
     }
 }
