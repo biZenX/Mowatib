@@ -192,7 +192,7 @@
 
         <receiver
             android:name=".ui.widget.GlobalStreakWidgetReceiver"
-            android:label="Global Streak"
+            android:label="@string/global_streak_widget_name"
             android:exported="false">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
@@ -205,7 +205,7 @@
 
         <receiver
             android:name=".ui.widget.AppStreakWidgetReceiver"
-            android:label="App Streak"
+            android:label="@string/app_streak_widget_name"
             android:exported="false">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
@@ -218,7 +218,7 @@
 
         <receiver
             android:name=".ui.widget.TotalScreenTimeWidgetReceiver"
-            android:label="Total Screen Time"
+            android:label="@string/total_screen_time_widget_name"
             android:exported="false">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
@@ -231,7 +231,7 @@
 
         <receiver
             android:name=".ui.widget.RemainingTargetWidgetReceiver"
-            android:label="Remaining Target"
+            android:label="@string/remaining_target_widget_name"
             android:exported="false">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
@@ -244,7 +244,7 @@
 
         <receiver
             android:name=".ui.widget.PhoneFreeTimeWidgetReceiver"
-            android:label="Phone Free Time"
+            android:label="@string/phone_free_time_widget_name"
             android:exported="false">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
@@ -266,6 +266,45 @@
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/mowatib_focus_widget_info" />
+        </receiver>
+
+        <receiver
+            android:name=".ui.widget.MowatibPomodoroWidgetReceiver"
+            android:label="@string/mowatib_pomodoro_widget_name"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/mowatib_pomodoro_widget_info" />
+        </receiver>
+
+        <receiver
+            android:name=".ui.widget.MowatibTasksWidgetReceiver"
+            android:label="@string/mowatib_tasks_widget_name"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/mowatib_tasks_widget_info" />
+        </receiver>
+
+        <receiver
+            android:name=".ui.widget.MowatibHabitsWidgetReceiver"
+            android:label="@string/mowatib_habits_widget_name"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/mowatib_habits_widget_info" />
         </receiver>
 
         <meta-data

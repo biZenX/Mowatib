@@ -1,11 +1,22 @@
 <resources>
     <string name="app_name">Mowatib</string>
     <string name="accessibility_service_description">Helps Mowatib identify the currently active application for digital wellbeing features.</string>
+    <string name="global_streak_widget_name">Global Streak</string>
     <string name="global_streak_widget_description">Days in a row under your screen time target.</string>
+    <string name="app_streak_widget_name">App Streak</string>
     <string name="app_streak_widget_description">Streak for one app: shield stays under its limit, goal reaches its target.</string>
+    <string name="total_screen_time_widget_name">Total Screen Time</string>
     <string name="total_screen_time_widget_description">Shows total screen time today.</string>
+    <string name="remaining_target_widget_name">Remaining Target</string>
     <string name="remaining_target_widget_description">Shows remaining time before daily screen time target.</string>
+    <string name="phone_free_time_widget_name">Phone Free Time</string>
     <string name="phone_free_time_widget_description">Shows phone-free time today - how long you haven\'t used your phone, resets daily.</string>
     <string name="mowatib_focus_widget_name">Mowatib Focus</string>
     <string name="mowatib_focus_widget_description">Shows quick focus actions, streaks, and smart tasks.</string>
+    <string name="mowatib_pomodoro_widget_name">Mowatib Focus &amp; Pomodoro</string>
+    <string name="mowatib_pomodoro_widget_description">Quick Pomodoro timer widget for home screen focus with Material 3 Expressive shapes.</string>
+    <string name="mowatib_tasks_widget_name">Mowatib Smart Tasks</string>
+    <string name="mowatib_tasks_widget_description">View and track today\'s smart tasks and progress directly on your home screen.</string>
+    <string name="mowatib_habits_widget_name">Mowatib Habits &amp; Streaks</string>
+    <string name="mowatib_habits_widget_description">Daily habits tracker and commitment streaks with expressive shapes.</string>
 </resources>

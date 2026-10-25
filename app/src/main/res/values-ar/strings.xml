@@ -2,11 +2,22 @@
 <resources>
     <string name="app_name">مواظب</string>
     <string name="accessibility_service_description">تساعد مواظب في التعرف على التطبيق النشط حالياً لتفعيل مميزات التركيز وإدارة الوقت والرفاهية الرقمية.</string>
+    <string name="global_streak_widget_name">سلسلة الالتزام العامة</string>
     <string name="global_streak_widget_description">عدد الأيام المتتالية تحت هدف وقت الشاشة المحدد.</string>
+    <string name="app_streak_widget_name">سلسلة التطبيق</string>
     <string name="app_streak_widget_description">سلسلة الالتزام لتطبيق محدد: الحفاظ على الحدود وتحقيق الهدف اليومي.</string>
+    <string name="total_screen_time_widget_name">إجمالي وقت الشاشة</string>
     <string name="total_screen_time_widget_description">يعرض إجمالي وقت استخدام الشاشة لليوم.</string>
+    <string name="remaining_target_widget_name">الوقت المتبقي من الهدف</string>
     <string name="remaining_target_widget_description">يعرض الوقت المتبقي قبل الوصول للحد اليومي لاستخدام الشاشة.</string>
+    <string name="phone_free_time_widget_name">وقت التحرر من الهاتف</string>
     <string name="phone_free_time_widget_description">يعرض مدة الابتعاد عن الهاتف خلال اليوم، ويعاد ضبطه تلقائياً يومياً.</string>
     <string name="mowatib_focus_widget_name">مواظب للتركيز</string>
     <string name="mowatib_focus_widget_description">اختصارات التركيز السريع، متابعة السلاسل، والمهام الذكية.</string>
+    <string name="mowatib_pomodoro_widget_name">مواظب - مؤقت التركيز والبومودورو</string>
+    <string name="mowatib_pomodoro_widget_description">عداد بومودورو وجلسات التركيز من الشاشة الرئيسية بأشكال ماتيريال ٣ المعبرة.</string>
+    <string name="mowatib_tasks_widget_name">مواظب - قائمة المهام الذكية</string>
+    <string name="mowatib_tasks_widget_description">عرض ومتابعة مهام اليوم ونسبة الإنجاز مباشرة من شاشتك الرئيسية.</string>
+    <string name="mowatib_habits_widget_name">مواظب - متتبع العادات والسلاسل</string>
+    <string name="mowatib_habits_widget_description">سلاسل العادات اليومية وشعلة الالتزام بأشكال معبرة.</string>
 </resources>
