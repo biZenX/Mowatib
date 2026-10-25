@@ -342,6 +342,15 @@ class OverlayActionHandler(
                 }
             }
 
+            if (isEmergency) {
+                scope.launch(Dispatchers.IO) {
+                    try {
+                        com.etrisad.zenith.data.manager.MowatibTelegramManager(overlayManager.context)
+                            .sendShieldBreachAlert(shieldWithTimestamp.appName, shieldWithTimestamp.timeLimitMinutes)
+                    } catch (_: Exception) {}
+                }
+            }
+
             val currentPrefs = SharedMonitoringState.currentPreferences ?: return@launch
             if (currentPrefs.sessionUsageOverlayEnabled) {
                 val isGoal = shieldWithTimestamp.type == FocusType.GOAL

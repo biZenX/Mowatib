@@ -28,6 +28,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -97,10 +100,17 @@ object MowatibHabitsManager {
                         lastCompletedDate = ""
                     )
                 } else {
-                    habit.copy(
+                    val updated = habit.copy(
                         streak = habit.streak + 1,
                         lastCompletedDate = today
                     )
+                    kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+                        try {
+                            com.etrisad.zenith.data.manager.MowatibTelegramManager(context)
+                                .sendHabitCompleted(habit.title, updated.streak)
+                        } catch (_: Exception) {}
+                    }
+                    updated
                 }
             } else habit
         }

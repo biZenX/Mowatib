@@ -426,6 +426,7 @@ fun SettingsCategoryScreen(
                         onShowDbLogViewer = { showDbLogSheet = true },
                         onShowOverlayLogViewer = { showOverlayLogSheet = true }
                     )
+                    "telegram" -> MowatibTelegramSettingsScreen()
                 }
             }
         }

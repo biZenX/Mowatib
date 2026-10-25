@@ -214,6 +214,15 @@ fun SettingsScreen(
                     summary = "Backup, Restore, and Usage Sync",
                     onClick = { navController.navigate(Screen.SettingsCategory.createRoute("Data Management")) },
                     icon = Icons.Outlined.Storage,
+                    shape = RoundedCornerShape(8.dp)
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+                SettingsActionItem(
+                    title = "Telegram Integration",
+                    summary = "ربط التطبيق مع بوت تيليجرام للتقارير وتنبيهات الانضباط",
+                    onClick = { navController.navigate(Screen.SettingsCategory.createRoute("telegram")) },
+                    icon = Icons.Outlined.Chat,
                     shape = RoundedCornerShape(
                         topStart = 8.dp, topEnd = 8.dp,
                         bottomStart = if (preferences.developerModeEnabled) 8.dp else 24.dp,

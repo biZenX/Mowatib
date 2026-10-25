@@ -45,7 +45,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class InterceptOverlayManager(
-    private val context: Context,
+    val context: Context,
     private val preferencesRepository: com.etrisad.zenith.data.preferences.UserPreferencesRepository
 ) {
 
