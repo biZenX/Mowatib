@@ -68,8 +68,13 @@ class GitHubUpdateManager(private val context: Context) {
     }
 
     private fun isNewerVersion(latest: String, current: String): Boolean {
-        val latestParts = latest.split(".").mapNotNull { it.toIntOrNull() }
-        val currentParts = current.split(".").mapNotNull { it.toIntOrNull() }
+        fun sanitize(version: String): List<Int> {
+            val base = version.trim().removePrefix("v").split("-")[0].split("+")[0]
+            return base.split(".").mapNotNull { it.toIntOrNull() }
+        }
+
+        val latestParts = sanitize(latest)
+        val currentParts = sanitize(current)
         
         val maxLength = maxOf(latestParts.size, currentParts.size)
         for (i in 0 until maxLength) {

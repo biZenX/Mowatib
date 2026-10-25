@@ -5,7 +5,48 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.0.0] - 2026-10-26
+## [2.1.0] - 2026-10-26
+
+### Added
+- Add **Telegram Bot Integration** (`MowatibTelegramManager` and `MowatibTelegramSettingsScreen`) allowing real-time synchronization between the app and Telegram.
+- Add deep linking to Telegram bots (`@MowatibAppBot` and `@userinfobot`) to retrieve Chat IDs in a single tap.
+- Add instant connection tester that dispatches verification messages to Telegram directly via Bot API.
+- Add automated Telegram notification triggers for habit completions, Pomodoro sessions, daily recaps, and screen time limit breaches (accountability partner mode).
+- Add support for custom self-hosted Bot Tokens via `@BotFather`.
+- Add 7 Android Glance home screen widgets with Material 3 Expressive shapes:
+  - `MowatibFocusWidget`: Real-time streak tracking, current focus state, and quick launch.
+  - `MowatibPomodoroWidget`: Interactive focus timer with direct start/pause controls.
+  - `MowatibTasksWidget`: Daily checklist with toggleable task status.
+  - `MowatibHabitsWidget`: Habit progression, streaks, and completion state.
+  - `MowatibMotivationalQuoteWidget`: Curated daily Arabic wisdom and discipline quotes.
+  - `MowatibQuickDashboardWidget`: Glanceable summary of screen time, tasks, and habit streaks.
+  - `MowatibAmbientAudioWidget`: Quick toggle for ambient concentration audio.
+- Add Smart Tasks management system (`MowatibTaskManager` and `MowatibTaskCard`) with category tagging, persistence, and completion tracking.
+- Add Habit & Streak tracking engine (`MowatibHabitsCard` and `MowatibHabitsManager`) with streak counts and automated daily resets.
+- Add Ambient Focus Audio engine (`MowatibAmbientSoundManager` and `AmbientSoundCard`) for concentration soundscapes.
+- Add bundled offline font family **IBM Plex Sans Arabic** (Regular, Medium, SemiBold, Bold) in `res/font/`.
+- Add bundled offline font family **Thmanyah Sans** (Regular, Medium, Bold).
+- Add Material Vector Drawables (SVGs / XML vectors) replacing all Unicode chat emojis.
+
+### Changed
+- Bump `versionCode` to `21` and `versionName` to `2.1.0` to guarantee smooth, conflict-free upgrades on user devices.
+- Refactor version comparator in `GitHubUpdateManager` to sanitize tag suffixes and guarantee reliable in-app update checks.
+- Change `applicationId` to `com.bizenx.mowatib` to eliminate package conflicts and allow seamless side-by-side installation.
+- Change internal broadcast actions and authorities from `com.etrisad.zenith.action.*` to `com.bizenx.mowatib.action.*`.
+- Change default system font to IBM Plex Sans Arabic for native RTL Arabic and Latin typographical balance.
+- Overhaul color palette to warm Mowatib creamy tones (`#FDFBF7` light, `#1C1B18` dark) with earthy olive accents (`#3D5622` and `#D2E3B8`).
+
+### Fixed
+- Fix in-app update comparison logic when parsing tag suffixes and prerelease tokens.
+- Fix package collision conflict preventing installation when other packages are present.
+- Fix broken Arabic text layout and bidirectional glyph reversal in mixed-language labels.
+- Fix missing Glance widget imports and unresolved references for daily screen time sync.
+
+### Security
+- Isolate `FileProvider` authority to `com.bizenx.mowatib.fileprovider`.
+- Restrict internal broadcast receivers to explicit Mowatib action namespaces.
+
+## [2.0.0] - 2026-10-24
 
 ### Added
 - Add **Telegram Bot Integration** (`MowatibTelegramManager` and `MowatibTelegramSettingsScreen`) allowing real-time synchronization between the app and Telegram.

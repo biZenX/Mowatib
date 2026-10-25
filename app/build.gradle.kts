@@ -16,8 +16,8 @@ android {
         applicationId = "com.bizenx.mowatib"
         minSdk = 30
         targetSdk = 36
-        versionCode = 20
-        versionName = "2.0.0-mowatib"
+        versionCode = 21
+        versionName = "2.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

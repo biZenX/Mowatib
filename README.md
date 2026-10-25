@@ -15,7 +15,7 @@
   <img src="https://img.shields.io/badge/Package-com.bizenx.mowatib-3D5622?style=for-the-badge">&nbsp;&nbsp;
   <img src="https://img.shields.io/badge/License-GPLv3-blue?style=for-the-badge">&nbsp;&nbsp;
   <a href="https://github.com/biZenX/Mowatib/releases/latest">
-    <img src="https://img.shields.io/badge/Release-v2.0.0-orange?style=for-the-badge&logo=github">
+    <img src="https://img.shields.io/badge/Release-v2.1.0-orange?style=for-the-badge&logo=github">
   </a>
 </p>
 
@@ -24,8 +24,8 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/biZenX/Mowatib/releases/download/v2.0.0-mowatib/Mowatib-v2.0.0.apk">
-    <img src="https://img.shields.io/badge/Download-Mowatib--v2.0.0.apk-2ea44f?style=for-the-badge&logo=android&logoColor=white">
+  <a href="https://github.com/biZenX/Mowatib/releases/download/v2.1.0/Mowatib-v2.1.0.apk">
+    <img src="https://img.shields.io/badge/Download-Mowatib--v2.1.0.apk-2ea44f?style=for-the-badge&logo=android&logoColor=white">
   </a>
   &nbsp;&nbsp;
   <a href="https://github.com/biZenX/Mowatib">
