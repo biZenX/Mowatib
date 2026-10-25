@@ -1,134 +1,168 @@
 <p align="center">
-  <img src="fastlane/metadata/android/en-US/images/icon.png" width="128" height="128">
+  <img src="fastlane/metadata/android/en-US/images/icon.png" width="128" height="128" alt="Mowatib Icon">
 </p>
 
 <h1 align="center">Mowatib (مواظب)</h1>
-<h3 align="center">A Material Design 3 Expressive Digital Wellbeing & Focus Assistant</h3>
+<h3 align="center">A Material Design 3 Expressive Digital Wellbeing, Focus & Habit Platform for Android</h3>
 
 <p align="center">
   <img src="fastlane/metadata/android/en-US/images/featureGraphic.png" alt="Feature Graphic" width="100%">
 </p>
 
 <p align="center">
-  <img src="https://ziadoua.github.io/m3-Markdown-Badges/badges/Android/android2.svg">&nbsp;&nbsp;
-  <img src="https://ziadoua.github.io/m3-Markdown-Badges/badges/AndroidStudio/androidstudio2.svg">&nbsp;&nbsp;
-  <img src="https://ziadoua.github.io/m3-Markdown-Badges/badges/Kotlin/kotlin2.svg">&nbsp;&nbsp;
-  <img src="https://ziadoua.github.io/m3-Markdown-Badges/badges/LicenceGPLv3/licencegplv32.svg">
+  <img src="https://img.shields.io/badge/Platform-Android-3DDC84?style=for-the-badge&logo=android&logoColor=white">&nbsp;&nbsp;
+  <img src="https://img.shields.io/badge/Language-Kotlin-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white">&nbsp;&nbsp;
+  <img src="https://img.shields.io/badge/Package-com.bizenx.mowatib-3D5622?style=for-the-badge">&nbsp;&nbsp;
+  <img src="https://img.shields.io/badge/License-GPLv3-blue?style=for-the-badge">&nbsp;&nbsp;
+  <a href="https://github.com/biZenX/Mowatib/releases/latest">
+    <img src="https://img.shields.io/badge/Release-v2.0.0-orange?style=for-the-badge&logo=github">
+  </a>
 </p>
 
 <p align="center">
-  <strong>Mowatib (مواظب)</strong> is a smart digital wellbeing and focus assistant for Android, built with <strong>Material Design 3 Expressive</strong>. It uses proactive interventions and real-time monitoring to help you break addictive scrolling habits through a fluid, motion-rich experience.
+  <strong>Mowatib (مواظب)</strong> is an open-source, privacy-first digital wellbeing and habit-building assistant for Android, built with <strong>Material Design 3 Expressive</strong>. Through proactive friction, intelligent intervention shields, Telegram accountability bots, and comprehensive focus tools, Mowatib empowers you to break dopamine scrolling loops, cultivate deep focus, and maintain long-term personal discipline.
 </p>
 
 <p align="center">
+  <a href="https://github.com/biZenX/Mowatib/releases/download/v2.0.0-mowatib/Mowatib-v2.0.0.apk">
+    <img src="https://img.shields.io/badge/Download-Mowatib--v2.0.0.apk-2ea44f?style=for-the-badge&logo=android&logoColor=white">
+  </a>
+  &nbsp;&nbsp;
   <a href="https://github.com/biZenX/Mowatib">
     <img src="https://img.shields.io/badge/Repository-Mowatib-6750A4?style=for-the-badge&logo=github&logoColor=white">
   </a>
 </p>
 
-
+---
 
 ## Screenshots
 
 <div align="center">
   <table border="0" cellpadding="0" cellspacing="2" style="border-collapse: collapse;">
     <tr style="border: none;">
-      <td width="32%" style="border: none; padding: 2px;"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/1.png"></td>
-      <td width="32%" style="border: none; padding: 2px;"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2.png"></td>
-      <td width="32%" style="border: none; padding: 2px;"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/3.png"></td>
+      <td width="32%" style="border: none; padding: 2px;"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/1.png" alt="Screenshot 1"></td>
+      <td width="32%" style="border: none; padding: 2px;"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2.png" alt="Screenshot 2"></td>
+      <td width="32%" style="border: none; padding: 2px;"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/3.png" alt="Screenshot 3"></td>
     </tr>
     <tr style="border: none;">
-      <td width="32%" style="border: none; padding: 2px;"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/4.png"></td>
-      <td width="32%" style="border: none; padding: 2px;"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/5.png"></td>
-      <td width="32%" style="border: none; padding: 2px;"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/6.png"></td>
+      <td width="32%" style="border: none; padding: 2px;"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/4.png" alt="Screenshot 4"></td>
+      <td width="32%" style="border: none; padding: 2px;"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/5.png" alt="Screenshot 5"></td>
+      <td width="32%" style="border: none; padding: 2px;"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/6.png" alt="Screenshot 6"></td>
     </tr>
   </table>
 </div>
 
+---
+
 ## Key Features
 
-- **Shield Mode**: Protect specific apps with mindful pauses, usage frequency limits, and emergency use quotas.
-- **Goal Pursuit**: Set and achieve target usage times for productive applications with full-screen lock overlays.
-- **Delay App**: Configurable delay timer before reopening protected apps to break automatic habits.
-- **Mindful Gateway**: Proactively interrupt all non-whitelisted apps with a mindful pause to prevent mindless scrolling.
-- **Bedtime Mode**: Automate your digital detox with customizable schedules, Wind Down notifications, and automatic Do Not Disturb.
-- **Focus Sessions / Smart Schedules**: Time-based app blocking with BLOCK and ALLOW modes, plus notification interception (BLOCK schedules).
-- **Pomodoro**: Focus/break cycles with presets, pause/resume, session history and stats.
-- **Lockdown**: Restrict adding/editing/deleting shields, goals and schedules during set hours and days.
-- **Pause Point**: Mindful tasks before opening apps — waiting, breathing, walk, QR/NFC scan, number slide, switch, math, counting, typing, goal-app choice.
-- **Heatmap & History**: Long-term weekly/monthly/yearly summaries, per-app breakdown, week detail with delta, unlimited swipe-back history.
-- **Website Tracking & Shielding**: Track time spent on specific websites and apply shields to domains across 12+ browsers.
-- **Alarm System**: Multi-alarm with custom sounds, TTS, Pause Point dismiss missions, gradual volume, and wake-up app launching.
-- **Eye Care**: 20-20-20 rule reminders with configurable work/rest durations.
-- **Grace Period**: Time windows where all apps become unblocked.
-- **Incentive Lock**: Progressively unlock shields as you complete goals through five tiers.
-- **Session HUD**: A floating, customizable overlay (size & opacity) that shows remaining time for active sessions.
-- **Early Kick**: Optional reminders or early ejection to help you transition out of apps before your limit expires.
-- **Interactive Widgets**: Keep track of your app streaks and daily focus progress with Material 3 Expressive home screen widgets.
-- **Streak System**: Track global, per-app, per-website, and bedtime streaks with recovery mechanisms.
-- **Level & Achievements**: XP, progressive avatar borders/titles, tiered achievements with global unlock banners.
-- **Notification Insights**: Daily focus recaps, weekly trend comparisons, and milestone celebrations.
-- **Backup & Restore**: Securely save your settings and schedules with automated periodic backups or manual exports.
-- **Expressive Design**: Fully compliant with Material Design 3 Expressive guidelines, featuring fluid motion, adaptive typography (GSFlex), and floating navigation components.
+### 🤖 Telegram Bot Integration & Accountability Partner
+- **Direct Telegram Link**: Connect Mowatib to your Telegram account via Chat ID or deep link to `@MowatibAppBot`.
+- **Instant Connection Test**: Send a real-time verification message to Telegram with a single tap.
+- **Accountability Alerts**: Automatically dispatch warning messages to Telegram when a protected app limit is reached or emergency recharge is used.
+- **Daily Summaries & Recaps**: Receive evening recaps of screen time, completed tasks, and streak progress directly in your Telegram inbox.
+- **Focus Milestones**: Real-time notifications upon completing Pomodoro sessions and maintaining habit streaks.
+- **Custom Bot Support**: Configure your own bot token from `@BotFather` for self-hosted, private workflows.
+
+### 🧩 Material 3 Expressive Home Screen Widgets (7 Glance Widgets)
+- **MowatibFocusWidget**: Glanceable streak indicator, active shield status, and quick launch.
+- **MowatibPomodoroWidget**: Interactive timer controls (Start, Pause, Reset) directly from your launcher.
+- **MowatibTasksWidget**: Interactive daily task checklist with instant toggle completion.
+- **MowatibHabitsWidget**: Daily habit progression, streak tracking, and completion status.
+- **MowatibMotivationalQuoteWidget**: Curated daily Arabic quotes on discipline, focus, and continuous growth.
+- **MowatibQuickDashboardWidget**: At-a-glance dashboard displaying daily screen time, tasks done, and habit counters.
+- **MowatibAmbientAudioWidget**: Quick play/pause control for focus soundscapes.
+
+### 🛡️ App Shields & Proactive Intervention
+- **Shield Mode**: Protect distracting applications with mindful delays, launch limits, and strict lockouts.
+- **Delay App**: Introduce customizable friction timers (5s to 60s) before opening distracting apps to break muscle memory.
+- **Mindful Gateway**: Intercept all non-whitelisted applications with a moment of mindfulness to deter compulsive opening.
+- **Floating Session HUD**: Non-intrusive floating pill indicating remaining session allowance with adjustable opacity and position.
+- **Emergency Quotas**: Configurable emergency recharge tokens for unexpected necessities without abandoning long-term limits.
+
+### 🎯 Habits, Tasks & Ambient Focus Engine
+- **Smart Tasks System**: Integrated checklist supporting categories (Focus, Work, Study) and persistent storage.
+- **Habit & Streak Tracker**: Daily habit ledger with automated midnight reset and streak preservation.
+- **Ambient Focus Audio**: Built-in concentration soundscapes (Rainfall, White Noise, Nature) that play without requiring internet connectivity.
+
+### 🔤 Authentic Typography & Warm Aesthetics
+- **Bundled Offline Fonts**: Fully integrated **IBM Plex Sans Arabic** (`Regular`, `Medium`, `SemiBold`, `Bold`) and **Thmanyah Sans** fonts.
+- **Warm Creamy Palette**: Earthy, soothing color scheme (`#FDFBF7` cream light theme, `#1C1B18` dark theme, `#3D5622` organic olive accents) designed to reduce eye strain.
+- **Pure Vector Drawables**: Zero dependency on platform emojis; all icons use crisp, scalable Material Vector SVGs.
+
+### ⏱️ Pomodoro, Schedules & Mindful Detox
+- **Pomodoro Timer**: Flexible focus/break intervals, session presets, and detailed historical statistics.
+- **Smart Focus Schedules**: Block or allow apps based on recurring calendar days and time windows.
+- **Bedtime Mode**: Automatically silence distracting notifications, wind down screen engagement, and encourage sleep.
+- **Pause Point Challenges**: Mindful friction before opening apps—breathing exercises, math problems, typing drills, step counting, or NFC/QR code scans.
+- **Eye Care (20-20-20)**: Periodic break reminders to prevent digital eye strain during extended work periods.
+- **Lockdown Mode**: Restrict changes to your settings, shields, and goals during critical commitment windows.
+
+---
+
+## Application ID & Coexistence
+
+Mowatib uses the unique application ID:
+```
+com.bizenx.mowatib
+```
+This ensures 100% side-by-side coexistence with any previously installed packages. You can install Mowatib safely without removing existing apps or encountering package collision errors.
+
+---
 
 ## Installation Guide
 
-1. Clone this repository.
-2. Open it in Android Studio Ladybug (2024.2.1) or a newer version.
-3. Ensure Android SDK 33+ is installed.
-4. Build and run on a physical device (recommended for proper permission handling).
-5. Pick a flavor: `fullRelease` (`Mowatib-full-<version>.apk`) or `storeRelease` (`Mowatib-store-<version>.apk`).
+### Download Pre-built APK
+Download the latest signed release APK directly from GitHub:
+👉 **[Download Mowatib-v2.0.0.apk](https://github.com/biZenX/Mowatib/releases/download/v2.0.0-mowatib/Mowatib-v2.0.0.apk)**
 
-## Download Variants: Full vs Store
+### Build from Source
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/biZenX/Mowatib.git
+   cd Mowatib
+   ```
+2. Open the project in **Android Studio Ladybug (2024.2.1)** or newer.
+3. Ensure **Android SDK 34** and **JDK 17** are configured.
+4. Assemble the release build:
+   ```bash
+   ./gradlew assembleFullRelease
+   ```
+5. The generated APK will be located at:
+   ```
+   app/build/outputs/apk/full/release/Mowatib-full-2.0.0-mowatib.apk
+   ```
 
-Same app ID (`com.etrisad.zenith`), same features. Only distribution and update flow differ.
+---
 
-| | Full | Store |
-| --- | --- | --- |
-| File | `Mowatib-full-<version>.apk` | `Mowatib-store-<version>.apk` |
-| Get it at | GitHub Releases | IzzyOnDroid / OpenAPK |
-| `INTERNET` permission | Yes (`app/src/main/AndroidManifest.xml`) | Removed (`app/src/store/AndroidManifest.xml` uses `tools:node="remove"`) |
-| `BuildConfig.SHOW_UPDATES` | `true` (`app/build.gradle.kts`) | `false` |
-| In-app update check (GitHub API via `GitHubUpdateManager`) | Yes: Settings > About > Check for Update, Check update on start, View Changelog, update banner/onboarding | No: all of those are hidden, update via the store instead |
-| External links (View Repository, GitHub profile, website, WhatsApp channel) | Yes | Yes (opened via browser intent, no `INTERNET` needed) |
+## Permissions & Privacy Transparency
 
-In short: use Full if you download from GitHub and want self-update; use Store if you download from IzzyOnDroid/OpenAPK and want a fully offline build.
+Mowatib operates with a privacy-first architecture. All app statistics, habit histories, and usage data remain strictly on your local device.
 
-## Required Permissions
+### Required Permissions
+1. **Usage Access (`PACKAGE_USAGE_STATS`)**: Required to measure screen time and enforce app time limits.
+2. **Display Over Other Apps (`SYSTEM_ALERT_WINDOW`)**: Required to display mindful pauses, session HUDs, and shield screens.
+3. **Query All Packages (`QUERY_ALL_PACKAGES`)**: Required to list installed applications so you can configure shields.
+4. **Post Notifications (`POST_NOTIFICATIONS`)**: Required for goal updates, Pomodoro completion alerts, and daily recaps.
+5. **Foreground Service (`FOREGROUND_SERVICE`)**: Ensures reliable background tracking without process termination.
+6. **Boot Completed (`RECEIVE_BOOT_COMPLETED`)**: Restores alarms, bedtime schedules, and background monitoring after device reboot.
 
-To help you stay focused and break mindless habits, Mowatib needs a few permissions.
+### Optional Permissions
+- **Accessibility Service (`BIND_ACCESSIBILITY_SERVICE`)**: Provides instant app launch detection for immediate shield engagement.
+- **Notification Listener (`BIND_NOTIFICATION_LISTENER_SERVICE`)**: Hides distracting notifications during active focus schedules.
+- **Ignore Battery Optimizations**: Prevents Android from terminating background focus timers.
+- **Exact Alarm (`SCHEDULE_EXACT_ALARM`)**: Ensures midnight habit resets and bedtime schedules trigger precisely.
+- **Internet (`INTERNET`)**: Used exclusively for in-app update checks and optional Telegram Bot integration. No analytics or private telemetry are ever transmitted.
+- **Camera / NFC (`CAMERA`, `NFC`)**: Only accessed if you explicitly configure QR code or NFC scan dismiss tasks in Pause Point.
 
-### Required
-Without these, Mowatib won't be able to track your usage or help you stay mindful.
-
-1. **Usage Stats (`PACKAGE_USAGE_STATS`)**: This lets Mowatib see how much time you spend in your apps so it can help you stick to your limits.
-2. **System Overlay (`SYSTEM_ALERT_WINDOW`)**: This allows Mowatib to show a "Shield" or a timer over other apps when you've reached your limit or need a mindful pause.
-   - **Note for Android Go users**: Some Android Go devices do not allow granting this permission through settings. Grant it from Settings > Apps > Mowatib > Display over other apps (`Settings.ACTION_MANAGE_OVERLAY_PERMISSION`).
-3. **App List (`QUERY_ALL_PACKAGES`)**: Mowatib needs this to show you a list of your apps so you can choose which ones you want to track or block.
-4. **Notifications (`POST_NOTIFICATIONS`)**: Used to send you goal reminders and keep you updated on your focus progress throughout the day.
-5. **Do Not Disturb (`ACCESS_NOTIFICATION_POLICY`)**: This allows Bedtime Mode to automatically silence your phone so you can get a better night's sleep.
-6. **Foreground Service (`FOREGROUND_SERVICE`)**: Required for the AppUsageMonitorService that continuously tracks your app usage, and for alarm playback.
-7. **Full Screen Intent (`USE_FULL_SCREEN_INTENT`)**: Allows Mowatib to show full-screen overlays for alarms and goal reminders over the lock screen.
-8. **Wake Lock (`WAKE_LOCK`)**: Keeps the screen on during alarm display so you can see and dismiss it.
-9. **Boot Completed (`RECEIVE_BOOT_COMPLETED`)**: Restarts Mowatib's monitoring services and re-schedules alarms after your device reboots.
-
-### Optional
-These are optional, but they make Mowatib much more reliable and powerful.
-
-10. **Accessibility Service (`BIND_ACCESSIBILITY_SERVICE`)**: An optional service that helps Mowatib catch when you open a restricted app instantly, making your "Shields" feel much more responsive.
-11. **Notification Intercept (`BIND_NOTIFICATION_LISTENER_SERVICE`)**: This lets Mowatib hide distracting notifications during your scheduled Focus sessions or Bedtime.
-12. **Battery Optimization**: This tells Android not to close Mowatib in the background, ensuring your focus time is always tracked accurately.
-13. **Precise Timing (`SCHEDULE_EXACT_ALARM`)**: Makes sure your daily resets, bedtime schedules, and reminders happen exactly when they're supposed to.
-14. **Storage Access (`READ_EXTERNAL_STORAGE`)**: Only used if you want to use the Backup & Restore feature to save or load your settings.
-15. **Internet Access (`INTERNET`)**: Used to check for app updates via GitHub API.
-16. **Calendar Access (`READ_CALENDAR`)**: Enables the "Show Current Event" feature, which displays your current calendar event during the app-opening delay in the intercept overlay.
-17. **Camera (`CAMERA`)**: Only needed if you use QR Scan tasks in Pause Point, so you can scan one of your saved QR codes to continue.
-18. **NFC (`NFC`)**: Only needed if you use NFC Scan tasks in Pause Point.
+---
 
 ## Author & Maintainer
 
-- **[biZenX (Abdelrahman Karim)](https://github.com/biZenX)** - Maintainer & Lead Developer of Mowatib.
+- **[biZenX (Abdelrahman Karim)](https://github.com/biZenX)** — Maintainer & Lead Developer of Mowatib.
+
+---
 
 ## License
 
-Licensed under the **[GNU General Public License v3.0](LICENSE)**.
+This project is licensed under the **[GNU General Public License v3.0](LICENSE)**.
