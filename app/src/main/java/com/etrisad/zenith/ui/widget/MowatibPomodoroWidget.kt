@@ -30,6 +30,7 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextAlign
 import androidx.glance.text.TextStyle
 import com.etrisad.zenith.MainActivity
+import com.etrisad.zenith.R
 
 class MowatibPomodoroWidget : GlanceAppWidget() {
     override val sizeMode: SizeMode = SizeMode.Exact
@@ -102,12 +103,11 @@ class MowatibPomodoroWidget : GlanceAppWidget() {
                         modifier = GlanceModifier.fillMaxSize(),
                         colorFilter = ColorFilter.tint(GlanceTheme.colors.primaryContainer)
                     )
-                    Text(
-                        text = "⏱️",
-                        style = TextStyle(
-                            fontSize = (14 * scale).sp,
-                            textAlign = TextAlign.Center
-                        )
+                    Image(
+                        provider = ImageProvider(R.drawable.ic_timer),
+                        contentDescription = null,
+                        modifier = GlanceModifier.size((16 * scale).dp),
+                        colorFilter = ColorFilter.tint(GlanceTheme.colors.onPrimaryContainer)
                     )
                 }
 
@@ -133,17 +133,28 @@ class MowatibPomodoroWidget : GlanceAppWidget() {
                     )
                 )
 
-                Spacer(modifier = GlanceModifier.height((2 * scale).dp))
+                Spacer(modifier = GlanceModifier.height((3 * scale).dp))
 
-                Text(
-                    text = "▶ ابدأ الآن",
-                    style = TextStyle(
-                        color = GlanceTheme.colors.onSurfaceVariant,
-                        fontSize = (10 * scale).sp,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Image(
+                        provider = ImageProvider(R.drawable.ic_play_arrow),
+                        contentDescription = null,
+                        modifier = GlanceModifier.size((12 * scale).dp),
+                        colorFilter = ColorFilter.tint(GlanceTheme.colors.onSurfaceVariant)
                     )
-                )
+                    Spacer(modifier = GlanceModifier.width((4 * scale).dp))
+                    Text(
+                        text = "ابدأ الآن",
+                        style = TextStyle(
+                            color = GlanceTheme.colors.onSurfaceVariant,
+                            fontSize = (10 * scale).sp,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center
+                        )
+                    )
+                }
             }
         }
     }

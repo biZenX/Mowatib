@@ -904,17 +904,17 @@ fun UpdateBottomSheetPreview() {
                         > This update is critical for database safety.
                         
                         ## New Features
-                        * ✨ **Material 3 Expressive**: New floating tab bar.
-                        * 🚀 **GitHub Update Checker**: Fast updates.
+                        * **Material 3 Expressive**: New floating tab bar.
+                        * **GitHub Update Checker**: Fast updates.
                         ![Preview Image](https://raw.githubusercontent.com/biZenX/Mowatib/main/fastlane/metadata/android/en-US/images/featureGraphic.png)
                         
                         <img src="https://raw.githubusercontent.com/biZenX/Mowatib/main/fastlane/metadata/android/en-US/images/featureGraphic.png" alt="Banner" />
 
                         ## Improvements
                         ### Performance
-                        * ⚡ Optimized usage history loading.
+                        * Optimized usage history loading.
                         ### UI/UX
-                        * 📱 Better support for foldable devices.
+                        * Better support for foldable devices.
                         
                         This version is the result of many weeks of work.
                     """.trimIndent(),

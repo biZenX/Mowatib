@@ -26,11 +26,13 @@ import androidx.glance.appwidget.provideContent
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Box
 import androidx.glance.layout.Column
+import androidx.glance.layout.Row
 import androidx.glance.layout.Spacer
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.height
 import androidx.glance.layout.padding
 import androidx.glance.layout.size
+import androidx.glance.layout.width
 import androidx.glance.state.GlanceStateDefinition
 import androidx.glance.state.PreferencesGlanceStateDefinition
 import androidx.glance.text.FontWeight
@@ -38,6 +40,7 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextAlign
 import androidx.glance.text.TextStyle
 import com.etrisad.zenith.MainActivity
+import com.etrisad.zenith.R
 import java.util.Calendar
 
 class MowatibMotivationalQuoteWidget : GlanceAppWidget() {
@@ -118,15 +121,26 @@ class MowatibMotivationalQuoteWidget : GlanceAppWidget() {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "✨ ومضة مواظب",
-                    style = TextStyle(
-                        color = GlanceTheme.colors.primary,
-                        fontSize = (11 * scale).sp,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Image(
+                        provider = ImageProvider(R.drawable.ic_auto_awesome),
+                        contentDescription = null,
+                        modifier = GlanceModifier.size((14 * scale).dp),
+                        colorFilter = ColorFilter.tint(GlanceTheme.colors.primary)
                     )
-                )
+                    Spacer(modifier = GlanceModifier.width((4 * scale).dp))
+                    Text(
+                        text = "ومضة مواظب",
+                        style = TextStyle(
+                            color = GlanceTheme.colors.primary,
+                            fontSize = (11 * scale).sp,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center
+                        )
+                    )
+                }
 
                 Spacer(modifier = GlanceModifier.height((6 * scale).dp))
 

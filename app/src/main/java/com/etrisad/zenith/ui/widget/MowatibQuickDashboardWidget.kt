@@ -16,6 +16,9 @@ import androidx.glance.appwidget.action.actionStartActivity
 import androidx.glance.appwidget.cornerRadius
 import androidx.glance.appwidget.provideContent
 import androidx.glance.background
+import androidx.glance.ColorFilter
+import androidx.glance.Image
+import androidx.glance.ImageProvider
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Box
 import androidx.glance.layout.Column
@@ -25,6 +28,7 @@ import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.height
 import androidx.glance.layout.padding
+import androidx.glance.layout.size
 import androidx.glance.layout.width
 import androidx.glance.state.GlanceStateDefinition
 import androidx.glance.state.PreferencesGlanceStateDefinition
@@ -33,6 +37,7 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextAlign
 import androidx.glance.text.TextStyle
 import com.etrisad.zenith.MainActivity
+import com.etrisad.zenith.R
 import com.etrisad.zenith.ZenithApplication
 import com.etrisad.zenith.data.local.MowatibTaskManager
 import com.etrisad.zenith.ui.screens.pomodoro.MowatibHabitsManager
@@ -121,15 +126,26 @@ class MowatibQuickDashboardWidget : GlanceAppWidget() {
                 modifier = GlanceModifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "🌱 مواظب — لوحة اليوم",
-                    style = TextStyle(
-                        color = GlanceTheme.colors.primary,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold
-                    ),
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
                     modifier = GlanceModifier.defaultWeight()
-                )
+                ) {
+                    Image(
+                        provider = ImageProvider(R.drawable.ic_spa),
+                        contentDescription = null,
+                        modifier = GlanceModifier.size(18.dp),
+                        colorFilter = ColorFilter.tint(GlanceTheme.colors.primary)
+                    )
+                    Spacer(modifier = GlanceModifier.width(6.dp))
+                    Text(
+                        text = "مواظب — لوحة اليوم",
+                        style = TextStyle(
+                            color = GlanceTheme.colors.primary,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    )
+                }
 
                 Box(
                     modifier = GlanceModifier
@@ -137,14 +153,23 @@ class MowatibQuickDashboardWidget : GlanceAppWidget() {
                         .background(GlanceTheme.colors.primaryContainer)
                         .padding(horizontal = 8.dp, vertical = 2.dp)
                 ) {
-                    Text(
-                        text = if (streak > 0) "🔥 $streak يوم" else "⚡ انطلق",
-                        style = TextStyle(
-                            color = GlanceTheme.colors.onPrimaryContainer,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Image(
+                            provider = ImageProvider(if (streak > 0) R.drawable.ic_fire_department_outlined else R.drawable.ic_bolt),
+                            contentDescription = null,
+                            modifier = GlanceModifier.size(12.dp),
+                            colorFilter = ColorFilter.tint(GlanceTheme.colors.onPrimaryContainer)
                         )
-                    )
+                        Spacer(modifier = GlanceModifier.width(4.dp))
+                        Text(
+                            text = if (streak > 0) "$streak يوم" else "انطلق",
+                            style = TextStyle(
+                                color = GlanceTheme.colors.onPrimaryContainer,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        )
+                    }
                 }
             }
 
@@ -158,7 +183,7 @@ class MowatibQuickDashboardWidget : GlanceAppWidget() {
                 MetricCard(
                     title = "وقت الشاشة",
                     value = screenTimeText,
-                    icon = "📱",
+                    iconRes = R.drawable.ic_phone_android,
                     modifier = GlanceModifier.defaultWeight()
                 )
 
@@ -168,7 +193,7 @@ class MowatibQuickDashboardWidget : GlanceAppWidget() {
                 MetricCard(
                     title = "المهام",
                     value = "$completedTasks/$totalTasks",
-                    icon = "✅",
+                    iconRes = R.drawable.ic_task_alt,
                     modifier = GlanceModifier.defaultWeight()
                 )
 
@@ -178,7 +203,7 @@ class MowatibQuickDashboardWidget : GlanceAppWidget() {
                 MetricCard(
                     title = "العادات",
                     value = "$completedHabits/$totalHabits",
-                    icon = "⭐",
+                    iconRes = R.drawable.ic_star,
                     modifier = GlanceModifier.defaultWeight()
                 )
             }
@@ -189,7 +214,7 @@ class MowatibQuickDashboardWidget : GlanceAppWidget() {
     private fun MetricCard(
         title: String,
         value: String,
-        icon: String,
+        iconRes: Int,
         modifier: GlanceModifier
     ) {
         Box(
@@ -202,11 +227,13 @@ class MowatibQuickDashboardWidget : GlanceAppWidget() {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(
-                    text = icon,
-                    style = TextStyle(fontSize = 14.sp, textAlign = TextAlign.Center)
+                Image(
+                    provider = ImageProvider(iconRes),
+                    contentDescription = null,
+                    modifier = GlanceModifier.size(16.dp),
+                    colorFilter = ColorFilter.tint(GlanceTheme.colors.primary)
                 )
-                Spacer(modifier = GlanceModifier.height(2.dp))
+                Spacer(modifier = GlanceModifier.height(3.dp))
                 Text(
                     text = value,
                     style = TextStyle(

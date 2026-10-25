@@ -31,6 +31,7 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextAlign
 import androidx.glance.text.TextStyle
 import com.etrisad.zenith.MainActivity
+import com.etrisad.zenith.R
 import com.etrisad.zenith.ui.screens.pomodoro.MowatibHabitsManager
 
 class MowatibHabitsWidget : GlanceAppWidget() {
@@ -81,24 +82,44 @@ class MowatibHabitsWidget : GlanceAppWidget() {
                 modifier = GlanceModifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "🌱 عادات مواظب",
-                    style = TextStyle(
-                        color = GlanceTheme.colors.onSurface,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Bold
-                    ),
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
                     modifier = GlanceModifier.defaultWeight()
-                )
-
-                Text(
-                    text = "🔥 سلاسل الالتزام",
-                    style = TextStyle(
-                        color = GlanceTheme.colors.primary,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold
+                ) {
+                    Image(
+                        provider = ImageProvider(R.drawable.ic_spa),
+                        contentDescription = null,
+                        modifier = GlanceModifier.size(18.dp),
+                        colorFilter = ColorFilter.tint(GlanceTheme.colors.primary)
                     )
-                )
+                    Spacer(modifier = GlanceModifier.width(6.dp))
+                    Text(
+                        text = "عادات مواظب",
+                        style = TextStyle(
+                            color = GlanceTheme.colors.onSurface,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    )
+                }
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Image(
+                        provider = ImageProvider(R.drawable.ic_fire_department_outlined),
+                        contentDescription = null,
+                        modifier = GlanceModifier.size(14.dp),
+                        colorFilter = ColorFilter.tint(GlanceTheme.colors.primary)
+                    )
+                    Spacer(modifier = GlanceModifier.width(4.dp))
+                    Text(
+                        text = "سلاسل الالتزام",
+                        style = TextStyle(
+                            color = GlanceTheme.colors.primary,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    )
+                }
             }
 
             Spacer(modifier = GlanceModifier.height(8.dp))
@@ -109,7 +130,7 @@ class MowatibHabitsWidget : GlanceAppWidget() {
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "ابدأ بناء عاداتك اليومية\nمع مواظب الآن 🌿",
+                        text = "ابدأ بناء عاداتك اليومية\nمع مواظب الآن",
                         style = TextStyle(
                             color = GlanceTheme.colors.onSurfaceVariant,
                             fontSize = 12.sp,
@@ -152,14 +173,23 @@ class MowatibHabitsWidget : GlanceAppWidget() {
                                 .background(GlanceTheme.colors.tertiaryContainer)
                                 .padding(horizontal = 7.dp, vertical = 2.dp)
                         ) {
-                            Text(
-                                text = "🔥 ${habit.streak} يوم",
-                                style = TextStyle(
-                                    color = GlanceTheme.colors.onTertiaryContainer,
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Image(
+                                    provider = ImageProvider(R.drawable.ic_fire_department_outlined),
+                                    contentDescription = null,
+                                    modifier = GlanceModifier.size(12.dp),
+                                    colorFilter = ColorFilter.tint(GlanceTheme.colors.onTertiaryContainer)
                                 )
-                            )
+                                Spacer(modifier = GlanceModifier.width(3.dp))
+                                Text(
+                                    text = "${habit.streak} يوم",
+                                    style = TextStyle(
+                                        color = GlanceTheme.colors.onTertiaryContainer,
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                )
+                            }
                         }
                     }
                 }

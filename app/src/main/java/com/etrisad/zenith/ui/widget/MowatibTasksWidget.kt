@@ -24,7 +24,11 @@ import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextAlign
 import androidx.glance.text.TextStyle
+import androidx.glance.ColorFilter
+import androidx.glance.Image
+import androidx.glance.ImageProvider
 import com.etrisad.zenith.MainActivity
+import com.etrisad.zenith.R
 import com.etrisad.zenith.data.local.MowatibTaskManager
 
 class MowatibTasksWidget : GlanceAppWidget() {
@@ -83,15 +87,26 @@ class MowatibTasksWidget : GlanceAppWidget() {
                 modifier = GlanceModifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "📝 مهام مواظب",
-                    style = TextStyle(
-                        color = GlanceTheme.colors.onSurface,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Bold
-                    ),
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
                     modifier = GlanceModifier.defaultWeight()
-                )
+                ) {
+                    Image(
+                        provider = ImageProvider(R.drawable.ic_task_alt),
+                        contentDescription = null,
+                        modifier = GlanceModifier.size(18.dp),
+                        colorFilter = ColorFilter.tint(GlanceTheme.colors.primary)
+                    )
+                    Spacer(modifier = GlanceModifier.width(6.dp))
+                    Text(
+                        text = "مهام مواظب",
+                        style = TextStyle(
+                            color = GlanceTheme.colors.onSurface,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    )
+                }
 
                 Box(
                     modifier = GlanceModifier
@@ -118,7 +133,7 @@ class MowatibTasksWidget : GlanceAppWidget() {
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "لا توجد مهام حالياً\nاضغط لإضافة مهمة جديدة ✨",
+                        text = "لا توجد مهام حالياً\nاضغط لإضافة مهمة جديدة",
                         style = TextStyle(
                             color = GlanceTheme.colors.onSurfaceVariant,
                             fontSize = 12.sp,
@@ -134,14 +149,13 @@ class MowatibTasksWidget : GlanceAppWidget() {
                             .padding(vertical = 3.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = if (task.isCompleted) "✓ " else "○ ",
-                            style = TextStyle(
-                                color = if (task.isCompleted) GlanceTheme.colors.primary else GlanceTheme.colors.onSurfaceVariant,
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Bold
-                            )
+                        Image(
+                            provider = ImageProvider(if (task.isCompleted) R.drawable.ic_check else R.drawable.ic_radio_button_unchecked),
+                            contentDescription = null,
+                            modifier = GlanceModifier.size(16.dp),
+                            colorFilter = ColorFilter.tint(if (task.isCompleted) GlanceTheme.colors.primary else GlanceTheme.colors.onSurfaceVariant)
                         )
+                        Spacer(modifier = GlanceModifier.width(6.dp))
 
                         Text(
                             text = task.title,

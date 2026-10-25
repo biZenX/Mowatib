@@ -30,11 +30,13 @@ import androidx.glance.appwidget.provideContent
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Box
 import androidx.glance.layout.Column
+import androidx.glance.layout.Row
 import androidx.glance.layout.Spacer
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.height
 import androidx.glance.layout.padding
 import androidx.glance.layout.size
+import androidx.glance.layout.width
 import androidx.glance.state.GlanceStateDefinition
 import androidx.glance.state.PreferencesGlanceStateDefinition
 import androidx.glance.text.FontWeight
@@ -142,14 +144,32 @@ class MowatibFocusWidget : GlanceAppWidget() {
                             modifier = GlanceModifier.fillMaxSize(),
                             colorFilter = ColorFilter.tint(GlanceTheme.colors.primaryContainer)
                         )
-                        Text(
-                            text = if (currentStreak > 0) "🔥 $currentStreak" else "⚡",
-                            style = TextStyle(
-                                color = GlanceTheme.colors.onPrimaryContainer,
-                                fontSize = (12 * scaleFactor).sp,
-                                fontWeight = FontWeight.Bold
+                        if (currentStreak > 0) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Image(
+                                    provider = ImageProvider(R.drawable.ic_fire_department_outlined),
+                                    contentDescription = null,
+                                    modifier = GlanceModifier.size((14 * scaleFactor).dp),
+                                    colorFilter = ColorFilter.tint(GlanceTheme.colors.onPrimaryContainer)
+                                )
+                                Spacer(modifier = GlanceModifier.width((2 * scaleFactor).dp))
+                                Text(
+                                    text = "$currentStreak",
+                                    style = TextStyle(
+                                        color = GlanceTheme.colors.onPrimaryContainer,
+                                        fontSize = (12 * scaleFactor).sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                )
+                            }
+                        } else {
+                            Image(
+                                provider = ImageProvider(R.drawable.ic_bolt),
+                                contentDescription = null,
+                                modifier = GlanceModifier.size((18 * scaleFactor).dp),
+                                colorFilter = ColorFilter.tint(GlanceTheme.colors.onPrimaryContainer)
                             )
-                        )
+                        }
                     }
 
                     Spacer(modifier = GlanceModifier.height((4 * scaleFactor).dp))

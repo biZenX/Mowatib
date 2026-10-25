@@ -26,11 +26,13 @@ import androidx.glance.appwidget.provideContent
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Box
 import androidx.glance.layout.Column
+import androidx.glance.layout.Row
 import androidx.glance.layout.Spacer
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.height
 import androidx.glance.layout.padding
 import androidx.glance.layout.size
+import androidx.glance.layout.width
 import androidx.glance.state.GlanceStateDefinition
 import androidx.glance.state.PreferencesGlanceStateDefinition
 import androidx.glance.text.FontWeight
@@ -38,6 +40,7 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextAlign
 import androidx.glance.text.TextStyle
 import com.etrisad.zenith.MainActivity
+import com.etrisad.zenith.R
 import com.etrisad.zenith.util.MowatibAmbientSoundManager
 
 class MowatibAmbientAudioWidget : GlanceAppWidget() {
@@ -107,15 +110,26 @@ class MowatibAmbientAudioWidget : GlanceAppWidget() {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = if (isPlaying) "🎧 صوت نشط" else "🎧 بيئة التركيز",
-                    style = TextStyle(
-                        color = GlanceTheme.colors.primary,
-                        fontSize = (11 * scale).sp,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Image(
+                        provider = ImageProvider(R.drawable.ic_headphones),
+                        contentDescription = null,
+                        modifier = GlanceModifier.size((14 * scale).dp),
+                        colorFilter = ColorFilter.tint(GlanceTheme.colors.primary)
                     )
-                )
+                    Spacer(modifier = GlanceModifier.width((4 * scale).dp))
+                    Text(
+                        text = if (isPlaying) "صوت نشط" else "بيئة التركيز",
+                        style = TextStyle(
+                            color = GlanceTheme.colors.primary,
+                            fontSize = (11 * scale).sp,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center
+                        )
+                    )
+                }
 
                 Spacer(modifier = GlanceModifier.height((6 * scale).dp))
 
@@ -131,15 +145,26 @@ class MowatibAmbientAudioWidget : GlanceAppWidget() {
 
                 Spacer(modifier = GlanceModifier.height((6 * scale).dp))
 
-                Text(
-                    text = if (isPlaying) "⏸ إيقاف مؤقت" else "▶ تشغيل الصوت",
-                    style = TextStyle(
-                        color = GlanceTheme.colors.onSurfaceVariant,
-                        fontSize = (11 * scale).sp,
-                        fontWeight = FontWeight.Medium,
-                        textAlign = TextAlign.Center
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Image(
+                        provider = ImageProvider(if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play_arrow),
+                        contentDescription = null,
+                        modifier = GlanceModifier.size((12 * scale).dp),
+                        colorFilter = ColorFilter.tint(GlanceTheme.colors.onSurfaceVariant)
                     )
-                )
+                    Spacer(modifier = GlanceModifier.width((4 * scale).dp))
+                    Text(
+                        text = if (isPlaying) "إيقاف مؤقت" else "تشغيل الصوت",
+                        style = TextStyle(
+                            color = GlanceTheme.colors.onSurfaceVariant,
+                            fontSize = (11 * scale).sp,
+                            fontWeight = FontWeight.Medium,
+                            textAlign = TextAlign.Center
+                        )
+                    )
+                }
             }
         }
     }
