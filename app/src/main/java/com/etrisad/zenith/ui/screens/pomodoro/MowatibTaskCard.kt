@@ -58,13 +58,13 @@ fun MowatibTaskCard(
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
                     Text(
-                        text = "مهام جلسة التركيز (Mowatib Tasks)",
+                        text = "مهام جلسة التركيز",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
                     val completedCount = tasks.count { it.isCompleted }
                     Text(
-                        text = "$completedCount من أصل ${tasks.size} مهام مكتملة",
+                        text = if (tasks.isEmpty()) "لا توجد مهام حالياً" else "تم إنجاز $completedCount من ${tasks.size} مهام",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.primary
                     )

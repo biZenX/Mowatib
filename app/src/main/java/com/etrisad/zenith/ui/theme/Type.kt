@@ -49,12 +49,11 @@ val ThmanyahFontFamily = FontFamily(
     androidx.compose.ui.text.font.Font(R.font.thmanyah_sans_bold, FontWeight.Bold)
 )
 
-val ibmPlexSansArabicName = GoogleFont("IBM Plex Sans Arabic")
 val IbmPlexSansArabicFontFamily = FontFamily(
-    GoogleFontSource(googleFont = ibmPlexSansArabicName, fontProvider = provider, weight = FontWeight.Normal),
-    GoogleFontSource(googleFont = ibmPlexSansArabicName, fontProvider = provider, weight = FontWeight.Medium),
-    GoogleFontSource(googleFont = ibmPlexSansArabicName, fontProvider = provider, weight = FontWeight.SemiBold),
-    GoogleFontSource(googleFont = ibmPlexSansArabicName, fontProvider = provider, weight = FontWeight.Bold)
+    androidx.compose.ui.text.font.Font(R.font.ibm_plex_sans_arabic_regular, FontWeight.Normal),
+    androidx.compose.ui.text.font.Font(R.font.ibm_plex_sans_arabic_medium, FontWeight.Medium),
+    androidx.compose.ui.text.font.Font(R.font.ibm_plex_sans_arabic_semibold, FontWeight.SemiBold),
+    androidx.compose.ui.text.font.Font(R.font.ibm_plex_sans_arabic_bold, FontWeight.Bold)
 )
 
 val NunitoTypography = createBasicTypography(NunitoFontFamily)

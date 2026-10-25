@@ -344,11 +344,11 @@ fun FontSelector(
             Spacer(modifier = Modifier.height(16.dp))
             
             val fontOptions = listOf(
-                FontOption.SYSTEM to "System",
-                FontOption.THMANYAH to "ثمانية",
-                FontOption.IBM_PLEX_SANS_ARABIC to "IBM Plex",
+                FontOption.IBM_PLEX_SANS_ARABIC to "IBM Plex Sans (مواظب)",
+                FontOption.THMANYAH to "ثمانية (Thmanyah)",
                 FontOption.GOOGLE_SANS_FLEX to "GS Flex",
-                FontOption.NUNITO to "Nunito"
+                FontOption.NUNITO to "Nunito",
+                FontOption.SYSTEM to "النظام (System)"
             )
 
             @OptIn(ExperimentalLayoutApi::class)

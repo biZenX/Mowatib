@@ -13,7 +13,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.etrisad.zenith"
+        applicationId = "com.bizenx.mowatib"
         minSdk = 30
         targetSdk = 36
         versionCode = 20

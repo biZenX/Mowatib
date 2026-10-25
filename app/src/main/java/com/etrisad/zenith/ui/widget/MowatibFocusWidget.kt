@@ -143,7 +143,7 @@ class MowatibFocusWidget : GlanceAppWidget() {
                             colorFilter = ColorFilter.tint(GlanceTheme.colors.primaryContainer)
                         )
                         Text(
-                            text = if (currentStreak > 0) "${currentStreak}d" else "⚡",
+                            text = if (currentStreak > 0) "🔥 $currentStreak" else "⚡",
                             style = TextStyle(
                                 color = GlanceTheme.colors.onPrimaryContainer,
                                 fontSize = (12 * scaleFactor).sp,

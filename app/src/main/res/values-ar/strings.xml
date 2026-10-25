@@ -20,4 +20,10 @@
     <string name="mowatib_tasks_widget_description">عرض ومتابعة مهام اليوم ونسبة الإنجاز مباشرة من شاشتك الرئيسية.</string>
     <string name="mowatib_habits_widget_name">مواظب - متتبع العادات والسلاسل</string>
     <string name="mowatib_habits_widget_description">سلاسل العادات اليومية وشعلة الالتزام بأشكال معبرة.</string>
+    <string name="mowatib_quote_widget_name">مواظب - ومضة اليوم والتحفيز</string>
+    <string name="mowatib_quote_widget_description">حكمة واقتباس يومي يعزز الانضباط والمواظبة.</string>
+    <string name="mowatib_dashboard_widget_name">مواظب - لوحة التحكم الشاملة</string>
+    <string name="mowatib_dashboard_widget_description">نظرة فورية على وقت الشاشة، المهام، وسلاسل الالتزام.</string>
+    <string name="mowatib_audio_widget_name">مواظب - مشغل أصوات الهدوء والتركيز</string>
+    <string name="mowatib_audio_widget_description">أصوات طبيعية وتلاوة هادئة لبيئة عمل وتركيز عميق.</string>
 </resources>

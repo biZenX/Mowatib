@@ -88,7 +88,7 @@
             android:name=".ui.components.nfc.NfcScanActivity"
             android:exported="false"
             android:launchMode="singleTop"
-            android:taskAffinity="com.etrisad.zenith.nfcscan"
+            android:taskAffinity="com.bizenx.mowatib.nfcscan"
             android:excludeFromRecents="true"
             android:showWhenLocked="true"
             android:turnScreenOn="true"
@@ -118,7 +118,7 @@
             android:name=".crash.CrashActivity"
             android:exported="false"
             android:launchMode="singleTask"
-            android:taskAffinity="com.etrisad.zenith.crash"
+            android:taskAffinity="com.bizenx.mowatib.crash"
             android:excludeFromRecents="true"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize|uiMode|locale|density|fontScale"
             android:theme="@style/Theme.Zenith" />
@@ -142,7 +142,7 @@
             android:enabled="true"
             android:exported="false">
             <intent-filter>
-                <action android:name="com.etrisad.zenith.action.MIDNIGHT_RESET" />
+                <action android:name="com.bizenx.mowatib.action.MIDNIGHT_RESET" />
             </intent-filter>
         </receiver>
 
@@ -151,9 +151,9 @@
             android:enabled="true"
             android:exported="false">
             <intent-filter>
-                <action android:name="com.etrisad.zenith.action.FIRE_ALARM" />
-                <action android:name="com.etrisad.zenith.action.CHECK_USAGE" />
-                <action android:name="com.etrisad.zenith.action.RE_TRIGGER_ALARM" />
+                <action android:name="com.bizenx.mowatib.action.FIRE_ALARM" />
+                <action android:name="com.bizenx.mowatib.action.CHECK_USAGE" />
+                <action android:name="com.bizenx.mowatib.action.RE_TRIGGER_ALARM" />
             </intent-filter>
         </receiver>
 
@@ -174,8 +174,8 @@
             android:enabled="true"
             android:exported="true">
             <intent-filter>
-                <action android:name="com.etrisad.zenith.action.HEARTBEAT" />
-                <action android:name="com.etrisad.zenith.action.REFRESH_SERVICES" />
+                <action android:name="com.bizenx.mowatib.action.HEARTBEAT" />
+                <action android:name="com.bizenx.mowatib.action.REFRESH_SERVICES" />
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
@@ -305,6 +305,45 @@
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/mowatib_habits_widget_info" />
+        </receiver>
+
+        <receiver
+            android:name=".ui.widget.MowatibMotivationalQuoteWidgetReceiver"
+            android:label="@string/mowatib_quote_widget_name"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/mowatib_quote_widget_info" />
+        </receiver>
+
+        <receiver
+            android:name=".ui.widget.MowatibQuickDashboardWidgetReceiver"
+            android:label="@string/mowatib_dashboard_widget_name"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/mowatib_dashboard_widget_info" />
+        </receiver>
+
+        <receiver
+            android:name=".ui.widget.MowatibAmbientAudioWidgetReceiver"
+            android:label="@string/mowatib_audio_widget_name"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/mowatib_audio_widget_info" />
         </receiver>
 
         <meta-data

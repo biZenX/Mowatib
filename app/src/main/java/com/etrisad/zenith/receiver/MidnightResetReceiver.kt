@@ -16,6 +16,6 @@ class MidnightResetReceiver : BroadcastReceiver() {
     }
 
     companion object {
-        const val ACTION_START_MIDNIGHT_RESET = "com.etrisad.zenith.action.MIDNIGHT_RESET"
+        const val ACTION_START_MIDNIGHT_RESET = "com.bizenx.mowatib.action.MIDNIGHT_RESET"
     }
 }

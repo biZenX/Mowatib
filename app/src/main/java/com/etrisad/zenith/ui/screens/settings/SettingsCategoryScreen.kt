@@ -380,7 +380,7 @@ fun SettingsCategoryScreen(
                             try {
                                 val alarmManager = context.getSystemService(android.content.Context.ALARM_SERVICE) as android.app.AlarmManager
                                 val alarmIntent = android.content.Intent(context, com.etrisad.zenith.service.ZenithHeartbeatReceiver::class.java).apply {
-                                    action = "com.etrisad.zenith.action.TEST_GOAL_CALLER_FIRE"
+                                    action = "com.bizenx.mowatib.action.TEST_GOAL_CALLER_FIRE"
                                 }
                                 val pendingIntent = android.app.PendingIntent.getBroadcast(
                                     context, 9003, alarmIntent,

@@ -107,7 +107,7 @@ class ShieldOperationsManager(
     }
 
     fun triggerServiceRefresh() {
-        val intent = Intent("com.etrisad.zenith.action.REFRESH_SERVICES").apply { setPackage(context.packageName) }
+        val intent = Intent("com.bizenx.mowatib.action.REFRESH_SERVICES").apply { setPackage(context.packageName) }
         context.sendBroadcast(intent)
     }
 

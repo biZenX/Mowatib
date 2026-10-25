@@ -43,6 +43,6 @@ class MidnightResetWorker(context: Context, params: WorkerParameters) : Coroutin
     }
 
     companion object {
-        const val ACTION_MIDNIGHT_RESET_SERVICE = "com.etrisad.zenith.action.MIDNIGHT_RESET_SERVICE"
+        const val ACTION_MIDNIGHT_RESET_SERVICE = "com.bizenx.mowatib.action.MIDNIGHT_RESET_SERVICE"
     }
 }

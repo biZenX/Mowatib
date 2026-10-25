@@ -310,9 +310,9 @@ class AlarmBroadcastReceiver : BroadcastReceiver() {
     }
 
     companion object {
-        const val ACTION_FIRE_ALARM = "com.etrisad.zenith.action.FIRE_ALARM"
-        const val ACTION_CHECK_USAGE = "com.etrisad.zenith.action.CHECK_USAGE"
-        const val ACTION_RE_TRIGGER = "com.etrisad.zenith.action.RE_TRIGGER_ALARM"
+        const val ACTION_FIRE_ALARM = "com.bizenx.mowatib.action.FIRE_ALARM"
+        const val ACTION_CHECK_USAGE = "com.bizenx.mowatib.action.CHECK_USAGE"
+        const val ACTION_RE_TRIGGER = "com.bizenx.mowatib.action.RE_TRIGGER_ALARM"
         const val EXTRA_IS_ONCE = "extra_is_once"
         const val EXTRA_ALARM_ID = "alarm_id"
         const val EXTRA_DISMISS_AT = "extra_dismiss_at"

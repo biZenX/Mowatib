@@ -94,7 +94,7 @@ class ZenithService : AccessibilityService() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (intent?.action == "com.etrisad.zenith.action.REFRESH_DATA") {
+        if (intent?.action == "com.bizenx.mowatib.action.REFRESH_DATA") {
             refreshService()
         }
         return START_NOT_STICKY

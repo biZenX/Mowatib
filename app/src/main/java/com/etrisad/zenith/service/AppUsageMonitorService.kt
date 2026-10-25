@@ -224,15 +224,15 @@ class AppUsageMonitorService : Service() {
         when (intent?.action) {
             "SEND_TEST_NOTIFICATION" -> sendTestNotification()
             ACTION_ENSURE_CAMERA_FGS -> ensureCameraForegroundType()
-            "com.etrisad.zenith.action.MIDNIGHT_RESET_SERVICE" -> onMidnightReset()
-            "com.etrisad.zenith.action.HEARTBEAT" -> {
+            "com.bizenx.mowatib.action.MIDNIGHT_RESET_SERVICE" -> onMidnightReset()
+            "com.bizenx.mowatib.action.HEARTBEAT" -> {
                 scheduleHeartbeatAlarm()
                 refreshData()
             }
-            "com.etrisad.zenith.action.REFRESH_DATA" -> {
+            "com.bizenx.mowatib.action.REFRESH_DATA" -> {
                 refreshData()
             }
-            "com.etrisad.zenith.action.SCREEN_OFF_GOAL_CHECK" -> {
+            "com.bizenx.mowatib.action.SCREEN_OFF_GOAL_CHECK" -> {
                 if (!isScreenOn) {
                     serviceScope.launch {
                         ensureGoalCacheLoaded()
@@ -243,11 +243,11 @@ class AppUsageMonitorService : Service() {
                 } else {
                 }
             }
-            "com.etrisad.zenith.action.TEST_GOAL_CALLER" -> {
+            "com.bizenx.mowatib.action.TEST_GOAL_CALLER" -> {
                 try {
                     val alarmManager = getSystemService(android.content.Context.ALARM_SERVICE) as AlarmManager
                     val alarmIntent = Intent(this, ZenithHeartbeatReceiver::class.java).apply {
-                        action = "com.etrisad.zenith.action.TEST_GOAL_CALLER_FIRE"
+                        action = "com.bizenx.mowatib.action.TEST_GOAL_CALLER_FIRE"
                     }
                     val pendingIntent = PendingIntent.getBroadcast(
                         this, 9003, alarmIntent,
@@ -262,7 +262,7 @@ class AppUsageMonitorService : Service() {
                 } catch (e: Exception) {
                 }
             }
-            "com.etrisad.zenith.action.TEST_GOAL_CALLER_FIRE" -> {
+            "com.bizenx.mowatib.action.TEST_GOAL_CALLER_FIRE" -> {
                 serviceScope.launch { sendTestGoalCallerNotification() }
             }
         }
@@ -374,7 +374,7 @@ class AppUsageMonitorService : Service() {
         }
         val alarmManager = getSystemService(android.content.Context.ALARM_SERVICE) as android.app.AlarmManager
         val intent = Intent(this, ZenithHeartbeatReceiver::class.java).apply {
-            action = "com.etrisad.zenith.action.HEARTBEAT"
+            action = "com.bizenx.mowatib.action.HEARTBEAT"
         }
         val pendingIntent = PendingIntent.getBroadcast(
             this, 9000, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
@@ -387,7 +387,7 @@ class AppUsageMonitorService : Service() {
         try {
             val alarmManager = getSystemService(android.content.Context.ALARM_SERVICE) as android.app.AlarmManager
             val intent = Intent(this, ZenithHeartbeatReceiver::class.java).apply {
-                action = "com.etrisad.zenith.action.HEARTBEAT"
+                action = "com.bizenx.mowatib.action.HEARTBEAT"
             }
             val pendingIntent = PendingIntent.getBroadcast(
                 this, 9000, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
@@ -401,7 +401,7 @@ class AppUsageMonitorService : Service() {
         if (!hasCallerGoals) return
         val alarmManager = getSystemService(android.content.Context.ALARM_SERVICE) as android.app.AlarmManager
         val intent = Intent(this, ZenithHeartbeatReceiver::class.java).apply {
-            action = "com.etrisad.zenith.action.SCREEN_OFF_GOAL_CHECK"
+            action = "com.bizenx.mowatib.action.SCREEN_OFF_GOAL_CHECK"
         }
         val pendingIntent = PendingIntent.getBroadcast(
             this, 9001, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
@@ -417,7 +417,7 @@ class AppUsageMonitorService : Service() {
     private fun cancelScreenOffGoalAlarm() {
         val alarmManager = getSystemService(android.content.Context.ALARM_SERVICE) as android.app.AlarmManager
         val intent = Intent(this, ZenithHeartbeatReceiver::class.java).apply {
-            action = "com.etrisad.zenith.action.SCREEN_OFF_GOAL_CHECK"
+            action = "com.bizenx.mowatib.action.SCREEN_OFF_GOAL_CHECK"
         }
         val pendingIntent = PendingIntent.getBroadcast(
             this, 9001, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
@@ -2668,7 +2668,7 @@ class AppUsageMonitorService : Service() {
         private const val BEDTIME_CHANNEL_ID = "zenith_bedtime_channel"
         private const val WIND_DOWN_NOTIFICATION_ID = 2006
 
-        const val ACTION_ENSURE_CAMERA_FGS = "com.etrisad.zenith.action.ENSURE_CAMERA_FGS"
+        const val ACTION_ENSURE_CAMERA_FGS = "com.bizenx.mowatib.action.ENSURE_CAMERA_FGS"
 
         /** True while this process holds a live, foreground monitor service. */
         @Volatile

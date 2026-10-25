@@ -16,11 +16,11 @@ class ZenithHeartbeatReceiver : BroadcastReceiver() {
         val action = intent.action ?: return
         
         val validActions = setOf(
-            "com.etrisad.zenith.action.HEARTBEAT",
-            "com.etrisad.zenith.action.REFRESH_SERVICES",
-            "com.etrisad.zenith.action.SCREEN_OFF_GOAL_CHECK",
-            "com.etrisad.zenith.action.TEST_GOAL_CALLER",
-            "com.etrisad.zenith.action.TEST_GOAL_CALLER_FIRE",
+            "com.bizenx.mowatib.action.HEARTBEAT",
+            "com.bizenx.mowatib.action.REFRESH_SERVICES",
+            "com.bizenx.mowatib.action.SCREEN_OFF_GOAL_CHECK",
+            "com.bizenx.mowatib.action.TEST_GOAL_CALLER",
+            "com.bizenx.mowatib.action.TEST_GOAL_CALLER_FIRE",
             Intent.ACTION_BOOT_COMPLETED,
             Intent.ACTION_MY_PACKAGE_REPLACED
         )
@@ -28,7 +28,7 @@ class ZenithHeartbeatReceiver : BroadcastReceiver() {
         if (action in validActions) {
             val needsGate = action == Intent.ACTION_BOOT_COMPLETED ||
                 Intent.ACTION_MY_PACKAGE_REPLACED == action ||
-                action == "com.etrisad.zenith.action.HEARTBEAT"
+                action == "com.bizenx.mowatib.action.HEARTBEAT"
             if (needsGate) {
                 val pending = goAsync()
                 CoroutineScope(Dispatchers.IO).launch {
@@ -58,16 +58,16 @@ class ZenithHeartbeatReceiver : BroadcastReceiver() {
 
     private fun startMonitorLocked(context: Context, action: String) {
         val mappedAction = when (action) {
-            "com.etrisad.zenith.action.REFRESH_SERVICES" -> "com.etrisad.zenith.action.REFRESH_DATA"
-            "com.etrisad.zenith.action.SCREEN_OFF_GOAL_CHECK" -> "com.etrisad.zenith.action.SCREEN_OFF_GOAL_CHECK"
-            "com.etrisad.zenith.action.TEST_GOAL_CALLER" -> "com.etrisad.zenith.action.TEST_GOAL_CALLER"
-            "com.etrisad.zenith.action.TEST_GOAL_CALLER_FIRE" -> "com.etrisad.zenith.action.TEST_GOAL_CALLER_FIRE"
-            else -> "com.etrisad.zenith.action.HEARTBEAT"
+            "com.bizenx.mowatib.action.REFRESH_SERVICES" -> "com.bizenx.mowatib.action.REFRESH_DATA"
+            "com.bizenx.mowatib.action.SCREEN_OFF_GOAL_CHECK" -> "com.bizenx.mowatib.action.SCREEN_OFF_GOAL_CHECK"
+            "com.bizenx.mowatib.action.TEST_GOAL_CALLER" -> "com.bizenx.mowatib.action.TEST_GOAL_CALLER"
+            "com.bizenx.mowatib.action.TEST_GOAL_CALLER_FIRE" -> "com.bizenx.mowatib.action.TEST_GOAL_CALLER_FIRE"
+            else -> "com.bizenx.mowatib.action.HEARTBEAT"
         }
         AppUsageMonitorService.startMonitorService(context.applicationContext, mappedAction)
         if (ZenithService.isServiceRunning) {
             val accessIntent = Intent(context, ZenithService::class.java).apply {
-                this.action = "com.etrisad.zenith.action.REFRESH_DATA"
+                this.action = "com.bizenx.mowatib.action.REFRESH_DATA"
             }
             try {
                 context.startService(accessIntent)

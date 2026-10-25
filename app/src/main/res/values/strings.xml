@@ -19,4 +19,10 @@
     <string name="mowatib_tasks_widget_description">View and track today\'s smart tasks and progress directly on your home screen.</string>
     <string name="mowatib_habits_widget_name">Mowatib Habits &amp; Streaks</string>
     <string name="mowatib_habits_widget_description">Daily habits tracker and commitment streaks with expressive shapes.</string>
+    <string name="mowatib_quote_widget_name">Mowatib Daily Motivation</string>
+    <string name="mowatib_quote_widget_description">Daily wisdom and quotes to inspire discipline and focus.</string>
+    <string name="mowatib_dashboard_widget_name">Mowatib Quick Dashboard</string>
+    <string name="mowatib_dashboard_widget_description">Quick overview of screen time, smart tasks, and habits streaks.</string>
+    <string name="mowatib_audio_widget_name">Mowatib Ambient Focus Audio</string>
+    <string name="mowatib_audio_widget_description">Natural ambient sounds and quiet recitation for deep focus.</string>
 </resources>

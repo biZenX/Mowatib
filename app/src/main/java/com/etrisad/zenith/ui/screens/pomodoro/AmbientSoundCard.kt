@@ -63,12 +63,12 @@ fun AmbientSoundCard(
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
                         Text(
-                            text = "أصوات التركيز (Mowatib Audio)",
+                            text = "أصوات التركيز والهدوء",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = if (currentSound.id == "none") "صامت (بدون صوت)" else "${currentSound.nameAr} (${currentSound.nameEn})",
+                            text = if (currentSound.id == "none") "صامت (بدون صوت)" else currentSound.nameAr,
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.primary
                         )

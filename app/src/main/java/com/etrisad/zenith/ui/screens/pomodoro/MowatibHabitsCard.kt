@@ -201,7 +201,7 @@ fun MowatibHabitsCard(
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            text = "الالتزام اليومي وسلاسل النجاح (Streaks)",
+                            text = "الالتزام اليومي وسلاسل الاستمرار",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
