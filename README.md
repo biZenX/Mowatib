@@ -159,7 +159,7 @@ Mowatib operates with a privacy-first architecture. All app statistics, habit hi
 
 ## Author & Maintainer
 
-- **[biZenX (Abdelrahman Karim)](https://github.com/biZenX)** — Maintainer & Lead Developer of Mowatib.
+- **[biZenX](https://github.com/biZenX)** — Maintainer & Lead Developer of Mowatib.
 
 ---
 
