@@ -126,9 +126,9 @@ class MowatibTelegramManager(private val context: Context) {
                 }
                 Result.failure(Exception(errorMsg))
             }
-        } catch (e: Exception) {
-            val failMsg = if (isAr) "فشل الاتصال بخوادم تيليجرام" else "Failed to connect to Telegram servers"
-            Result.failure(Exception(e.localizedMessage ?: failMsg))
+        } catch (_: Exception) {
+            val failMsg = if (isAr) "فشل الاتصال بخوادم تيليجرام، يرجى التحقق من اتصال الإنترنت" else "Failed to connect to Telegram servers, please check network connection"
+            Result.failure(Exception(failMsg))
         }
     }
 
