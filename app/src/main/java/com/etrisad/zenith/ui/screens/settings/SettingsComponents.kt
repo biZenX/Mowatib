@@ -343,13 +343,24 @@ fun FontSelector(
             
             Spacer(modifier = Modifier.height(16.dp))
             
-            val fontOptions = listOf(
-                FontOption.IBM_PLEX_SANS_ARABIC to "IBM Plex Sans (مواظب)",
-                FontOption.THMANYAH to "ثمانية (Thmanyah)",
-                FontOption.GOOGLE_SANS_FLEX to "GS Flex",
-                FontOption.NUNITO to "Nunito",
-                FontOption.SYSTEM to "النظام (System)"
-            )
+            val isArabic = java.util.Locale.getDefault().language.startsWith("ar")
+            val fontOptions = if (isArabic) {
+                listOf(
+                    FontOption.GOOGLE_SANS_FLEX to "GS Flex",
+                    FontOption.IBM_PLEX_SANS_ARABIC to "آي بي إم بلكس",
+                    FontOption.THMANYAH to "ثمانية",
+                    FontOption.NUNITO to "نونيتو",
+                    FontOption.SYSTEM to "خط النظام"
+                )
+            } else {
+                listOf(
+                    FontOption.GOOGLE_SANS_FLEX to "GS Flex",
+                    FontOption.IBM_PLEX_SANS_ARABIC to "IBM Plex Sans",
+                    FontOption.THMANYAH to "Thmanyah",
+                    FontOption.NUNITO to "Nunito",
+                    FontOption.SYSTEM to "System Default"
+                )
+            }
 
             @OptIn(ExperimentalLayoutApi::class)
             FlowRow(

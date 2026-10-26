@@ -70,6 +70,9 @@ class MowatibFocusWidget : GlanceAppWidget() {
         val completedTasks = tasks.count { it.isCompleted }
         val totalTasks = tasks.size
 
+        val isAr = context.resources.configuration.locales[0]?.language?.startsWith("ar")
+            ?: java.util.Locale.getDefault().language.startsWith("ar")
+
         provideContent {
             val uiMode = context.resources.configuration.uiMode
             val flowerBitmap = remember(uiMode) { createShapeBitmap(context, 120, MaterialShapes.Flower) }
@@ -85,6 +88,7 @@ class MowatibFocusWidget : GlanceAppWidget() {
                     contentAlignment = Alignment.Center
                 ) {
                     FocusWidgetContent(
+                        isAr = isAr,
                         currentStreak = currentStreak,
                         completedTasks = completedTasks,
                         totalTasks = totalTasks,
@@ -100,6 +104,7 @@ class MowatibFocusWidget : GlanceAppWidget() {
     @SuppressLint("RestrictedApi")
     @Composable
     private fun FocusWidgetContent(
+        isAr: Boolean,
         currentStreak: Int,
         completedTasks: Int,
         totalTasks: Int,
@@ -175,7 +180,7 @@ class MowatibFocusWidget : GlanceAppWidget() {
                     Spacer(modifier = GlanceModifier.height((4 * scaleFactor).dp))
 
                     Text(
-                        text = "مواظب",
+                        text = if (isAr) "مواظب" else "Mowatib",
                         style = TextStyle(
                             color = GlanceTheme.colors.onSurface,
                             fontSize = mainFontSize,
@@ -184,7 +189,11 @@ class MowatibFocusWidget : GlanceAppWidget() {
                     )
 
                     Text(
-                        text = if (totalTasks > 0) "$completedTasks/$totalTasks مهام" else "ابدأ التركيز",
+                        text = if (isAr) {
+                            if (totalTasks > 0) "$completedTasks/$totalTasks مهام" else "ابدأ التركيز"
+                        } else {
+                            if (totalTasks > 0) "$completedTasks/$totalTasks Tasks" else "Start Focus"
+                        },
                         style = TextStyle(
                             color = GlanceTheme.colors.primary,
                             fontSize = labelFontSize,

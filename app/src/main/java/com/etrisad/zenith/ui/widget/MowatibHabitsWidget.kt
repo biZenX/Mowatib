@@ -39,6 +39,9 @@ class MowatibHabitsWidget : GlanceAppWidget() {
     override val stateDefinition: GlanceStateDefinition<*> = PreferencesGlanceStateDefinition
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
+        val isAr = context.resources.configuration.locales[0]?.language?.startsWith("ar")
+            ?: java.util.Locale.getDefault().language.startsWith("ar")
+
         MowatibHabitsManager.init(context)
         val habits = MowatibHabitsManager.habits.value
 
@@ -58,7 +61,7 @@ class MowatibHabitsWidget : GlanceAppWidget() {
                         .clickable(launchAction)
                         .padding(14.dp)
                 ) {
-                    HabitsWidgetContent(context, habits)
+                    HabitsWidgetContent(context, habits, isAr)
                 }
             }
         }
@@ -69,7 +72,8 @@ class MowatibHabitsWidget : GlanceAppWidget() {
     @Composable
     private fun HabitsWidgetContent(
         context: Context,
-        habits: List<com.etrisad.zenith.ui.screens.pomodoro.MowatibHabit>
+        habits: List<com.etrisad.zenith.ui.screens.pomodoro.MowatibHabit>,
+        isAr: Boolean
     ) {
         val size = LocalSize.current
         val isCompact = size.width < 160.dp
@@ -94,7 +98,7 @@ class MowatibHabitsWidget : GlanceAppWidget() {
                     )
                     Spacer(modifier = GlanceModifier.width(6.dp))
                     Text(
-                        text = "عادات مواظب",
+                        text = if (isAr) "عادات مواظب" else "Mowatib Habits",
                         style = TextStyle(
                             color = GlanceTheme.colors.onSurface,
                             fontSize = 15.sp,
@@ -112,7 +116,7 @@ class MowatibHabitsWidget : GlanceAppWidget() {
                     )
                     Spacer(modifier = GlanceModifier.width(4.dp))
                     Text(
-                        text = "سلاسل الالتزام",
+                        text = if (isAr) "سلاسل الالتزام" else "Streaks",
                         style = TextStyle(
                             color = GlanceTheme.colors.primary,
                             fontSize = 11.sp,
@@ -130,7 +134,7 @@ class MowatibHabitsWidget : GlanceAppWidget() {
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "ابدأ بناء عاداتك اليومية\nمع مواظب الآن",
+                        text = if (isAr) "ابدأ بناء عاداتك اليومية\nمع مواظب الآن" else "Build daily habits\nwith Mowatib now",
                         style = TextStyle(
                             color = GlanceTheme.colors.onSurfaceVariant,
                             fontSize = 12.sp,

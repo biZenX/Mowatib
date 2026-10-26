@@ -74,6 +74,9 @@ class PhoneFreeTimeWidget : GlanceAppWidget() {
                 ?: daily.filter { it.packageName !in setOf("SHIELD_TOTAL","GOAL_TOTAL","OTHER_TOTAL") }.sumOf { it.usageTimeMillis }
         } catch (_: Exception) { 0L }
 
+        val isAr = context.resources.configuration.locales[0]?.language?.startsWith("ar")
+            ?: java.util.Locale.getDefault().language.startsWith("ar")
+
         provideContent {
             val uiMode = context.resources.configuration.uiMode
             val sunnyBitmap = remember(uiMode) { createShapeBitmap(context, 80, MaterialShapes.Flower) }
@@ -89,6 +92,7 @@ class PhoneFreeTimeWidget : GlanceAppWidget() {
                     contentAlignment = Alignment.Center
                 ) {
                     PhoneFreeContent(
+                        isAr = isAr,
                         idleMillis = idleMillis,
                         sunnyBitmap = sunnyBitmap,
                         backgroundBitmap = backgroundBitmap
@@ -102,6 +106,7 @@ class PhoneFreeTimeWidget : GlanceAppWidget() {
     @SuppressLint("RestrictedApi")
     @Composable
     private fun PhoneFreeContent(
+        isAr: Boolean,
         idleMillis: Long,
         sunnyBitmap: Bitmap,
         backgroundBitmap: Bitmap
@@ -116,7 +121,11 @@ class PhoneFreeTimeWidget : GlanceAppWidget() {
 
         val idleHours = idleMillis / 3600000
         val idleMinutes = (idleMillis % 3600000) / 60000
-        val timeText = if (idleHours > 0) "${idleHours}h ${idleMinutes}m" else "${idleMinutes}m"
+        val timeText = if (isAr) {
+            if (idleHours > 0) "${idleHours}س ${idleMinutes}د" else "${idleMinutes}د"
+        } else {
+            if (idleHours > 0) "${idleHours}h ${idleMinutes}m" else "${idleMinutes}m"
+        }
 
         val mainFontSize = when {
             timeText.length >= 7 -> (16 * scaleFactor).sp
@@ -176,7 +185,7 @@ class PhoneFreeTimeWidget : GlanceAppWidget() {
                             )
                         )
                         Text(
-                            text = "AWAY",
+                            text = if (isAr) "تحرر" else "AWAY",
                             style = TextStyle(
                                 fontSize = labelFontSize,
                                 fontWeight = FontWeight.Medium,

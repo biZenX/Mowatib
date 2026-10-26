@@ -36,6 +36,9 @@ class MowatibTasksWidget : GlanceAppWidget() {
     override val stateDefinition: GlanceStateDefinition<*> = PreferencesGlanceStateDefinition
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
+        val isAr = context.resources.configuration.locales[0]?.language?.startsWith("ar")
+            ?: java.util.Locale.getDefault().language.startsWith("ar")
+
         MowatibTaskManager.init(context)
         val allTasks = MowatibTaskManager.tasks.value
         val completedCount = allTasks.count { it.isCompleted }
@@ -59,6 +62,7 @@ class MowatibTasksWidget : GlanceAppWidget() {
                         .padding(14.dp)
                 ) {
                     TasksWidgetContent(
+                        isAr = isAr,
                         totalCount = totalCount,
                         completedCount = completedCount,
                         tasks = topTasks
@@ -71,6 +75,7 @@ class MowatibTasksWidget : GlanceAppWidget() {
     @SuppressLint("RestrictedApi")
     @androidx.compose.runtime.Composable
     private fun TasksWidgetContent(
+        isAr: Boolean,
         totalCount: Int,
         completedCount: Int,
         tasks: List<com.etrisad.zenith.data.local.MowatibTask>
@@ -99,7 +104,7 @@ class MowatibTasksWidget : GlanceAppWidget() {
                     )
                     Spacer(modifier = GlanceModifier.width(6.dp))
                     Text(
-                        text = "مهام مواظب",
+                        text = if (isAr) "مهام مواظب" else "Mowatib Tasks",
                         style = TextStyle(
                             color = GlanceTheme.colors.onSurface,
                             fontSize = 15.sp,
@@ -133,7 +138,7 @@ class MowatibTasksWidget : GlanceAppWidget() {
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "لا توجد مهام حالياً\nاضغط لإضافة مهمة جديدة",
+                        text = if (isAr) "لا توجد مهام حالياً\nاضغط لإضافة مهمة جديدة" else "No tasks for today\nTap to add a new task",
                         style = TextStyle(
                             color = GlanceTheme.colors.onSurfaceVariant,
                             fontSize = 12.sp,

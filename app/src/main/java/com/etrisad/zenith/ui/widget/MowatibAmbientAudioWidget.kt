@@ -49,6 +49,8 @@ class MowatibAmbientAudioWidget : GlanceAppWidget() {
 
     @OptIn(ExperimentalMaterial3ExpressiveApi::class)
     override suspend fun provideGlance(context: Context, id: GlanceId) {
+        val isAr = context.resources.configuration.locales[0]?.language?.startsWith("ar")
+            ?: java.util.Locale.getDefault().language.startsWith("ar")
         val currentSound = MowatibAmbientSoundManager.currentSound.value
         val isPlaying = MowatibAmbientSoundManager.isPlaying.value
 
@@ -73,7 +75,12 @@ class MowatibAmbientAudioWidget : GlanceAppWidget() {
                     contentAlignment = Alignment.Center
                 ) {
                     AudioWidgetContent(
-                        soundName = if (currentSound.id == "none") "أصوات الهدوء" else currentSound.nameAr,
+                        isAr = isAr,
+                        soundName = if (isAr) {
+                            if (currentSound.id == "none") "أصوات الهدوء" else currentSound.nameAr
+                        } else {
+                            if (currentSound.id == "none") "Ambient Sounds" else currentSound.nameEn
+                        },
                         isPlaying = isPlaying,
                         sunnyBitmap = sunnyBitmap
                     )
@@ -84,6 +91,7 @@ class MowatibAmbientAudioWidget : GlanceAppWidget() {
 
     @Composable
     private fun AudioWidgetContent(
+        isAr: Boolean,
         soundName: String,
         isPlaying: Boolean,
         sunnyBitmap: Bitmap
@@ -121,7 +129,11 @@ class MowatibAmbientAudioWidget : GlanceAppWidget() {
                     )
                     Spacer(modifier = GlanceModifier.width((4 * scale).dp))
                     Text(
-                        text = if (isPlaying) "صوت نشط" else "بيئة التركيز",
+                        text = if (isAr) {
+                            if (isPlaying) "صوت نشط" else "بيئة التركيز"
+                        } else {
+                            if (isPlaying) "Now Playing" else "Focus Ambient"
+                        },
                         style = TextStyle(
                             color = GlanceTheme.colors.primary,
                             fontSize = (11 * scale).sp,
@@ -156,7 +168,11 @@ class MowatibAmbientAudioWidget : GlanceAppWidget() {
                     )
                     Spacer(modifier = GlanceModifier.width((4 * scale).dp))
                     Text(
-                        text = if (isPlaying) "إيقاف مؤقت" else "تشغيل الصوت",
+                        text = if (isAr) {
+                            if (isPlaying) "إيقاف مؤقت" else "تشغيل الصوت"
+                        } else {
+                            if (isPlaying) "Pause" else "Play Sound"
+                        },
                         style = TextStyle(
                             color = GlanceTheme.colors.onSurfaceVariant,
                             fontSize = (11 * scale).sp,

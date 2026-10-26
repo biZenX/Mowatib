@@ -48,21 +48,34 @@ class MowatibMotivationalQuoteWidget : GlanceAppWidget() {
     override val stateDefinition: GlanceStateDefinition<*> = PreferencesGlanceStateDefinition
 
     companion object {
-        val QUOTES = listOf(
-            Pair("قليلٌ دائمٌ خيرٌ من كثيرٍ منقطع.", "حديث نبوي شريف"),
+        val QUOTES_AR = listOf(
+            Pair("قليلٌ دائمٌ خيرٌ من كثيرٍ منقطع.", "حديث شريف"),
             Pair("المواظبة هي الجسر بين الأحلام والإنجاز.", "حكمة في الانضباط"),
-            Pair("إن الله يحب إذا عمل أحدكم عملاً أن يتقنه.", "حديث نبوي شريف"),
+            Pair("إن الله يحب إذا عمل أحدكم عملاً أن يتقنه.", "حديث شريف"),
             Pair("ركّز في هذه اللحظة، فالمستقبل يُصنع الآن.", "قانون التركيز"),
             Pair("النجاح تراكم عادات يومية متقنة وبسيطة.", "فلسفة مواظب"),
             Pair("انضباطك اليوم هو حريتك وراحتك غداً.", "حكمة في الالتزام"),
             Pair("لا تنتظر الشغف، اصنع العادة واستمر.", "قوة المواظبة")
         )
+
+        val QUOTES_EN = listOf(
+            Pair("Small, consistent steps lead to great achievements.", "Discipline"),
+            Pair("Consistency is the bridge between goals and accomplishment.", "Wisdom"),
+            Pair("Quality is not an act, it is a habit.", "Focus"),
+            Pair("Focus on this moment; the future is built right now.", "Productivity"),
+            Pair("Success is the sum of small habits repeated daily.", "Mowatib"),
+            Pair("Discipline today gives you freedom tomorrow.", "Growth"),
+            Pair("Do not wait for motivation; build the habit and keep going.", "Consistency")
+        )
     }
 
     @OptIn(ExperimentalMaterial3ExpressiveApi::class)
     override suspend fun provideGlance(context: Context, id: GlanceId) {
+        val isAr = context.resources.configuration.locales[0]?.language?.startsWith("ar")
+            ?: java.util.Locale.getDefault().language.startsWith("ar")
+        val quotes = if (isAr) QUOTES_AR else QUOTES_EN
         val dayOfYear = Calendar.getInstance().get(Calendar.DAY_OF_YEAR)
-        val quotePair = QUOTES[dayOfYear % QUOTES.size]
+        val quotePair = quotes[dayOfYear % quotes.size]
 
         provideContent {
             val uiMode = context.resources.configuration.uiMode
@@ -84,6 +97,7 @@ class MowatibMotivationalQuoteWidget : GlanceAppWidget() {
                     contentAlignment = Alignment.Center
                 ) {
                     QuoteWidgetContent(
+                        isAr = isAr,
                         quote = quotePair.first,
                         author = quotePair.second,
                         cookieBitmap = cookieBitmap
@@ -95,6 +109,7 @@ class MowatibMotivationalQuoteWidget : GlanceAppWidget() {
 
     @Composable
     private fun QuoteWidgetContent(
+        isAr: Boolean,
         quote: String,
         author: String,
         cookieBitmap: Bitmap
@@ -132,7 +147,7 @@ class MowatibMotivationalQuoteWidget : GlanceAppWidget() {
                     )
                     Spacer(modifier = GlanceModifier.width((4 * scale).dp))
                     Text(
-                        text = "ومضة مواظب",
+                        text = if (isAr) "ومضة مواظب" else "Daily Spark",
                         style = TextStyle(
                             color = GlanceTheme.colors.primary,
                             fontSize = (11 * scale).sp,

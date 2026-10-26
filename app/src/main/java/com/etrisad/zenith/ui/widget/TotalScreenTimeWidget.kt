@@ -72,6 +72,9 @@ class TotalScreenTimeWidget : GlanceAppWidget() {
             if (total != null && total > 0) total else daily.filter { it.packageName !in setOf("SHIELD_TOTAL","GOAL_TOTAL","OTHER_TOTAL") }.sumOf { it.usageTimeMillis }
         } catch (_: Exception) { 0L }
 
+        val isAr = context.resources.configuration.locales[0]?.language?.startsWith("ar")
+            ?: java.util.Locale.getDefault().language.startsWith("ar")
+
         provideContent {
             val uiMode = context.resources.configuration.uiMode
             val sunnyBitmap = remember(uiMode) { createShapeBitmap(context, 80, MaterialShapes.Sunny) }
@@ -85,6 +88,7 @@ class TotalScreenTimeWidget : GlanceAppWidget() {
                     contentAlignment = Alignment.Center
                 ) {
                     TotalScreenTimeContent(
+                        isAr = isAr,
                         totalMillis = totalMillis,
                         sunnyBitmap = sunnyBitmap,
                         backgroundBitmap = backgroundBitmap
@@ -98,6 +102,7 @@ class TotalScreenTimeWidget : GlanceAppWidget() {
     @SuppressLint("RestrictedApi")
     @Composable
     private fun TotalScreenTimeContent(
+        isAr: Boolean,
         totalMillis: Long,
         sunnyBitmap: Bitmap,
         backgroundBitmap: Bitmap
@@ -112,7 +117,11 @@ class TotalScreenTimeWidget : GlanceAppWidget() {
 
         val hours = totalMillis / 3600000
         val minutes = (totalMillis % 3600000) / 60000
-        val timeText = if (hours > 0) "${hours}h ${minutes}m" else "${minutes}m"
+        val timeText = if (isAr) {
+            if (hours > 0) "${hours}س ${minutes}د" else "${minutes}د"
+        } else {
+            if (hours > 0) "${hours}h ${minutes}m" else "${minutes}m"
+        }
 
         val mainFontSize = when {
             timeText.length >= 7 -> (16 * scaleFactor).sp
@@ -172,7 +181,7 @@ class TotalScreenTimeWidget : GlanceAppWidget() {
                             )
                         )
                         Text(
-                            text = "TODAY",
+                            text = if (isAr) "اليوم" else "TODAY",
                             style = TextStyle(
                                 fontSize = labelFontSize,
                                 fontWeight = FontWeight.Medium,

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Mowatib</string>
+    <string name="accessibility_service_description">डिजिटल वेलबीइंग सुविधाओं के लिए सक्रिय ऐप की पहचान करने में Mowatib की मदद करता है।</string>
+    <string name="global_streak_widget_name">वैश्विक स्ट्रीक</string>
+    <string name="global_streak_widget_description">स्क्रीन समय सीमा के भीतर लगातार बने रहने के दिन।</string>
+    <string name="app_streak_widget_name">ऐप स्ट्रीक</string>
+    <string name="app_streak_widget_description">एक ऐप की स्ट्रीक: सीमा के भीतर रहना और दैनिक लक्ष्य पूरा करना।</string>
+    <string name="total_screen_time_widget_name">कुल स्क्रीन समय</string>
+    <string name="total_screen_time_widget_description">आज का कुल स्क्रीन समय दिखाता है।</string>
+    <string name="remaining_target_widget_name">शेष लक्ष्य समय</string>
+    <string name="remaining_target_widget_description">दैनिक स्क्रीन समय सीमा तक पहुंचने से पहले का शेष समय।</string>
+    <string name="phone_free_time_widget_name">फोन मुक्त समय</string>
+    <string name="phone_free_time_widget_description">आज फोन से दूर बिताया गया समय, जो रोजाना रीसेट होता है।</string>
+    <string name="mowatib_focus_widget_name">Mowatib एकाग्रता</string>
+    <string name="mowatib_focus_widget_description">त्वरित फोकस क्रियाएं, स्ट्रीक और स्मार्ट कार्य दिखाता है।</string>
+    <string name="mowatib_pomodoro_widget_name">Mowatib फोकस और पोमोडोरो</string>
+    <string name="mowatib_pomodoro_widget_description">आधुनिक और सुंदर डिज़ाइन के साथ होम स्क्रीन पर त्वरित टाइमर।</string>
+    <string name="mowatib_tasks_widget_name">Mowatib स्मार्ट कार्य</string>
+    <string name="mowatib_tasks_widget_description">सीधे अपनी होम स्क्रीन पर आज के कार्यों और प्रगति को ट्रैक करें।</string>
+    <string name="mowatib_habits_widget_name">Mowatib आदतें और स्ट्रीक</string>
+    <string name="mowatib_habits_widget_description">दैनिक आदतों और निरंतरता को ट्रैक करने वाला विजेट।</string>
+    <string name="mowatib_quote_widget_name">Mowatib दैनिक प्रेरणा</string>
+    <string name="mowatib_quote_widget_description">अनुशासन और एकाग्रता को प्रेरित करने वाले दैनिक विचार।</string>
+    <string name="mowatib_dashboard_widget_name">Mowatib त्वरित डैशबोर्ड</string>
+    <string name="mowatib_dashboard_widget_description">स्क्रीन समय, कार्यों और आदतों का त्वरित अवलोकन।</string>
+    <string name="mowatib_audio_widget_name">Mowatib शांत फोकस ध्वनियां</string>
+    <string name="mowatib_audio_widget_description">गहरे ध्यान और एकाग्रता के लिए प्राकृतिक वातावरण की ध्वनियां।</string>
+</resources>

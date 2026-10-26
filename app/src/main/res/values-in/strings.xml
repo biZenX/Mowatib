@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Mowatib</string>
+    <string name="accessibility_service_description">Membantu Mowatib mengidentifikasi aplikasi yang sedang aktif untuk fitur kesejahteraan digital.</string>
+    <string name="global_streak_widget_name">Runtutan Global</string>
+    <string name="global_streak_widget_description">Hari berturut-turut di bawah target waktu layar Anda.</string>
+    <string name="app_streak_widget_name">Runtutan Aplikasi</string>
+    <string name="app_streak_widget_description">Runtutan satu aplikasi: tetap di bawah batas dan capai target.</string>
+    <string name="total_screen_time_widget_name">Total Waktu Layar</string>
+    <string name="total_screen_time_widget_description">Menampilkan total waktu layar hari ini.</string>
+    <string name="remaining_target_widget_name">Sisa Waktu Target</string>
+    <string name="remaining_target_widget_description">Menampilkan sisa waktu sebelum mencapai target harian waktu layar.</string>
+    <string name="phone_free_time_widget_name">Waktu Bebas Ponsel</string>
+    <string name="phone_free_time_widget_description">Menampilkan waktu bebas ponsel hari ini, disetel ulang setiap hari.</string>
+    <string name="mowatib_focus_widget_name">Mowatib Fokus</string>
+    <string name="mowatib_focus_widget_description">Pintasan fokus cepat, runtutan, dan tugas cerdas.</string>
+    <string name="mowatib_pomodoro_widget_name">Mowatib Fokus &amp; Pomodoro</string>
+    <string name="mowatib_pomodoro_widget_description">Pengatur waktu fokus di layar utama dengan desain modern.</string>
+    <string name="mowatib_tasks_widget_name">Mowatib Tugas Cerdas</string>
+    <string name="mowatib_tasks_widget_description">Pantau tugas hari ini dan kemajuan Anda langsung dari layar utama.</string>
+    <string name="mowatib_habits_widget_name">Mowatib Kebiasaan &amp; Runtutan</string>
+    <string name="mowatib_habits_widget_description">Pelacak kebiasaan harian dan runtutan konsistensi.</string>
+    <string name="mowatib_quote_widget_name">Mowatib Motivasi Harian</string>
+    <string name="mowatib_quote_widget_description">Kata bijak harian untuk menginspirasi kedisiplinan dan fokus.</string>
+    <string name="mowatib_dashboard_widget_name">Mowatib Dasbor Cepat</string>
+    <string name="mowatib_dashboard_widget_description">Ringkasan cepat waktu layar, tugas, dan kebiasaan harian.</string>
+    <string name="mowatib_audio_widget_name">Mowatib Audio Suasana Fokus</string>
+    <string name="mowatib_audio_widget_description">Suara alam yang menenangkan untuk fokus mendalam.</string>
+</resources>

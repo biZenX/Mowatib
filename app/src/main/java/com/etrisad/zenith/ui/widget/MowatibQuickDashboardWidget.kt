@@ -77,9 +77,16 @@ class MowatibQuickDashboardWidget : GlanceAppWidget() {
         val completedHabits = habits.count { it.lastCompletedDate.isNotEmpty() }
         val totalHabits = habits.size
 
+        val isAr = context.resources.configuration.locales[0]?.language?.startsWith("ar")
+            ?: java.util.Locale.getDefault().language.startsWith("ar")
+
         val hours = totalScreenTimeMinutes / 60
         val mins = totalScreenTimeMinutes % 60
-        val screenTimeText = if (hours > 0) "${hours}س ${mins}د" else "${mins} دقيقة"
+        val screenTimeText = if (isAr) {
+            if (hours > 0) "${hours}س ${mins}د" else "${mins} دقيقة"
+        } else {
+            if (hours > 0) "${hours}h ${mins}m" else "${mins}m"
+        }
 
         provideContent {
             GlanceTheme {
@@ -97,6 +104,7 @@ class MowatibQuickDashboardWidget : GlanceAppWidget() {
                         .clickable(clickAction)
                 ) {
                     DashboardContent(
+                        isAr = isAr,
                         screenTimeText = screenTimeText,
                         streak = streak,
                         completedTasks = completedTasks,
@@ -111,6 +119,7 @@ class MowatibQuickDashboardWidget : GlanceAppWidget() {
 
     @Composable
     private fun DashboardContent(
+        isAr: Boolean,
         screenTimeText: String,
         streak: Int,
         completedTasks: Int,
@@ -138,7 +147,7 @@ class MowatibQuickDashboardWidget : GlanceAppWidget() {
                     )
                     Spacer(modifier = GlanceModifier.width(6.dp))
                     Text(
-                        text = "مواظب — لوحة اليوم",
+                        text = if (isAr) "مواظب — لوحة اليوم" else "Mowatib — Today",
                         style = TextStyle(
                             color = GlanceTheme.colors.primary,
                             fontSize = 14.sp,
@@ -162,7 +171,11 @@ class MowatibQuickDashboardWidget : GlanceAppWidget() {
                         )
                         Spacer(modifier = GlanceModifier.width(4.dp))
                         Text(
-                            text = if (streak > 0) "$streak يوم" else "انطلق",
+                            text = if (isAr) {
+                                if (streak > 0) "$streak يوم" else "انطلق"
+                            } else {
+                                if (streak > 0) "${streak}d" else "Start"
+                            },
                             style = TextStyle(
                                 color = GlanceTheme.colors.onPrimaryContainer,
                                 fontSize = 11.sp,
@@ -181,7 +194,7 @@ class MowatibQuickDashboardWidget : GlanceAppWidget() {
             ) {
                 // Metric 1: Screen time
                 MetricCard(
-                    title = "وقت الشاشة",
+                    title = if (isAr) "وقت الشاشة" else "Screen Time",
                     value = screenTimeText,
                     iconRes = R.drawable.ic_phone_android,
                     modifier = GlanceModifier.defaultWeight()
@@ -191,7 +204,7 @@ class MowatibQuickDashboardWidget : GlanceAppWidget() {
 
                 // Metric 2: Tasks
                 MetricCard(
-                    title = "المهام",
+                    title = if (isAr) "المهام" else "Tasks",
                     value = "$completedTasks/$totalTasks",
                     iconRes = R.drawable.ic_task_alt,
                     modifier = GlanceModifier.defaultWeight()
@@ -201,7 +214,7 @@ class MowatibQuickDashboardWidget : GlanceAppWidget() {
 
                 // Metric 3: Habits
                 MetricCard(
-                    title = "العادات",
+                    title = if (isAr) "العادات" else "Habits",
                     value = "$completedHabits/$totalHabits",
                     iconRes = R.drawable.ic_star,
                     modifier = GlanceModifier.defaultWeight()

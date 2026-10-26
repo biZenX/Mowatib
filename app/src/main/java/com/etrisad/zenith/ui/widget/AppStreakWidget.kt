@@ -115,6 +115,9 @@ class AppStreakWidget : GlanceAppWidget() {
             val pillBitmap = remember(uiMode) { createShapeBitmap(context, 120, MaterialShapes.Pill) }
             val circleBitmap = remember(uiMode) { createShapeBitmap(context, 80, MaterialShapes.Circle) }
 
+            val isAr = context.resources.configuration.locales[0]?.language?.startsWith("ar")
+                ?: java.util.Locale.getDefault().language.startsWith("ar")
+
             GlanceTheme {
                 val appWidgetId = remember { GlanceAppWidgetManager(context).getAppWidgetId(id) }
                 val today = LocalDate.now()
@@ -176,7 +179,7 @@ class AppStreakWidget : GlanceAppWidget() {
                                 colorFilter = ColorFilter.tint(GlanceTheme.colors.surface)
                             )
                             Text(
-                                text = "Tap to select app",
+                                text = if (isAr) "اضغط لاختيار تطبيق" else "Tap to select app",
                                 style = TextStyle(color = GlanceTheme.colors.secondary)
                             )
                         }

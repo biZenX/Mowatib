@@ -466,7 +466,7 @@ val ACHIEVEMENT_BANNERS_SEEN = stringPreferencesKey("achievement_banners_seen")
     ) { settings, runtime ->
         UserPreferences(
             themeConfig = ThemeConfig.valueOf(settings[PreferencesKeys.THEME_CONFIG] ?: ThemeConfig.FOLLOW_SYSTEM.name),
-            fontOption = runCatching { FontOption.valueOf(settings[PreferencesKeys.FONT_OPTION] ?: FontOption.IBM_PLEX_SANS_ARABIC.name) }.getOrDefault(FontOption.IBM_PLEX_SANS_ARABIC),
+            fontOption = runCatching { FontOption.valueOf(settings[PreferencesKeys.FONT_OPTION] ?: FontOption.GOOGLE_SANS_FLEX.name) }.getOrDefault(FontOption.GOOGLE_SANS_FLEX),
             dynamicColor = settings[PreferencesKeys.DYNAMIC_COLOR] ?: true,
             accessibilityDisabled = settings[PreferencesKeys.ACCESSIBILITY_DISABLED] ?: false,
             accessibilityRequired = settings[PreferencesKeys.ACCESSIBILITY_REQUIRED] ?: false,
@@ -691,7 +691,7 @@ achievementBannersSeen = settings[PreferencesKeys.ACHIEVEMENT_BANNERS_SEEN] ?: "
     data class AppearancePrefs(
         val themeConfig: ThemeConfig = ThemeConfig.FOLLOW_SYSTEM,
         val dynamicColor: Boolean = true,
-        val fontOption: FontOption = FontOption.IBM_PLEX_SANS_ARABIC,
+        val fontOption: FontOption = FontOption.GOOGLE_SANS_FLEX,
         val expressiveColors: Boolean = false,
         val gsFlexSettings: GSFlexSettings = GSFlexSettings()
     )
@@ -1890,7 +1890,7 @@ achievementBannersSeen = settings[PreferencesKeys.ACHIEVEMENT_BANNERS_SEEN] ?: "
 
 data class UserPreferences(
     val themeConfig: ThemeConfig = ThemeConfig.FOLLOW_SYSTEM,
-    val fontOption: FontOption = FontOption.IBM_PLEX_SANS_ARABIC,
+    val fontOption: FontOption = FontOption.GOOGLE_SANS_FLEX,
     val dynamicColor: Boolean = true,
     val accessibilityDisabled: Boolean = false,
     val accessibilityRequired: Boolean = false,

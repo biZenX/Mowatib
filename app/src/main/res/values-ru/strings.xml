@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Mowatib</string>
+    <string name="accessibility_service_description">Помогает Mowatib определять активное приложение для функций цифрового благополучия.</string>
+    <string name="global_streak_widget_name">Общая серия</string>
+    <string name="global_streak_widget_description">Дни подряд в пределах установленного экранного времени.</string>
+    <string name="app_streak_widget_name">Серия приложения</string>
+    <string name="app_streak_widget_description">Серия для приложения: соблюдение лимитов и достижение цели.</string>
+    <string name="total_screen_time_widget_name">Общее экранное время</string>
+    <string name="total_screen_time_widget_description">Показывает общее время использования экрана сегодня.</string>
+    <string name="remaining_target_widget_name">Оставшееся время до цели</string>
+    <string name="remaining_target_widget_description">Показывает время до достижения дневного лимита.</string>
+    <string name="phone_free_time_widget_name">Время без телефона</string>
+    <string name="phone_free_time_widget_description">Время без телефона сегодня, сбрасывается ежедневно.</string>
+    <string name="mowatib_focus_widget_name">Mowatib Фокус</string>
+    <string name="mowatib_focus_widget_description">Быстрый фокус, серии дней и умные задачи.</string>
+    <string name="mowatib_pomodoro_widget_name">Mowatib Фокус и Помодоро</string>
+    <string name="mowatib_pomodoro_widget_description">Таймер концентрации на главном экране в современном дизайне.</string>
+    <string name="mowatib_tasks_widget_name">Mowatib Умные задачи</string>
+    <string name="mowatib_tasks_widget_description">Просмотр и отслеживание задач на сегодня прямо на главном экране.</string>
+    <string name="mowatib_habits_widget_name">Mowatib Привычки и серии</string>
+    <string name="mowatib_habits_widget_description">Отслеживание ежедневных привычек и серий постоянства.</string>
+    <string name="mowatib_quote_widget_name">Mowatib Вдохновение дня</string>
+    <string name="mowatib_quote_widget_description">Ежедневные мудрые мысли для дисциплины и концентрации.</string>
+    <string name="mowatib_dashboard_widget_name">Mowatib Быстрая панель</string>
+    <string name="mowatib_dashboard_widget_description">Краткий обзор экранного времени, задач и привычек.</string>
+    <string name="mowatib_audio_widget_name">Mowatib Звуки для концентрации</string>
+    <string name="mowatib_audio_widget_description">Природные фоновые звуки для глубокого сосредоточения.</string>
+</resources>

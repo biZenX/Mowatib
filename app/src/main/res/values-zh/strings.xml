@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Mowatib</string>
+    <string name="accessibility_service_description">帮助 Mowatib 识别当前活动应用以启用数字健康功能。</string>
+    <string name="global_streak_widget_name">全局连续天数</string>
+    <string name="global_streak_widget_description">连续保持在屏幕时间目标之下的天数。</string>
+    <string name="app_streak_widget_name">应用连续天数</string>
+    <string name="app_streak_widget_description">单个应用的连续记录：防护应用低于限制，目标应用达到目标。</string>
+    <string name="total_screen_time_widget_name">屏幕总使用时间</string>
+    <string name="total_screen_time_widget_description">显示今天的屏幕使用总时间。</string>
+    <string name="remaining_target_widget_name">剩余可用时间</string>
+    <string name="remaining_target_widget_description">显示达到每日屏幕时间目标之前的剩余时间。</string>
+    <string name="phone_free_time_widget_name">远离手机时间</string>
+    <string name="phone_free_time_widget_description">显示今天远离手机的时间，每日自动重置。</string>
+    <string name="mowatib_focus_widget_name">Mowatib 专注</string>
+    <string name="mowatib_focus_widget_description">显示快捷专注操作、连续打卡和智能任务。</string>
+    <string name="mowatib_pomodoro_widget_name">Mowatib 专注与番茄钟</string>
+    <string name="mowatib_pomodoro_widget_description">主屏幕快捷计时器，采用现代化优雅设计。</string>
+    <string name="mowatib_tasks_widget_name">Mowatib 智能任务</string>
+    <string name="mowatib_tasks_widget_description">在主屏幕上直接查看和追踪今日智能任务及进度。</string>
+    <string name="mowatib_habits_widget_name">Mowatib 习惯与打卡</string>
+    <string name="mowatib_habits_widget_description">追踪每日习惯与坚持记录。</string>
+    <string name="mowatib_quote_widget_name">Mowatib 每日灵感</string>
+    <string name="mowatib_quote_widget_description">每日格言与智慧，激励自律与专注。</string>
+    <string name="mowatib_dashboard_widget_name">Mowatib 快捷仪表盘</string>
+    <string name="mowatib_dashboard_widget_description">快速浏览屏幕使用时间、智能任务和习惯打卡。</string>
+    <string name="mowatib_audio_widget_name">Mowatib 专注音效</string>
+    <string name="mowatib_audio_widget_description">自然环境音与宁静声音，助力深度专注。</string>
+</resources>

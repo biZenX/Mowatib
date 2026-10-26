@@ -74,6 +74,9 @@ class RemainingTargetWidget : GlanceAppWidget() {
                 ?: daily.filter { it.packageName !in setOf("SHIELD_TOTAL","GOAL_TOTAL","OTHER_TOTAL") }.sumOf { it.usageTimeMillis }
         } catch (_: Exception) { 0L }
 
+        val isAr = context.resources.configuration.locales[0]?.language?.startsWith("ar")
+            ?: java.util.Locale.getDefault().language.startsWith("ar")
+
         provideContent {
             val uiMode = context.resources.configuration.uiMode
             val sunnyBitmap = remember(uiMode) { createShapeBitmap(context, 80, MaterialShapes.VerySunny) }
@@ -91,6 +94,7 @@ class RemainingTargetWidget : GlanceAppWidget() {
                     contentAlignment = Alignment.Center
                 ) {
                     RemainingTargetContent(
+                        isAr = isAr,
                         targetMinutes = targetMinutes,
                         remainingMillis = remainingMillis,
                         overMillis = overMillis,
@@ -107,6 +111,7 @@ class RemainingTargetWidget : GlanceAppWidget() {
     @SuppressLint("RestrictedApi")
     @Composable
     private fun RemainingTargetContent(
+        isAr: Boolean,
         targetMinutes: Int,
         remainingMillis: Long,
         overMillis: Long,
@@ -127,18 +132,18 @@ class RemainingTargetWidget : GlanceAppWidget() {
             isOver -> {
                 val h = overMillis / 3600000
                 val m = (overMillis % 3600000) / 60000
-                if (h > 0) "${h}h ${m}m" else "${m}m"
+                if (isAr) (if (h > 0) "${h}س ${m}د" else "${m}د") else (if (h > 0) "${h}h ${m}m" else "${m}m")
             }
             else -> {
                 val h = remainingMillis / 3600000
                 val m = (remainingMillis % 3600000) / 60000
-                if (h > 0) "${h}h ${m}m" else "${m}m"
+                if (isAr) (if (h > 0) "${h}س ${m}د" else "${m}د") else (if (h > 0) "${h}h ${m}m" else "${m}m")
             }
         }
         val badgeLabel = when {
-            targetMinutes == 0 -> "NO TARGET"
-            isOver -> "OVER"
-            else -> "LEFT"
+            targetMinutes == 0 -> if (isAr) "بلا هدف" else "NO TARGET"
+            isOver -> if (isAr) "تجاوز" else "OVER"
+            else -> if (isAr) "متبقي" else "LEFT"
         }
         val sunnyIcon = if (isOver) R.drawable.ic_warning else R.drawable.ic_flag
         val sunnyTint = if (isOver) GlanceTheme.colors.error else GlanceTheme.colors.primary

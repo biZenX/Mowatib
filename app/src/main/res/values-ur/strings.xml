@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">مواظب</string>
+    <string name="accessibility_service_description">ڈیجیٹل فلاح و بہبود کے لیے مواظب کو فعال ایپلیکیشن کی شناخت میں مدد کرتا ہے۔</string>
+    <string name="global_streak_widget_name">مجموعی تسلسل</string>
+    <string name="global_streak_widget_description">اسکرین کے یومیہ ہدف کے اندر مسلسل دنوں کی تعداد۔</string>
+    <string name="app_streak_widget_name">ایپ کا تسلسل</string>
+    <string name="app_streak_widget_description">کسی ایپ کے لیے تسلسل: حد برقرار رکھنا اور ہدف حاصل کرنا۔</string>
+    <string name="total_screen_time_widget_name">کل اسکرین وقت</string>
+    <string name="total_screen_time_widget_description">آج کا کل اسکرین وقت دکھاتا ہے۔</string>
+    <string name="remaining_target_widget_name">ہدف کا باقی وقت</string>
+    <string name="remaining_target_widget_description">یومیہ اسکرین کی حد مکمل ہونے سے قبل کا باقی وقت۔</string>
+    <string name="phone_free_time_widget_name">فون سے دوری کا وقت</string>
+    <string name="phone_free_time_widget_description">آج فون کے بغیر گزارا گیا وقت، جو روزانہ دوبارہ ترتیب دیا جاتا ہے۔</string>
+    <string name="mowatib_focus_widget_name">مواظب توجہ</string>
+    <string name="mowatib_focus_widget_description">فوری توجہ، تسلسل اور اسمارٹ کاموں کی نگرانی۔</string>
+    <string name="mowatib_pomodoro_widget_name">مواظب توجہ اور ٹائمر</string>
+    <string name="mowatib_pomodoro_widget_description">جدید اور خوبصورت ڈیزائن کے ساتھ ہوم اسکرین پر فوکس ٹائمر۔</string>
+    <string name="mowatib_tasks_widget_name">مواظب اسمارٹ کام</string>
+    <string name="mowatib_tasks_widget_description">ہوم اسکرین سے براہ راست آج کے کام اور پیش رفت دیکھیں۔</string>
+    <string name="mowatib_habits_widget_name">مواظب عادات اور تسلسل</string>
+    <string name="mowatib_habits_widget_description">روزمرہ کی عادات اور عزم کے تسلسل کا ٹریکر۔</string>
+    <string name="mowatib_quote_widget_name">مواظب روزانہ ترغیب</string>
+    <string name="mowatib_quote_widget_description">نظم و ضبط اور یکسوئی پیدا کرنے والے روزانہ کے اقوال۔</string>
+    <string name="mowatib_dashboard_widget_name">مواظب فوری ڈیش بورڈ</string>
+    <string name="mowatib_dashboard_widget_description">اسکرین کے وقت، کاموں اور عادات کا فوری جائزہ۔</string>
+    <string name="mowatib_audio_widget_name">مواظب پرسکون آوازیں</string>
+    <string name="mowatib_audio_widget_description">گہری توجہ کے لیے پرسکون قدرتی آوازیں۔</string>
+</resources>

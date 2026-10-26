@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Mowatib</string>
+    <string name="accessibility_service_description">ডিজিটাল সুস্থতার বৈশিষ্ট্যের জন্য সক্রিয় অ্যাপ শনাক্ত করতে Mowatib-কে সহায়তা করে।</string>
+    <string name="global_streak_widget_name">সার্বিক ধারাবাহিকতা</string>
+    <string name="global_streak_widget_description">দৈনিক স্ক্রিন সময়সীমার মধ্যে থাকার টানা দিনসংখ্যা।</string>
+    <string name="app_streak_widget_name">অ্যাপ ধারাবাহিকতা</string>
+    <string name="app_streak_widget_description">একটি নির্দিষ্ট অ্যাপের ধারাবাহিকতা: সীমা বজায় রাখা এবং লক্ষ্য অর্জন।</string>
+    <string name="total_screen_time_widget_name">মোট স্ক্রিন সময়</string>
+    <string name="total_screen_time_widget_description">আজকের মোট স্ক্রিন ব্যবহারের সময় দেখায়।</string>
+    <string name="remaining_target_widget_name">অবশিষ্ট লক্ষ্য সময়</string>
+    <string name="remaining_target_widget_description">দৈনিক লক্ষ্যসীমা পৌঁছানোর আগের অবশিষ্ট সময়।</string>
+    <string name="phone_free_time_widget_name">ফোন মুক্ত সময়</string>
+    <string name="phone_free_time_widget_description">আজকে ফোন ছাড়া কাটানো সময়, যা প্রতিদিন পুনঃনির্ধারিত হয়।</string>
+    <string name="mowatib_focus_widget_name">Mowatib মনোযোগ</string>
+    <string name="mowatib_focus_widget_description">দ্রুত মনোযোগ সেশন, ধারাবাহিকতা এবং স্মার্ট কাজ প্রদর্শন করে।</string>
+    <string name="mowatib_pomodoro_widget_name">Mowatib মনোযোগ ও পোমোডোরো</string>
+    <string name="mowatib_pomodoro_widget_description">আধুনিক নকশার সাথে হোম স্ক্রিনে দ্রুত টাইমার।</string>
+    <string name="mowatib_tasks_widget_name">Mowatib স্মার্ট কাজ</string>
+    <string name="mowatib_tasks_widget_description">সরাসরি হোম স্ক্রিন থেকে আজকের কাজ ও অগ্রগতি পর্যবেক্ষণ করুন।</string>
+    <string name="mowatib_habits_widget_name">Mowatib অভ্যাস ও ধারাবাহিকতা</string>
+    <string name="mowatib_habits_widget_description">দৈনিক অভ্যাস এবং প্রতিশ্রুতির ধারাবাহিকতা ট্র্যাকার।</string>
+    <string name="mowatib_quote_widget_name">Mowatib দৈনিক অনুপ্রেরণা</string>
+    <string name="mowatib_quote_widget_description">শৃঙ্খলা ও একাগ্রতা বাড়াতে অনুপ্রেরণাদায়ক দৈনিক বাণী।</string>
+    <string name="mowatib_dashboard_widget_name">Mowatib দ্রুত ড্যাশবোর্ড</string>
+    <string name="mowatib_dashboard_widget_description">স্ক্রিন সময়, কাজ এবং অভ্যাসের তাৎক্ষণিক পর্যালোচনা।</string>
+    <string name="mowatib_audio_widget_name">Mowatib শান্ত পরিবেশীয় শব্দ</string>
+    <string name="mowatib_audio_widget_description">গভীর মনোযোগের জন্য প্রশান্ত প্রাকৃতিক শব্দ।</string>
+</resources>

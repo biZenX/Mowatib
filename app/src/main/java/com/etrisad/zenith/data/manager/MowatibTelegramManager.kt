@@ -83,13 +83,16 @@ class MowatibTelegramManager(private val context: Context) {
         val config = getConfig()
         val chatId = (targetChatId ?: config.chatId).trim()
         val token = (targetToken ?: config.botToken).trim()
+        val isAr = Locale.getDefault().language.startsWith("ar")
 
         if (chatId.isBlank()) {
-            return@withContext Result.failure(IllegalArgumentException("يرجى إدخال معرّف الحساب (Chat ID) أولاً"))
+            val err = if (isAr) "يرجى إدخال معرّف الحساب الرقمي أولاً" else "Please enter your chat ID first"
+            return@withContext Result.failure(IllegalArgumentException(err))
         }
 
         if (token.isBlank()) {
-            return@withContext Result.failure(IllegalArgumentException("يرجى إدخال رمز البوت (Bot Token) من BotFather"))
+            val err = if (isAr) "يرجى إدخال رمز مفتاح البوت أولاً" else "Please enter your bot token first"
+            return@withContext Result.failure(IllegalArgumentException(err))
         }
 
         try {
@@ -111,18 +114,20 @@ class MowatibTelegramManager(private val context: Context) {
             val responseBody = response.body?.string().orEmpty()
 
             if (response.isSuccessful) {
-                Result.success("تم إرسال الرسالة بنجاح عبر تيليجرام!")
+                val okMsg = if (isAr) "تم إرسال الرسالة بنجاح عبر تيليجرام!" else "Message sent successfully via Telegram!"
+                Result.success(okMsg)
             } else {
                 val errorMsg = try {
                     val json = JSONObject(responseBody)
-                    json.optString("description", "خطأ غير معروف من تيليجرام")
+                    json.optString("description", if (isAr) "خطأ غير معروف من تيليجرام" else "Unknown Telegram error")
                 } catch (_: Exception) {
-                    "رمز الخطأ: ${response.code}"
+                    if (isAr) "رمز الخطأ: ${response.code}" else "Error code: ${response.code}"
                 }
                 Result.failure(Exception(errorMsg))
             }
         } catch (e: Exception) {
-            Result.failure(Exception(e.localizedMessage ?: "فشل الاتصال بخوادم تيليجرام"))
+            val failMsg = if (isAr) "فشل الاتصال بخوادم تيليجرام" else "Failed to connect to Telegram servers"
+            Result.failure(Exception(e.localizedMessage ?: failMsg))
         }
     }
 
@@ -130,18 +135,33 @@ class MowatibTelegramManager(private val context: Context) {
      * Send test connection message
      */
     suspend fun testConnection(chatId: String, token: String): Result<String> {
+        val isAr = Locale.getDefault().language.startsWith("ar")
         val timeStr = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date())
-        val message = """
-            <b>منصة وتطبيق مواظب | Mowatib</b>
-            
-            تم التحقق من الاتصال بنجاح!
-            تم ربط حسابك في تيليجرام مع تطبيق مواظب على هاتفك.
-            
-            <b>معرّف المحادثة (Chat ID):</b> <code>$chatId</code>
-            <b>توقيت الربط:</b> $timeStr
-            
-            ستصلك التنبيهات المحددة وتقارير الإنجاز اليومية مباشرة هنا لمساعدتك على الانضباط والمواظبة.
-        """.trimIndent()
+        val message = if (isAr) {
+            """
+                <b>تطبيق مواظب</b>
+                
+                تم التحقق من الاتصال بنجاح!
+                تم ربط حسابك في تيليجرام مع تطبيق مواظب على هاتفك.
+                
+                <b>معرّف المحادثة:</b> <code>$chatId</code>
+                <b>توقيت الربط:</b> $timeStr
+                
+                ستصلك التنبيهات المحددة وتقارير الإنجاز اليومية مباشرة هنا لمساعدتك على الانضباط والمواظبة.
+            """.trimIndent()
+        } else {
+            """
+                <b>Mowatib Focus</b>
+                
+                Connection verified successfully!
+                Your Telegram account is now connected with Mowatib on your phone.
+                
+                <b>Chat ID:</b> <code>$chatId</code>
+                <b>Connected At:</b> $timeStr
+                
+                You will receive scheduled alerts and daily progress summaries directly here.
+            """.trimIndent()
+        }
 
         return sendMessage(message, targetChatId = chatId, targetToken = token)
     }
@@ -153,15 +173,28 @@ class MowatibTelegramManager(private val context: Context) {
         val config = getConfig()
         if (!config.enabled || !config.notifyPomodoro) return
 
-        val taskDesc = if (!taskTitle.isNullOrBlank()) "\n<b>المهمة:</b> $taskTitle" else ""
-        val message = """
-            <b>مواظب | جلسة تركيز ناجحة</b>
-            
-            أحسنت! أتممت جلسة تركيز بومودورو بنجاح.
-            <b>المدة:</b> $sessionMinutes دقيقة$taskDesc
-            
-            استمر في التقدم والمواظبة على أهدافك!
-        """.trimIndent()
+        val isAr = Locale.getDefault().language.startsWith("ar")
+        val message = if (isAr) {
+            val taskDesc = if (!taskTitle.isNullOrBlank()) "\n<b>المهمة:</b> $taskTitle" else ""
+            """
+                <b>مواظب | جلسة تركيز ناجحة</b>
+                
+                أحسنت! أتممت جلسة تركيز بنجاح.
+                <b>المدة:</b> $sessionMinutes دقيقة$taskDesc
+                
+                استمر في التقدم والمواظبة على أهدافك!
+            """.trimIndent()
+        } else {
+            val taskDesc = if (!taskTitle.isNullOrBlank()) "\n<b>Task:</b> $taskTitle" else ""
+            """
+                <b>Mowatib | Focus Session Completed</b>
+                
+                Great job! You completed a focus session.
+                <b>Duration:</b> $sessionMinutes minutes$taskDesc
+                
+                Keep up the great discipline!
+            """.trimIndent()
+        }
 
         sendMessage(message)
     }
@@ -173,14 +206,26 @@ class MowatibTelegramManager(private val context: Context) {
         val config = getConfig()
         if (!config.enabled || !config.notifyShieldBreach) return
 
-        val message = """
-            <b>مواظب | تنبيه انضباط ووقت الشاشة</b>
-            
-            تنبيه: تم تجاوز الحد المسموح لتطبيق <b>$appName</b> ($limitMinutes دقيقة).
-            تطبيق مواظب قام بتفعيل درع الحماية لمساعدتك على استعادة تركيزك.
-            
-            تذكّر: الانضباط اليوم هو حريتك وراحتك غداً.
-        """.trimIndent()
+        val isAr = Locale.getDefault().language.startsWith("ar")
+        val message = if (isAr) {
+            """
+                <b>مواظب | تنبيه انضباط ووقت الشاشة</b>
+                
+                تنبيه: تم تجاوز الحد المسموح لتطبيق <b>$appName</b> ($limitMinutes دقيقة).
+                تطبيق مواظب قام بتفعيل درع الحماية لمساعدتك على استعادة تركيزك.
+                
+                تذكّر: الانضباط اليوم هو حريتك وراحتك غداً.
+            """.trimIndent()
+        } else {
+            """
+                <b>Mowatib | Screen Time Alert</b>
+                
+                Alert: The daily usage limit for <b>$appName</b> has been reached ($limitMinutes minutes).
+                Mowatib shield has been activated to help you refocus.
+                
+                Remember: Daily discipline creates tomorrow's freedom.
+            """.trimIndent()
+        }
 
         sendMessage(message)
     }
@@ -192,14 +237,26 @@ class MowatibTelegramManager(private val context: Context) {
         val config = getConfig()
         if (!config.enabled || !config.notifyHabits) return
 
-        val message = """
-            <b>مواظب | إنجاز عادة يومية</b>
-            
-            تم تسجيل إنجاز عادة: <b>$habitTitle</b>
-            <b>سلسلة الالتزام (Streak):</b> $currentStreak أيام متتالية!
-            
-            قليلٌ دائمٌ خيرٌ من كثيرٍ منقطع.
-        """.trimIndent()
+        val isAr = Locale.getDefault().language.startsWith("ar")
+        val message = if (isAr) {
+            """
+                <b>مواظب | إنجاز عادة يومية</b>
+                
+                تم تسجيل إنجاز عادة: <b>$habitTitle</b>
+                <b>سلسلة الالتزام:</b> $currentStreak أيام متتالية!
+                
+                قليلٌ دائمٌ خيرٌ من كثيرٍ منقطع.
+            """.trimIndent()
+        } else {
+            """
+                <b>Mowatib | Habit Completed</b>
+                
+                Habit registered: <b>$habitTitle</b>
+                <b>Current Streak:</b> $currentStreak consecutive days!
+                
+                Consistency is the key to mastery.
+            """.trimIndent()
+        }
 
         sendMessage(message)
     }
@@ -215,17 +272,32 @@ class MowatibTelegramManager(private val context: Context) {
         val config = getConfig()
         if (!config.enabled || !config.notifyDailyRecap) return
 
-        val dateStr = SimpleDateFormat("EEEE، d MMMM yyyy", Locale.forLanguageTag("ar")).format(Date())
-        val message = """
-            <b>مواظب | التقرير اليومي للإنجاز</b>
-            <b>التاريخ:</b> $dateStr
-            
-            <b>وقت استخدام الشاشة:</b> $screenTimeFormatted
-            <b>المهام المنجزة:</b> $tasksCompleted
-            <b>العادات المكتملة:</b> $habitsCompleted
-            
-            عظيم! كل خطوة صغيرة اليوم تصنع فارقاً كبيراً غداً.
-        """.trimIndent()
+        val isAr = Locale.getDefault().language.startsWith("ar")
+        val message = if (isAr) {
+            val dateStr = SimpleDateFormat("EEEE، d MMMM yyyy", Locale.forLanguageTag("ar")).format(Date())
+            """
+                <b>مواظب | التقرير اليومي للإنجاز</b>
+                <b>التاريخ:</b> $dateStr
+                
+                <b>وقت استخدام الشاشة:</b> $screenTimeFormatted
+                <b>المهام المنجزة:</b> $tasksCompleted
+                <b>العادات المكتملة:</b> $habitsCompleted
+                
+                عظيم! كل خطوة صغيرة اليوم تصنع فارقاً كبيراً غداً.
+            """.trimIndent()
+        } else {
+            val dateStr = SimpleDateFormat("EEEE, MMMM d, yyyy", Locale.ENGLISH).format(Date())
+            """
+                <b>Mowatib | Daily Progress Summary</b>
+                <b>Date:</b> $dateStr
+                
+                <b>Screen Time:</b> $screenTimeFormatted
+                <b>Tasks Completed:</b> $tasksCompleted
+                <b>Habits Completed:</b> $habitsCompleted
+                
+                Every small daily step builds long-term success.
+            """.trimIndent()
+        }
 
         sendMessage(message)
     }

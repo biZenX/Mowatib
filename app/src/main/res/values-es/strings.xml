@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Mowatib</string>
+    <string name="accessibility_service_description">Permite a Mowatib identificar la aplicación activa para funciones de bienestar digital.</string>
+    <string name="global_streak_widget_name">Racha global</string>
+    <string name="global_streak_widget_description">Días consecutivos dentro del objetivo de tiempo en pantalla.</string>
+    <string name="app_streak_widget_name">Racha de la app</string>
+    <string name="app_streak_widget_description">Racha de una app: mantenerse bajo el límite o alcanzar la meta diaria.</string>
+    <string name="total_screen_time_widget_name">Tiempo total de pantalla</string>
+    <string name="total_screen_time_widget_description">Muestra el tiempo total de uso de pantalla hoy.</string>
+    <string name="remaining_target_widget_name">Tiempo restante del objetivo</string>
+    <string name="remaining_target_widget_description">Muestra el tiempo restante antes de alcanzar el límite diario.</string>
+    <string name="phone_free_time_widget_name">Tiempo libre de teléfono</string>
+    <string name="phone_free_time_widget_description">Muestra el tiempo sin usar el teléfono hoy; se reinicia diariamente.</string>
+    <string name="mowatib_focus_widget_name">Mowatib Enfoque</string>
+    <string name="mowatib_focus_widget_description">Muestra accesos de enfoque rápido, rachas y tareas inteligentes.</string>
+    <string name="mowatib_pomodoro_widget_name">Mowatib Enfoque y Pomodoro</string>
+    <string name="mowatib_pomodoro_widget_description">Temporizador de enfoque en la pantalla de inicio con diseño moderno.</string>
+    <string name="mowatib_tasks_widget_name">Mowatib Tareas inteligentes</string>
+    <string name="mowatib_tasks_widget_description">Revisa y sigue las tareas de hoy y tu progreso desde la pantalla de inicio.</string>
+    <string name="mowatib_habits_widget_name">Mowatib Hábitos y rachas</string>
+    <string name="mowatib_habits_widget_description">Registro de hábitos diarios y rachas de constancia.</string>
+    <string name="mowatib_quote_widget_name">Mowatib Motivación diaria</string>
+    <string name="mowatib_quote_widget_description">Sabiduría y citas diarias para inspirar disciplina y concentración.</string>
+    <string name="mowatib_dashboard_widget_name">Mowatib Panel rápido</string>
+    <string name="mowatib_dashboard_widget_description">Resumen rápido de tiempo de pantalla, tareas y hábitos.</string>
+    <string name="mowatib_audio_widget_name">Mowatib Sonidos de concentración</string>
+    <string name="mowatib_audio_widget_description">Sonidos relajantes de la naturaleza para un enfoque profundo.</string>
+</resources>

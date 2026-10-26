@@ -85,16 +85,21 @@ fun MowatibTelegramSettingsScreen(
                     )
                 }
                 Spacer(modifier = Modifier.width(16.dp))
+                val isAr = java.util.Locale.getDefault().language.startsWith("ar")
+
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "ربط تيليجرام | Mowatib Bot",
+                        text = if (isAr) "تكامل منصة تيليجرام" else "Telegram Bot Integration",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "اربط تطبيق مواظب بحسابك لتلقي تقارير الإنجاز اليومية، تنبيهات انضباط الشاشة، ومتابعة عاداتك وجلسات تركيزك لحظياً.",
+                        text = if (isAr)
+                            "اربط التطبيق بحسابك لتلقي تقارير الإنجاز اليومية، وتنبيهات انضباط الشاشة، ومتابعة عاداتك وجلسات تركيزك لحظياً."
+                        else
+                            "Connect your account to receive daily progress reports, screen time discipline alerts, and real-time focus updates.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f)
                     )
@@ -102,13 +107,15 @@ fun MowatibTelegramSettingsScreen(
             }
         }
 
+        val isAr = java.util.Locale.getDefault().language.startsWith("ar")
+
         Spacer(modifier = Modifier.height(16.dp))
-        PreferenceCategory(title = "حالة التكامل")
+        PreferenceCategory(title = if (isAr) "حالة التكامل" else "Integration Status")
 
         // Enable Switch
         SettingsToggle(
-            title = "تفعيل إشعارات تيليجرام",
-            description = "إرسال تقارير المواظبة وتنبيهات الانضباط عبر البوت",
+            title = if (isAr) "تفعيل إشعارات تيليجرام" else "Enable Telegram Notifications",
+            description = if (isAr) "إرسال تقارير المواظبة وتنبيهات الانضباط عبر البوت" else "Send focus reports and discipline alerts via Telegram bot",
             checked = config.enabled,
             onCheckedChange = { isEnabled ->
                 val updated = config.copy(enabled = isEnabled, chatId = chatIdInput, botToken = tokenInput)
@@ -125,7 +132,7 @@ fun MowatibTelegramSettingsScreen(
         ) {
             Column(modifier = Modifier.fillMaxWidth()) {
                 Spacer(modifier = Modifier.height(16.dp))
-                PreferenceCategory(title = "خطوات الربط السريع")
+                PreferenceCategory(title = if (isAr) "خطوات الربط السريع" else "Quick Setup Instructions")
 
                 // Instructions Card
                 Card(
@@ -137,16 +144,21 @@ fun MowatibTelegramSettingsScreen(
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
-                            text = "كيف تربط حسابك؟",
+                            text = if (isAr) "كيف تربط حسابك؟" else "How to connect?",
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "١. اضغط زر «فتح البوت» أدناه واضغط Start في تيليجرام.\n" +
-                                    "٢. أرسل أي رسالة للبوت لمعرفة الـ Chat ID أو استخدم بوت @userinfobot.\n" +
-                                    "٣. الصق الـ Chat ID ورمز البوت (Bot Token) من @BotFather ثم اضغط فحص الاتصال.",
+                            text = if (isAr)
+                                "١. اضغط زر «فتح البوت» أدناه واضغط زر البدء في تيليجرام.\n" +
+                                "٢. أرسل أي رسالة للبوت لمعرفة معرّف حسابك الرقمي.\n" +
+                                "٣. الصق معرّف الحساب ورمز مفتاح البوت ثم اضغط فحص الاتصال."
+                            else
+                                "1. Tap \"Open Bot\" below and start the bot in Telegram.\n" +
+                                "2. Send any message to get your Chat ID, or use @userinfobot.\n" +
+                                "3. Paste your Chat ID and Bot Token, then tap Test Connection.",
                             style = MaterialTheme.typography.bodySmall,
                             lineHeight = 20.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -168,7 +180,7 @@ fun MowatibTelegramSettingsScreen(
                                     modifier = Modifier.size(18.dp)
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("فتح البوت")
+                                Text(if (isAr) "فتح البوت" else "Open Bot")
                             }
 
                             OutlinedButton(
@@ -182,14 +194,14 @@ fun MowatibTelegramSettingsScreen(
                                     modifier = Modifier.size(18.dp)
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("معرفة الـ ID")
+                                Text(if (isAr) "معرفة المعرّف" else "Get Chat ID")
                             }
                         }
                     }
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
-                PreferenceCategory(title = "بيانات الحساب والبوت")
+                PreferenceCategory(title = if (isAr) "بيانات الحساب ومفتاح البوت" else "Account & Bot Credentials")
 
                 // Chat ID Field
                 OutlinedTextField(
@@ -198,8 +210,8 @@ fun MowatibTelegramSettingsScreen(
                         chatIdInput = it
                         updateAndSave(config.copy(chatId = it))
                     },
-                    label = { Text("معرّف الحساب (Telegram Chat ID)") },
-                    placeholder = { Text("مثال: 123456789") },
+                    label = { Text(if (isAr) "معرّف الحساب الرقمي" else "Chat ID") },
+                    placeholder = { Text(if (isAr) "مثال: 123456789" else "e.g. 123456789") },
                     leadingIcon = {
                         Icon(Icons.Outlined.Tag, contentDescription = null)
                     },
@@ -210,7 +222,7 @@ fun MowatibTelegramSettingsScreen(
                                 updateAndSave(config.copy(chatId = text))
                             }
                         }) {
-                            Icon(Icons.Outlined.ContentPaste, contentDescription = "لصق")
+                            Icon(Icons.Outlined.ContentPaste, contentDescription = if (isAr) "لصق" else "Paste")
                         }
                     },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -228,8 +240,8 @@ fun MowatibTelegramSettingsScreen(
                         tokenInput = it
                         updateAndSave(config.copy(botToken = it))
                     },
-                    label = { Text("رمز البوت (Telegram Bot Token)") },
-                    placeholder = { Text("من @BotFather (مثال: 123456:ABC-DEF...)") },
+                    label = { Text(if (isAr) "رمز مفتاح البوت" else "Bot Token") },
+                    placeholder = { Text(if (isAr) "مثال: 123456:ABC-DEF..." else "e.g. 123456:ABC-DEF...") },
                     leadingIcon = {
                         Icon(Icons.Outlined.Key, contentDescription = null)
                     },
@@ -240,7 +252,7 @@ fun MowatibTelegramSettingsScreen(
                                 updateAndSave(config.copy(botToken = text))
                             }
                         }) {
-                            Icon(Icons.Outlined.ContentPaste, contentDescription = "لصق")
+                            Icon(Icons.Outlined.ContentPaste, contentDescription = if (isAr) "لصق" else "Paste")
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),
@@ -254,7 +266,8 @@ fun MowatibTelegramSettingsScreen(
                 Button(
                     onClick = {
                         if (chatIdInput.isBlank() || tokenInput.isBlank()) {
-                            Toast.makeText(context, "يرجى ملء حقل الـ Chat ID ورمز البوت أولاً", Toast.LENGTH_SHORT).show()
+                            val msg = if (isAr) "يرجى ملء حقل معرّف الحساب ورمز مفتاح البوت أولاً" else "Please enter both Chat ID and Bot Token first"
+                            Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
                             return@Button
                         }
                         coroutineScope.launch {
@@ -264,11 +277,13 @@ fun MowatibTelegramSettingsScreen(
                             isTestingConnection = false
                             if (result.isSuccess) {
                                 isTestSuccess = true
-                                testResultStatus = "تم إرسال رسالة تجريبية بنجاح إلى حسابك في تيليجرام!"
-                                Toast.makeText(context, "الاتصال ناجح!", Toast.LENGTH_SHORT).show()
+                                testResultStatus = if (isAr) "تم إرسال رسالة تجريبية بنجاح إلى حسابك في تيليجرام!" else "Test message sent successfully to your Telegram account!"
+                                val okToast = if (isAr) "الاتصال ناجح!" else "Connection successful!"
+                                Toast.makeText(context, okToast, Toast.LENGTH_SHORT).show()
                             } else {
                                 isTestSuccess = false
-                                testResultStatus = "فشل الاتصال: ${result.exceptionOrNull()?.message}"
+                                val prefix = if (isAr) "فشل الاتصال: " else "Connection failed: "
+                                testResultStatus = prefix + (result.exceptionOrNull()?.message ?: "")
                             }
                         }
                     },
@@ -283,11 +298,11 @@ fun MowatibTelegramSettingsScreen(
                             strokeWidth = 2.dp
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("جارٍ فحص الاتصال...")
+                        Text(if (isAr) "جارٍ فحص الاتصال..." else "Testing connection...")
                     } else {
                         Icon(Icons.Outlined.NotificationsActive, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("فحص الاتصال وإرسال رسالة تجريبية")
+                        Text(if (isAr) "فحص الاتصال وإرسال رسالة تجريبية" else "Test Connection & Send Message")
                     }
                 }
 
@@ -303,12 +318,12 @@ fun MowatibTelegramSettingsScreen(
                 }
 
                 Spacer(modifier = Modifier.height(20.dp))
-                PreferenceCategory(title = "تخصيص التنبيهات والتقارير")
+                PreferenceCategory(title = if (isAr) "تخصيص التنبيهات والتقارير" else "Notification Preferences")
 
                 // Notification Preferences
                 SettingsToggle(
-                    title = "تقرير الإنجاز اليومي",
-                    description = "إرسال ملخص استخدام الشاشة والعادات مساء كل يوم",
+                    title = if (isAr) "تقرير الإنجاز اليومي" else "Daily Progress Report",
+                    description = if (isAr) "إرسال ملخص استخدام الشاشة والعادات مساء كل يوم" else "Send daily screen time and habits recap every evening",
                     checked = config.notifyDailyRecap,
                     onCheckedChange = { checked ->
                         updateAndSave(config.copy(notifyDailyRecap = checked))
@@ -319,8 +334,8 @@ fun MowatibTelegramSettingsScreen(
 
                 Spacer(modifier = Modifier.height(4.dp))
                 SettingsToggle(
-                    title = "تنبيهات انضباط الشاشة",
-                    description = "إرسال تنبيه فوري عند بلوغ الحد الأقصى لأي تطبيق محمي",
+                    title = if (isAr) "تنبيهات انضباط الشاشة" else "Screen Time Alerts",
+                    description = if (isAr) "إرسال تنبيه فوري عند بلوغ الحد الأقصى لأي تطبيق محمي" else "Instant notification when an app reaches its usage limit",
                     checked = config.notifyShieldBreach,
                     onCheckedChange = { checked ->
                         updateAndSave(config.copy(notifyShieldBreach = checked))
@@ -331,8 +346,8 @@ fun MowatibTelegramSettingsScreen(
 
                 Spacer(modifier = Modifier.height(4.dp))
                 SettingsToggle(
-                    title = "إتمام جلسات البومودورو",
-                    description = "تأكيد إنجاز فترات التركيز بنجاح عبر تيليجرام",
+                    title = if (isAr) "إتمام جلسات التركيز" else "Focus Session Completions",
+                    description = if (isAr) "تأكيد إنجاز فترات التركيز بنجاح عبر تيليجرام" else "Confirm completed focus and Pomodoro intervals",
                     checked = config.notifyPomodoro,
                     onCheckedChange = { checked ->
                         updateAndSave(config.copy(notifyPomodoro = checked))
@@ -343,8 +358,8 @@ fun MowatibTelegramSettingsScreen(
 
                 Spacer(modifier = Modifier.height(4.dp))
                 SettingsToggle(
-                    title = "إنجاز العادات وسلسلة الالتزام",
-                    description = "تسجيل إتمام العادات اليومية وتحديث الـ Streak",
+                    title = if (isAr) "إنجاز العادات وسلاسل الالتزام" else "Habit & Streak Completions",
+                    description = if (isAr) "تسجيل إتمام العادات اليومية وتحديث سلسلة الأيام" else "Record completed daily habits and streak updates",
                     checked = config.notifyHabits,
                     onCheckedChange = { checked ->
                         updateAndSave(config.copy(notifyHabits = checked))

@@ -37,6 +37,9 @@ class MowatibPomodoroWidget : GlanceAppWidget() {
     override val stateDefinition: GlanceStateDefinition<*> = PreferencesGlanceStateDefinition
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
+        val isAr = context.resources.configuration.locales[0]?.language?.startsWith("ar")
+            ?: java.util.Locale.getDefault().language.startsWith("ar")
+
         provideContent {
             GlanceTheme {
                 val intent = Intent(context, MainActivity::class.java).apply {
@@ -52,7 +55,7 @@ class MowatibPomodoroWidget : GlanceAppWidget() {
                         .clickable(launchAction),
                     contentAlignment = Alignment.Center
                 ) {
-                    PomodoroWidgetContent(context)
+                    PomodoroWidgetContent(context = context, isAr = isAr)
                 }
             }
         }
@@ -61,7 +64,7 @@ class MowatibPomodoroWidget : GlanceAppWidget() {
     @OptIn(ExperimentalMaterial3ExpressiveApi::class)
     @SuppressLint("RestrictedApi")
     @Composable
-    private fun PomodoroWidgetContent(context: Context) {
+    private fun PomodoroWidgetContent(context: Context, isAr: Boolean) {
         val size = LocalSize.current
         val squareSize = minOf(size.width, size.height)
         val scale = (squareSize.value / 120f).coerceIn(0.7f, 2.0f)
@@ -124,7 +127,7 @@ class MowatibPomodoroWidget : GlanceAppWidget() {
                 )
 
                 Text(
-                    text = "جلسة تركيز مواظب",
+                    text = if (isAr) "جلسة تركيز مواظب" else "Mowatib Focus Session",
                     style = TextStyle(
                         color = GlanceTheme.colors.primary,
                         fontSize = (11 * scale).sp,
@@ -146,7 +149,7 @@ class MowatibPomodoroWidget : GlanceAppWidget() {
                     )
                     Spacer(modifier = GlanceModifier.width((4 * scale).dp))
                     Text(
-                        text = "ابدأ الآن",
+                        text = if (isAr) "ابدأ الآن" else "Start Now",
                         style = TextStyle(
                             color = GlanceTheme.colors.onSurfaceVariant,
                             fontSize = (10 * scale).sp,
