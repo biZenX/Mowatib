@@ -73,10 +73,12 @@ fun PomodoroScreen(
     var pendingDeletePreset by remember { mutableStateOf<String?>(null) }
 
     val pomoContext = LocalContext.current
+    val isAr = remember { java.util.Locale.getDefault().language.startsWith("ar") }
     fun startWithPreflight() {
         when {
             !Settings.canDrawOverlays(pomoContext) -> {
-                Toast.makeText(pomoContext, "Display over other apps is required for blocking", Toast.LENGTH_LONG).show()
+                val msg = if (isAr) "إذن الظهور فوق التطبيقات مطلوب لقفل التطبيقات" else "Display over other apps is required for blocking"
+                Toast.makeText(pomoContext, msg, Toast.LENGTH_LONG).show()
                 pomoContext.startActivity(
                     Intent(
                         Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
@@ -85,13 +87,15 @@ fun PomodoroScreen(
                 )
             }
             !isAccessibilityServiceEnabled(pomoContext) -> {
-                Toast.makeText(pomoContext, "Accessibility service is required to detect apps", Toast.LENGTH_LONG).show()
+                val msg = if (isAr) "خدمة إمكانية الوصول مطلوبة للتعرف على التطبيقات" else "Accessibility service is required to detect apps"
+                Toast.makeText(pomoContext, msg, Toast.LENGTH_LONG).show()
                 pomoContext.startActivity(
                     Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 )
             }
             !isNotificationListenerEnabled(pomoContext) -> {
-                Toast.makeText(pomoContext, "Notification access is required to block notifications", Toast.LENGTH_LONG).show()
+                val msg = if (isAr) "إذن الوصول للإشعارات مطلوب لمنع الإشعارات أثناء الجلسة" else "Notification access is required to block notifications"
+                Toast.makeText(pomoContext, msg, Toast.LENGTH_LONG).show()
                 pomoContext.startActivity(
                     Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 )
@@ -243,7 +247,7 @@ fun PomodoroScreen(
             if (!uiState.isSessionActive) {
                 item(key = "stats") {
                     Column {
-                        PreferenceCategory(title = "Statistics")
+                        PreferenceCategory(title = if (isAr) "الإحصائيات" else "Statistics")
                         PomodoroStatsSection(viewModel = viewModel)
                     }
                 }
@@ -276,7 +280,7 @@ fun PomodoroScreen(
                 if (!sessionActive) {
                     ZenithButton(
                         onClick = { startWithPreflight() },
-                        text = "Start Focus",
+                        text = if (isAr) "بدء التركيز" else "Start Focus",
                         icon = Icons.Outlined.PlayArrow,
                         size = ZenithButtonSize.ExtraLarge,
                         fillMaxWidth = true
@@ -297,7 +301,7 @@ fun PomodoroScreen(
                                         if (paused) viewModel.resumeSession()
                                         else viewModel.pauseSession()
                                     },
-                                    text = if (paused) "Resume Session" else "Pause Session",
+                                    text = if (paused) (if (isAr) "استئناف الجلسة" else "Resume Session") else (if (isAr) "إيقاف مؤقت" else "Pause Session"),
                                     icon = if (paused) Icons.Outlined.PlayArrow else Icons.Outlined.Pause,
                                     type = if (paused) ZenithButtonType.Filled else ZenithButtonType.Outlined,
                                     containerColor = if (paused) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.tertiaryContainer,
@@ -311,7 +315,7 @@ fun PomodoroScreen(
                     if (uiState.isBreakActive) {
                         ZenithButton(
                             onClick = { viewModel.skipToNextSession() },
-                            text = if (uiState.currentSessionNumber >= uiState.sessionCount) "Skip to End" else "Skip Break",
+                            text = if (uiState.currentSessionNumber >= uiState.sessionCount) (if (isAr) "تخطي للنهاية" else "Skip to End") else (if (isAr) "تخطي الاستراحة" else "Skip Break"),
                             icon = Icons.Outlined.SkipNext,
                             type = ZenithButtonType.Text,
                             size = ZenithButtonSize.Large,
@@ -321,7 +325,7 @@ fun PomodoroScreen(
 
                     ZenithButton(
                         onClick = { showDisableSheet = true },
-                        text = if (uiState.currentSessionNumber >= uiState.sessionCount) "End Pomodoro Session" else "End Session",
+                        text = if (uiState.currentSessionNumber >= uiState.sessionCount) (if (isAr) "إنهاء جلسة التركيز" else "End Pomodoro Session") else (if (isAr) "إنهاء الجلسة" else "End Session"),
                         icon = Icons.Outlined.Stop,
                         type = ZenithButtonType.Text,
                         size = ZenithButtonSize.Large,
@@ -384,7 +388,7 @@ fun PomodoroScreen(
             },
             onSearchQueryChange = { searchQuery = it },
             showTabs = false,
-            title = "Select Allowed Apps",
+            title = if (isAr) "تحديد التطبيقات المسموحة" else "Select Allowed Apps",
             maxSelection = uiState.maxSelection
         )
     }
@@ -427,12 +431,12 @@ fun PomodoroScreen(
                     .navigationBarsPadding()
             ) {
                 Text(
-                    text = "Save App Selection",
+                    text = if (isAr) "حفظ مجموعة التطبيقات" else "Save App Selection",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "Name this app selection preset to easily apply it later.",
+                    text = if (isAr) "قم بتسمية هذه المجموعة لتطبيقها بسهولة لاحقاً." else "Name this app selection preset to easily apply it later.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -440,7 +444,7 @@ fun PomodoroScreen(
                 OutlinedTextField(
                     value = presetNameInput,
                     onValueChange = { presetNameInput = it },
-                    placeholder = { Text("e.g., Work, Study, Focus") },
+                    placeholder = { Text(if (isAr) "مثال: عمل، دراسة، تركيز" else "e.g., Work, Study, Focus") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
@@ -457,7 +461,7 @@ fun PomodoroScreen(
                             showPresetSaveSheet = false
                         }
                     },
-                    text = "Save Preset",
+                    text = if (isAr) "حفظ النموذج" else "Save Preset",
                     icon = Icons.Outlined.Save,
                     fillMaxWidth = true,
                     enabled = presetNameInput.isNotBlank()
@@ -465,7 +469,7 @@ fun PomodoroScreen(
                 Spacer(modifier = Modifier.height(8.dp))
                 ZenithButton(
                     onClick = { showPresetSaveSheet = false },
-                    text = "Cancel",
+                    text = if (isAr) "إلغاء" else "Cancel",
                     type = ZenithButtonType.Text,
                     fillMaxWidth = true
                 )
@@ -488,14 +492,14 @@ fun PomodoroScreen(
                     .navigationBarsPadding()
             ) {
                 Text(
-                    text = "Apply Preset",
+                    text = if (isAr) "تطبيق نموذج مسبق" else "Apply Preset",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 
                 if (presetList.isEmpty()) {
-                    Text("No presets saved yet.", modifier = Modifier.padding(vertical = 32.dp))
+                    Text(if (isAr) "لا توجد نماذج محفوظة حتى الآن." else "No presets saved yet.", modifier = Modifier.padding(vertical = 32.dp))
                 } else {
                     presetList.forEachIndexed { index, pair ->
                         val name = pair.first
@@ -559,6 +563,7 @@ fun TimeSettingsCard(
 ) {
     val middleShape = RoundedCornerShape(8.dp)
     val bottomShape = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp, bottomStart = 24.dp, bottomEnd = 24.dp)
+    val isAr = remember { java.util.Locale.getDefault().language.startsWith("ar") }
 
     var focusText by remember(sessionDuration) { mutableStateOf(sessionDuration.toString()) }
     var breakText by remember(breakDuration) { mutableStateOf(breakDuration.toString()) }
@@ -573,7 +578,7 @@ fun TimeSettingsCard(
         ) {
             TimeAdjustmentCard(
                 modifier = Modifier.weight(1f),
-                title = "Focus",
+                title = if (isAr) "تركيز" else "Focus",
                 value = focusText,
                 onValueChange = { focusText = it; it.toIntOrNull()?.let(onSessionDurationChange) },
                 shape = RoundedCornerShape(topStart = 24.dp, topEnd = 8.dp, bottomStart = 8.dp, bottomEnd = 8.dp),
@@ -581,7 +586,7 @@ fun TimeSettingsCard(
             )
             TimeAdjustmentCard(
                 modifier = Modifier.weight(1f),
-                title = "Break",
+                title = if (isAr) "استراحة" else "Break",
                 value = breakText,
                 onValueChange = { breakText = it; it.toIntOrNull()?.let(onBreakDurationChange) },
                 shape = middleShape,
@@ -589,7 +594,7 @@ fun TimeSettingsCard(
             )
             TimeAdjustmentCard(
                 modifier = Modifier.weight(1f),
-                title = "Long",
+                title = if (isAr) "طويلة" else "Long",
                 value = longBreakText,
                 onValueChange = { longBreakText = it; it.toIntOrNull()?.let(onLongBreakDurationChange) },
                 shape = RoundedCornerShape(topEnd = 24.dp, topStart = 8.dp, bottomStart = 8.dp, bottomEnd = 8.dp),
@@ -601,8 +606,8 @@ fun TimeSettingsCard(
         CardGroup(shape = middleShape, containerColor = containerColor) {
             ToggleOptionRow(
                 icon = Icons.Outlined.Repeat,
-                title = "Sessions",
-                subtitle = "Total sessions to complete",
+                title = if (isAr) "الجلسات" else "Sessions",
+                subtitle = if (isAr) "عدد الجلسات الإجمالي" else "Total sessions to complete",
                 options = listOf(2, 3, 4, 6, 8, 10),
                 selected = sessionCount,
                 onSelect = onSessionCountChange
@@ -612,8 +617,8 @@ fun TimeSettingsCard(
         CardGroup(shape = bottomShape, containerColor = containerColor) {
             ToggleOptionRow(
                 icon = Icons.Outlined.HourglassEmpty,
-                title = "Long Break Every",
-                subtitle = "Sessions before a long break",
+                title = if (isAr) "استراحة طويلة كل" else "Long Break Every",
+                subtitle = if (isAr) "جلسات قبل الاستراحة الطويلة" else "Sessions before a long break",
                 options = listOf(2, 3, 4, 6, 8),
                 selected = sessionsBeforeLongBreak,
                 onSelect = onSessionsBeforeLongBreakChange
@@ -739,13 +744,14 @@ fun AppSelectionCard(
     val topShape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp, bottomStart = 8.dp, bottomEnd = 8.dp)
     val middleShape = RoundedCornerShape(8.dp)
     val bottomShape = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp, bottomStart = 24.dp, bottomEnd = 24.dp)
+    val isAr = remember { java.util.Locale.getDefault().language.startsWith("ar") }
 
     Column {
-        PreferenceCategory(title = "App Protection")
+        PreferenceCategory(title = if (isAr) "حماية التطبيقات" else "App Protection")
         CardGroup(shape = topShape, containerColor = containerColor) {
             SettingsToggle(
-                title = "Block apps behind puzzle",
-                description = "Selected apps require a puzzle to access",
+                title = if (isAr) "حظر التطبيقات بلعبة لغز" else "Block apps behind puzzle",
+                description = if (isAr) "التطبيقات المحددة تتطلب حل لغز لفتحها" else "Selected apps require a puzzle to access",
                 checked = blockAllowedApps,
                 onCheckedChange = onBlockAllowedAppsChange,
                 icon = Icons.Outlined.Lock,
@@ -755,8 +761,8 @@ fun AppSelectionCard(
         Spacer(modifier = Modifier.height(4.dp))
         CardGroup(shape = bottomShape, containerColor = containerColor) {
             SettingsToggle(
-                title = "Pauseable Session",
-                description = "Allow pausing to access apps freely",
+                title = if (isAr) "جلسة قابلة للإيقاف المؤقت" else "Pauseable Session",
+                description = if (isAr) "السماح بإيقاف الجلسة مؤقتاً للوصول للتطبيقات" else "Allow pausing to access apps freely",
                 checked = pauseable,
                 onCheckedChange = onPauseableChange,
                 icon = Icons.Outlined.PauseCircle,
@@ -766,7 +772,7 @@ fun AppSelectionCard(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        PreferenceCategory(title = "App Selection")
+        PreferenceCategory(title = if (isAr) "اختيار التطبيقات" else "App Selection")
         CardGroup(shape = topShape, containerColor = containerColor) {
             val context = LocalContext.current
             val selectedCount = allowedPackages.size
@@ -795,18 +801,18 @@ fun AppSelectionCard(
                     Spacer(modifier = Modifier.width(16.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            "Allowed Apps",
+                            if (isAr) "التطبيقات المسموحة" else "Allowed Apps",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            "All apps will be blocked",
+                            if (isAr) "سيتم حظر كافة التطبيقات" else "All apps will be blocked",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                     val maxOptions = remember { listOf(3, 5, 7, 10, 15) }
-                    val maxDropdownOptions = remember { maxOptions.map { "$it apps" to it } }
+                    val maxDropdownOptions = remember(isAr) { maxOptions.map { (if (isAr) "$it تطبيقات" else "$it apps") to it } }
                     ZenithDropdown(
                         options = maxDropdownOptions,
                         selectedOption = maxSelection,
@@ -839,7 +845,7 @@ fun AppSelectionCard(
                     Spacer(modifier = Modifier.width(16.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "$selectedCount Apps Selected",
+                            text = if (isAr) "$selectedCount تطبيقات محددة" else "$selectedCount Apps Selected",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
@@ -849,14 +855,14 @@ fun AppSelectionCard(
                                     if (index > 0) append(", ")
                                     append(name)
                                 }
-                                if (selectedCount > 2) append(" +${selectedCount - 2} more")
+                                if (selectedCount > 2) append(if (isAr) " و+${selectedCount - 2} أخرى" else " +${selectedCount - 2} more")
                             },
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                     val maxOptions = remember { listOf(3, 5, 7, 10, 15) }
-                    val maxDropdownOptions = remember { maxOptions.map { "$it apps" to it } }
+                    val maxDropdownOptions = remember(isAr) { maxOptions.map { (if (isAr) "$it تطبيقات" else "$it apps") to it } }
                     ZenithDropdown(
                         options = maxDropdownOptions,
                         selectedOption = maxSelection,
@@ -871,7 +877,7 @@ fun AppSelectionCard(
             Box(modifier = Modifier.padding(16.dp)) {
                 ZenithButton(
                     onClick = onAppPickerClick,
-                    text = if (allowedPackages.isEmpty()) "Select apps" else "Change selection",
+                    text = if (allowedPackages.isEmpty()) (if (isAr) "اختيار تطبيقات" else "Select apps") else (if (isAr) "تعديل الاختيار" else "Change selection"),
                     icon = Icons.Outlined.Edit,
                     type = ZenithButtonType.Outlined,
                     size = ZenithButtonSize.Large,
@@ -883,7 +889,7 @@ fun AppSelectionCard(
         val presets = remember(presetsJson) { viewModel.getPresets() }
         if (presets.isNotEmpty() || allowedPackages.isNotEmpty()) {
             Spacer(modifier = Modifier.height(16.dp))
-            PreferenceCategory(title = "Presets")
+            PreferenceCategory(title = if (isAr) "النماذج المحفوظة" else "Presets")
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -892,7 +898,7 @@ fun AppSelectionCard(
             ) {
                 ZenithButton(
                     onClick = onSavePreset,
-                    text = "Save current",
+                    text = if (isAr) "حفظ الحالي" else "Save current",
                     icon = Icons.Outlined.Save,
                     type = ZenithButtonType.Tonal,
                     size = ZenithButtonSize.Medium,
@@ -901,7 +907,7 @@ fun AppSelectionCard(
                 if (presets.isNotEmpty()) {
                     ZenithButton(
                         onClick = onApplyPreset,
-                        text = "Load preset",
+                        text = if (isAr) "تحميل نموذج" else "Load preset",
                         icon = Icons.Outlined.Download,
                         type = ZenithButtonType.Tonal,
                         size = ZenithButtonSize.Medium,
@@ -939,11 +945,11 @@ fun AppSelectionCard(
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                                Text("${packages.size} apps", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(if (isAr) "${packages.size} تطبيقات" else "${packages.size} apps", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                             Icon(Icons.Outlined.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
                             IconButton(onClick = { onDeletePreset(name) }) {
-                                Icon(Icons.Outlined.Delete, contentDescription = "Delete", modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.error)
+                                Icon(Icons.Outlined.Delete, contentDescription = if (isAr) "حذف" else "Delete", modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.error)
                             }
                         }
                     }
@@ -971,6 +977,7 @@ fun PomodoroStatusProgress(
     isLongBreak: Boolean = false,
     circleSize: androidx.compose.ui.unit.Dp = 240.dp
 ) {
+    val isAr = remember { java.util.Locale.getDefault().language.startsWith("ar") }
     val remaining = if (isBreakActive) remainingBreakMillis else remainingSessionMillis
     val total = if (isBreakActive) totalBreakMillis else totalSessionMillis
     val progressValue = when {
@@ -1063,16 +1070,16 @@ fun PomodoroStatusProgress(
                 val minutes = (remaining / 60000).toInt()
                 val seconds = ((remaining % 60000) / 1000).toInt()
                 Text(
-                    text = if (isPreview) "${minutes}m" else "${minutes}m ${seconds}s",
+                    text = if (isPreview) (if (isAr) "${minutes}د" else "${minutes}m") else (if (isAr) "${minutes}د ${seconds}ث" else "${minutes}m ${seconds}s"),
                     style = MaterialTheme.typography.headlineLarge,
                     fontWeight = FontWeight.Black
                 )
                 Text(
                     text = when {
-                        isPreview -> "Ready to Focus"
-                        isBreakActive -> if (isLongBreak) "Long Break $currentSession/$totalSessions" else "Break $currentSession/$totalSessions"
-                        isPaused -> "Paused - Session $currentSession/$totalSessions"
-                        else -> "Session $currentSession/$totalSessions"
+                        isPreview -> if (isAr) "جاهز للتركيز والانطلاق" else "Ready to Focus"
+                        isBreakActive -> if (isLongBreak) (if (isAr) "استراحة طويلة $currentSession/$totalSessions" else "Long Break $currentSession/$totalSessions") else (if (isAr) "استراحة $currentSession/$totalSessions" else "Break $currentSession/$totalSessions")
+                        isPaused -> if (isAr) "مؤقت - جلسة $currentSession/$totalSessions" else "Paused - Session $currentSession/$totalSessions"
+                        else -> if (isAr) "جلسة $currentSession/$totalSessions" else "Session $currentSession/$totalSessions"
                     },
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant

@@ -20,6 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.etrisad.zenith.util.AmbientSound
 import com.etrisad.zenith.util.MowatibAmbientSoundManager
+import java.util.Locale
 
 @Composable
 fun AmbientSoundCard(
@@ -27,6 +28,7 @@ fun AmbientSoundCard(
     containerColor: Color = MaterialTheme.colorScheme.surfaceContainerLow
 ) {
     val context = LocalContext.current
+    val isAr = remember { Locale.getDefault().language.startsWith("ar") }
     val currentSound by MowatibAmbientSoundManager.currentSound.collectAsState()
     val isPlaying by MowatibAmbientSoundManager.isPlaying.collectAsState()
     val volume by MowatibAmbientSoundManager.volume.collectAsState()
@@ -63,12 +65,17 @@ fun AmbientSoundCard(
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
                         Text(
-                            text = "أصوات التركيز والهدوء",
+                            text = if (isAr) "أصوات التركيز والهدوء" else "Ambient & Focus Sounds",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
+                        val soundName = if (currentSound.id == "none") {
+                            if (isAr) "صامت (بدون صوت)" else "Silent (None)"
+                        } else {
+                            if (isAr) currentSound.nameAr else currentSound.nameEn
+                        }
                         Text(
-                            text = if (currentSound.id == "none") "صامت (بدون صوت)" else currentSound.nameAr,
+                            text = soundName,
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.primary
                         )
@@ -107,7 +114,7 @@ fun AmbientSoundCard(
                             }
                     ) {
                         Text(
-                            text = sound.nameAr,
+                            text = if (isAr) sound.nameAr else sound.nameEn,
                             modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,

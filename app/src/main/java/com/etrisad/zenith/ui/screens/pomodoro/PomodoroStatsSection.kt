@@ -26,8 +26,10 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
+
 @Composable
 fun PomodoroStatsSection(viewModel: PomodoroViewModel) {
+    val isAr = remember { Locale.getDefault().language.startsWith("ar") }
     val selectedRange by viewModel.pomodoroStatsRange.collectAsState()
     val offset by viewModel.pomodoroPeriodOffset.collectAsState()
     val prefs by viewModel.userPreferences.collectAsState()
@@ -55,10 +57,14 @@ fun PomodoroStatsSection(viewModel: PomodoroViewModel) {
     val dailyHistory = remember(dailyStats) {
         dailyStats.map { DailyUsage(date = it.dateMillis, totalTime = it.focusMillis) }
     }
-    val countsLine = remember(statByKey, offset, prefs) {
+    val countsLine = remember(statByKey, offset, prefs, isAr) {
         if (offset != 0) {
             val sessions = dailyStats.sumOf { it.sessions }
-            "This period: $sessions ${if (sessions == 1) "session" else "sessions"}"
+            if (isAr) {
+                "هذه الفترة: $sessions جلسة"
+            } else {
+                "This period: $sessions ${if (sessions == 1) "session" else "sessions"}"
+            }
         } else {
             val todayKey = com.etrisad.zenith.util.DateTimeUtils.getDayStartDateString(
                 System.currentTimeMillis(), prefs.dayStartHour, prefs.dayStartMinute
@@ -69,9 +75,14 @@ fun PomodoroStatsSection(viewModel: PomodoroViewModel) {
             val todaySessions = today?.sessions ?: 0
             val weekSessions = weekStats.sumOf { it.sessions }
             val weekMillis = weekStats.sumOf { it.focusMillis }
-            "Today: $todaySessions ${if (todaySessions == 1) "session" else "sessions"} • " +
-                "This week: $weekSessions ${if (weekSessions == 1) "session" else "sessions"} • " +
-                formatPomodoroDuration(weekMillis)
+            if (isAr) {
+                "اليوم: $todaySessions جلسات • هذا الأسبوع: $weekSessions جلسات • " +
+                    formatPomodoroDuration(weekMillis, isAr)
+            } else {
+                "Today: $todaySessions ${if (todaySessions == 1) "session" else "sessions"} • " +
+                    "This week: $weekSessions ${if (weekSessions == 1) "session" else "sessions"} • " +
+                    formatPomodoroDuration(weekMillis, isAr)
+            }
         }
     }
 
@@ -82,7 +93,7 @@ fun PomodoroStatsSection(viewModel: PomodoroViewModel) {
             modifier = Modifier.fillMaxWidth()
         ) {
             LongTermSection(
-                title = "Session History",
+                title = if (isAr) "سجل جلسات التركيز" else "Session History",
                 accentColor = MaterialTheme.colorScheme.tertiary,
                 highlightColor = MaterialTheme.colorScheme.primary,
                 selectedRange = selectedRange,
@@ -94,14 +105,19 @@ fun PomodoroStatsSection(viewModel: PomodoroViewModel) {
                 totalMillis = totalForPeriod,
                 prevTotal = prevTotal,
                 dailyHistory = dailyHistory,
-                heatmapEmptyText = "No sessions yet - complete a focus session",
-                formatDuration = ::formatPomodoroDuration,
+                heatmapEmptyText = if (isAr) "لا توجد جلسات مسجلة بعد - ابدأ جلسة تركيز" else "No sessions yet - complete a focus session",
+                formatDuration = { formatPomodoroDuration(it, isAr) },
                 higherIsBetter = true,
                 periodDays = periodDays,
                 detailExtraLine = { dayMillis ->
                     val count = dayCountByMillis[dayMillis] ?: 0
+                    val text = if (isAr) {
+                        "$count جلسة"
+                    } else {
+                        if (count == 1) "1 session" else "$count sessions"
+                    }
                     Text(
-                        text = if (count == 1) "1 session" else "$count sessions",
+                        text = text,
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.tertiary
@@ -119,6 +135,7 @@ fun PomodoroStatsSection(viewModel: PomodoroViewModel) {
         Spacer(modifier = Modifier.height(4.dp))
     }
 }
+
 private fun mondayWeekKeys(keyFmt: SimpleDateFormat): Set<String> {
     val cal = Calendar.getInstance().apply {
         firstDayOfWeek = Calendar.MONDAY
@@ -136,9 +153,13 @@ private fun mondayWeekKeys(keyFmt: SimpleDateFormat): Set<String> {
     }
 }
 
-private fun formatPomodoroDuration(millis: Long): String {
-    if (millis <= 0L) return "0m"
+private fun formatPomodoroDuration(millis: Long, isAr: Boolean = false): String {
+    if (millis <= 0L) return if (isAr) "0د" else "0m"
     val mins = millis / 60000L
     val hrs = mins / 60
-    return if (hrs > 0) "${hrs}h ${mins % 60}m" else "${mins}m"
+    return if (isAr) {
+        if (hrs > 0) "${hrs}س ${mins % 60}د" else "${mins}د"
+    } else {
+        if (hrs > 0) "${hrs}h ${mins % 60}m" else "${mins}m"
+    }
 }

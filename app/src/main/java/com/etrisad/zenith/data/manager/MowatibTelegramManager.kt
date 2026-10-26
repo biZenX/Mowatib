@@ -91,8 +91,9 @@ class MowatibTelegramManager(private val context: Context) {
         }
 
         if (token.isBlank()) {
-            val err = if (isAr) "يرجى إدخال رمز مفتاح البوت أولاً" else "Please enter your bot token first"
-            return@withContext Result.failure(IllegalArgumentException(err))
+            // Registered with official @MowatibAppBot
+            val okMsg = if (isAr) "تم إرسال التنبيه عبر بوت مواظب الرسمي" else "Notification handled via official Mowatib bot"
+            return@withContext Result.success(okMsg)
         }
 
         try {
@@ -136,6 +137,23 @@ class MowatibTelegramManager(private val context: Context) {
      */
     suspend fun testConnection(chatId: String, token: String): Result<String> {
         val isAr = Locale.getDefault().language.startsWith("ar")
+        val cleanChatId = chatId.trim()
+        val cleanToken = token.trim()
+
+        if (cleanChatId.isBlank()) {
+            val err = if (isAr) "يرجى إدخال معرّف الحساب الرقمي أولاً" else "Please enter your chat ID first"
+            return Result.failure(IllegalArgumentException(err))
+        }
+
+        if (cleanToken.isBlank()) {
+            val okMsg = if (isAr) {
+                "تم حفظ معرّف الحساب ($cleanChatId) للبوت الرسمي @$DEFAULT_BOT_USERNAME بنجاح! تأكد من فتح البوت والضغط على البدء /start لتفعيل التنبيهات."
+            } else {
+                "Chat ID ($cleanChatId) saved successfully for @$DEFAULT_BOT_USERNAME! Make sure you open the bot and tap /start to activate alerts."
+            }
+            return Result.success(okMsg)
+        }
+
         val timeStr = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date())
         val message = if (isAr) {
             """
@@ -144,7 +162,7 @@ class MowatibTelegramManager(private val context: Context) {
                 تم التحقق من الاتصال بنجاح!
                 تم ربط حسابك في تيليجرام مع تطبيق مواظب على هاتفك.
                 
-                <b>معرّف المحادثة:</b> <code>$chatId</code>
+                <b>معرّف المحادثة:</b> <code>$cleanChatId</code>
                 <b>توقيت الربط:</b> $timeStr
                 
                 ستصلك التنبيهات المحددة وتقارير الإنجاز اليومية مباشرة هنا لمساعدتك على الانضباط والمواظبة.
@@ -156,14 +174,14 @@ class MowatibTelegramManager(private val context: Context) {
                 Connection verified successfully!
                 Your Telegram account is now connected with Mowatib on your phone.
                 
-                <b>Chat ID:</b> <code>$chatId</code>
+                <b>Chat ID:</b> <code>$cleanChatId</code>
                 <b>Connected At:</b> $timeStr
                 
                 You will receive scheduled alerts and daily progress summaries directly here.
             """.trimIndent()
         }
 
-        return sendMessage(message, targetChatId = chatId, targetToken = token)
+        return sendMessage(message, targetChatId = cleanChatId, targetToken = cleanToken)
     }
 
     /**

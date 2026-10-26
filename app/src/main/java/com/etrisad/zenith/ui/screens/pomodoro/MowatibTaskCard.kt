@@ -18,15 +18,17 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.etrisad.zenith.data.local.MowatibTask
 import com.etrisad.zenith.data.local.MowatibTaskManager
+import java.util.Locale
 
 @Composable
 fun MowatibTaskCard(
     modifier: Modifier = Modifier,
     containerColor: Color = MaterialTheme.colorScheme.surfaceContainerLow
 ) {
+    val isAr = remember { Locale.getDefault().language.startsWith("ar") }
     val tasks by MowatibTaskManager.tasks.collectAsState()
     var newTaskText by remember { mutableStateOf("") }
-    val selectedCategory = "تركيز"
+    val selectedCategory = if (isAr) "تركيز" else "Focus"
 
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -58,13 +60,17 @@ fun MowatibTaskCard(
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
                     Text(
-                        text = "مهام جلسة التركيز",
+                        text = if (isAr) "مهام جلسة التركيز" else "Focus Session Tasks",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
                     val completedCount = tasks.count { it.isCompleted }
                     Text(
-                        text = if (tasks.isEmpty()) "لا توجد مهام حالياً" else "تم إنجاز $completedCount من ${tasks.size} مهام",
+                        text = if (tasks.isEmpty()) {
+                            if (isAr) "لا توجد مهام حالياً" else "No tasks currently"
+                        } else {
+                            if (isAr) "تم إنجاز $completedCount من ${tasks.size} مهام" else "Completed $completedCount of ${tasks.size} tasks"
+                        },
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.primary
                     )
@@ -80,7 +86,7 @@ fun MowatibTaskCard(
                 OutlinedTextField(
                     value = newTaskText,
                     onValueChange = { newTaskText = it },
-                    placeholder = { Text("أضف مهمة جديدة للتركيز...") },
+                    placeholder = { Text(if (isAr) "أضف مهمة جديدة للتركيز..." else "Add a new focus task...") },
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(12.dp),
                     singleLine = true
@@ -99,7 +105,7 @@ fun MowatibTaskCard(
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.Add,
-                        contentDescription = "Add Task",
+                        contentDescription = if (isAr) "إضافة مهمة" else "Add Task",
                         tint = MaterialTheme.colorScheme.onPrimary
                     )
                 }
@@ -109,7 +115,7 @@ fun MowatibTaskCard(
 
             if (tasks.isEmpty()) {
                 Text(
-                    text = "لا توجد مهام حالياً. أضف مهمة لتبدأ التركيز عليها!",
+                    text = if (isAr) "لا توجد مهام حالياً. أضف مهمة لتبدأ التركيز عليها!" else "No tasks yet. Add a task to start focusing!",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(vertical = 8.dp)
@@ -117,7 +123,7 @@ fun MowatibTaskCard(
             } else {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     tasks.forEach { task ->
-                        TaskItemRow(task = task)
+                        TaskItemRow(task = task, isAr = isAr)
                     }
                 }
             }
@@ -126,7 +132,7 @@ fun MowatibTaskCard(
 }
 
 @Composable
-private fun TaskItemRow(task: MowatibTask) {
+private fun TaskItemRow(task: MowatibTask, isAr: Boolean) {
     Surface(
         shape = RoundedCornerShape(12.dp),
         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
@@ -166,7 +172,7 @@ private fun TaskItemRow(task: MowatibTask) {
             ) {
                 Icon(
                     imageVector = Icons.Outlined.Close,
-                    contentDescription = "Delete",
+                    contentDescription = if (isAr) "حذف" else "Delete",
                     tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                     modifier = Modifier.size(16.dp)
                 )

@@ -40,7 +40,7 @@ import com.etrisad.zenith.MainActivity
 import com.etrisad.zenith.R
 import com.etrisad.zenith.ZenithApplication
 import com.etrisad.zenith.data.local.MowatibTaskManager
-import com.etrisad.zenith.ui.screens.pomodoro.MowatibHabitsManager
+import com.etrisad.zenith.data.local.MowatibHabitsManager
 import kotlinx.coroutines.flow.first
 
 class MowatibQuickDashboardWidget : GlanceAppWidget() {

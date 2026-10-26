@@ -79,7 +79,7 @@ class ZenithApplication : Application(), ImageLoaderFactory {
         super.onCreate()
         CrashHandler.install(this)
         com.etrisad.zenith.data.local.MowatibTaskManager.init(this)
-        com.etrisad.zenith.ui.screens.pomodoro.MowatibHabitsManager.init(this)
+        com.etrisad.zenith.data.local.MowatibHabitsManager.init(this)
 
         lastUiMode = resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
 

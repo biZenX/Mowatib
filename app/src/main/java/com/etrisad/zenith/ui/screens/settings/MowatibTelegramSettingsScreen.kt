@@ -7,6 +7,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -28,13 +29,17 @@ import androidx.compose.ui.unit.sp
 import com.etrisad.zenith.R
 import com.etrisad.zenith.data.manager.MowatibTelegramConfig
 import com.etrisad.zenith.data.manager.MowatibTelegramManager
+import com.etrisad.zenith.ui.components.focus.PreferenceCategory
+import com.etrisad.zenith.ui.components.focus.SettingsToggle
 import kotlinx.coroutines.launch
+import java.util.Locale
 
 @Composable
 fun MowatibTelegramSettingsScreen(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val isAr = remember { Locale.getDefault().language.startsWith("ar") }
     val coroutineScope = rememberCoroutineScope()
     val clipboardManager = LocalClipboardManager.current
     val telegramManager = remember { MowatibTelegramManager(context) }
@@ -42,6 +47,7 @@ fun MowatibTelegramSettingsScreen(
     var config by remember { mutableStateOf(telegramManager.getConfig()) }
     var chatIdInput by remember { mutableStateOf(config.chatId) }
     var tokenInput by remember { mutableStateOf(config.botToken) }
+    var isAdvancedExpanded by remember { mutableStateOf(config.botToken.isNotBlank()) }
 
     var isTestingConnection by remember { mutableStateOf(false) }
     var testResultStatus by remember { mutableStateOf<String?>(null) }
@@ -57,7 +63,7 @@ fun MowatibTelegramSettingsScreen(
             .fillMaxWidth()
             .padding(bottom = 32.dp)
     ) {
-        // Header Info Card
+        // Hero Header Card
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(24.dp),
@@ -65,49 +71,61 @@ fun MowatibTelegramSettingsScreen(
                 containerColor = MaterialTheme.colorScheme.primaryContainer
             )
         ) {
-            Row(
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(20.dp),
-                verticalAlignment = Alignment.CenterVertically
+                    .padding(20.dp)
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .background(MaterialTheme.colorScheme.primary, CircleShape),
-                    contentAlignment = Alignment.Center
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_telegram),
-                        contentDescription = "Telegram",
-                        tint = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier.size(28.dp)
-                    )
+                    Box(
+                        modifier = Modifier
+                            .size(48.dp)
+                            .background(MaterialTheme.colorScheme.primary, CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_telegram),
+                            contentDescription = "Telegram",
+                            tint = MaterialTheme.colorScheme.onPrimary,
+                            modifier = Modifier.size(26.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = if (isAr) "بوت مواظب في تيليجرام" else "Mowatib Telegram Bot",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                        val statusText = if (config.enabled && config.chatId.isNotBlank()) {
+                            if (isAr) "متصل بالمعرّف: ${config.chatId}" else "Linked to: ${config.chatId}"
+                        } else {
+                            if (isAr) "غير مرتبط بعد" else "Not connected yet"
+                        }
+                        Text(
+                            text = statusText,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 }
-                Spacer(modifier = Modifier.width(16.dp))
-                val isAr = java.util.Locale.getDefault().language.startsWith("ar")
 
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = if (isAr) "تكامل منصة تيليجرام" else "Telegram Bot Integration",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = if (isAr)
-                            "اربط التطبيق بحسابك لتلقي تقارير الإنجاز اليومية، وتنبيهات انضباط الشاشة، ومتابعة عاداتك وجلسات تركيزك لحظياً."
-                        else
-                            "Connect your account to receive daily progress reports, screen time discipline alerts, and real-time focus updates.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f)
-                    )
-                }
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = if (isAr)
+                        "اربط حسابك لتلقي تقارير الإنجاز اليومية، وتنبيهات انضباط الشاشة، ومتابعة عاداتك وجلسات تركيزك لحظياً عبر تيليجرام."
+                    else
+                        "Connect your Telegram account to receive daily progress reports, screen time discipline alerts, and real-time focus updates.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f),
+                    lineHeight = 18.sp
+                )
             }
         }
-
-        val isAr = java.util.Locale.getDefault().language.startsWith("ar")
 
         Spacer(modifier = Modifier.height(16.dp))
         PreferenceCategory(title = if (isAr) "حالة التكامل" else "Integration Status")
@@ -115,7 +133,7 @@ fun MowatibTelegramSettingsScreen(
         // Enable Switch
         SettingsToggle(
             title = if (isAr) "تفعيل إشعارات تيليجرام" else "Enable Telegram Notifications",
-            description = if (isAr) "إرسال تقارير المواظبة وتنبيهات الانضباط عبر البوت" else "Send focus reports and discipline alerts via Telegram bot",
+            description = if (isAr) "إرسال تقارير المواظبة وتنبيهات الانضباط عبر البوت" else "Send focus reports and discipline alerts via Telegram",
             checked = config.enabled,
             onCheckedChange = { isEnabled ->
                 val updated = config.copy(enabled = isEnabled, chatId = chatIdInput, botToken = tokenInput)
@@ -132,9 +150,9 @@ fun MowatibTelegramSettingsScreen(
         ) {
             Column(modifier = Modifier.fillMaxWidth()) {
                 Spacer(modifier = Modifier.height(16.dp))
-                PreferenceCategory(title = if (isAr) "خطوات الربط السريع" else "Quick Setup Instructions")
+                PreferenceCategory(title = if (isAr) "الربط مع بوت مواظب الرسمي" else "Official Mowatib Bot Linking")
 
-                // Instructions Card
+                // Official Bot Card
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(20.dp),
@@ -143,65 +161,65 @@ fun MowatibTelegramSettingsScreen(
                     )
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = if (isAr) "كيف تربط حسابك؟" else "How to connect?",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.SmartToy,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Column {
+                                Text(
+                                    text = if (isAr) "بوت مواظب الرسمي" else "Official Mowatib Bot",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = "@MowatibAppBot",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(10.dp))
                         Text(
                             text = if (isAr)
-                                "١. اضغط زر «فتح البوت» أدناه واضغط زر البدء في تيليجرام.\n" +
-                                "٢. أرسل أي رسالة للبوت لمعرفة معرّف حسابك الرقمي.\n" +
-                                "٣. الصق معرّف الحساب ورمز مفتاح البوت ثم اضغط فحص الاتصال."
+                                "١. اضغط الزر أدناه لفتح بوت مواظب في تيليجرام.\n" +
+                                "٢. اضغط زر البدء لتفعيل البوت واستلام معرّفك الرقمي.\n" +
+                                "٣. الصق المعرّف في الحقل أدناه واضغط فحص الاتصال."
                             else
-                                "1. Tap \"Open Bot\" below and start the bot in Telegram.\n" +
-                                "2. Send any message to get your Chat ID, or use @userinfobot.\n" +
-                                "3. Paste your Chat ID and Bot Token, then tap Test Connection.",
+                                "1. Tap the button below to open Mowatib Bot in Telegram.\n" +
+                                "2. Tap Start to activate the bot and receive your Chat ID.\n" +
+                                "3. Paste your Chat ID below and tap Test Connection.",
                             style = MaterialTheme.typography.bodySmall,
-                            lineHeight = 20.sp,
+                            lineHeight = 22.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
 
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Row(
+                        Spacer(modifier = Modifier.height(14.dp))
+                        Button(
+                            onClick = { telegramManager.openTelegramBot() },
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            shape = RoundedCornerShape(14.dp)
                         ) {
-                            OutlinedButton(
-                                onClick = { telegramManager.openTelegramBot() },
-                                modifier = Modifier.weight(1f),
-                                shape = RoundedCornerShape(12.dp)
-                            ) {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.ic_telegram),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(if (isAr) "فتح البوت" else "Open Bot")
-                            }
-
-                            OutlinedButton(
-                                onClick = { telegramManager.openUserInfoBot() },
-                                modifier = Modifier.weight(1f),
-                                shape = RoundedCornerShape(12.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Outlined.AccountCircle,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(if (isAr) "معرفة المعرّف" else "Get Chat ID")
-                            }
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_telegram),
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(if (isAr) "فتح بوت مواظب في تيليجرام" else "Open Mowatib Bot in Telegram")
                         }
                     }
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
-                PreferenceCategory(title = if (isAr) "بيانات الحساب ومفتاح البوت" else "Account & Bot Credentials")
+                PreferenceCategory(title = if (isAr) "معرّف حسابك الرقمي" else "Your Telegram Chat ID")
 
                 // Chat ID Field
                 OutlinedTextField(
@@ -210,7 +228,7 @@ fun MowatibTelegramSettingsScreen(
                         chatIdInput = it
                         updateAndSave(config.copy(chatId = it))
                     },
-                    label = { Text(if (isAr) "معرّف الحساب الرقمي" else "Chat ID") },
+                    label = { Text(if (isAr) "معرّف المحادثة الرقمي" else "Telegram Chat ID") },
                     placeholder = { Text(if (isAr) "مثال: 123456789" else "e.g. 123456789") },
                     leadingIcon = {
                         Icon(Icons.Outlined.Tag, contentDescription = null)
@@ -231,42 +249,13 @@ fun MowatibTelegramSettingsScreen(
                     singleLine = true
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Bot Token Field
-                OutlinedTextField(
-                    value = tokenInput,
-                    onValueChange = {
-                        tokenInput = it
-                        updateAndSave(config.copy(botToken = it))
-                    },
-                    label = { Text(if (isAr) "رمز مفتاح البوت" else "Bot Token") },
-                    placeholder = { Text(if (isAr) "مثال: 123456:ABC-DEF..." else "e.g. 123456:ABC-DEF...") },
-                    leadingIcon = {
-                        Icon(Icons.Outlined.Key, contentDescription = null)
-                    },
-                    trailingIcon = {
-                        IconButton(onClick = {
-                            clipboardManager.getText()?.text?.let { text ->
-                                tokenInput = text
-                                updateAndSave(config.copy(botToken = text))
-                            }
-                        }) {
-                            Icon(Icons.Outlined.ContentPaste, contentDescription = if (isAr) "لصق" else "Paste")
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    singleLine = true
-                )
-
                 Spacer(modifier = Modifier.height(12.dp))
 
                 // Test Connection Button
                 Button(
                     onClick = {
-                        if (chatIdInput.isBlank() || tokenInput.isBlank()) {
-                            val msg = if (isAr) "يرجى ملء حقل معرّف الحساب ورمز مفتاح البوت أولاً" else "Please enter both Chat ID and Bot Token first"
+                        if (chatIdInput.isBlank()) {
+                            val msg = if (isAr) "يرجى إدخال معرّف الحساب الرقمي أولاً" else "Please enter your Chat ID first"
                             Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
                             return@Button
                         }
@@ -277,12 +266,12 @@ fun MowatibTelegramSettingsScreen(
                             isTestingConnection = false
                             if (result.isSuccess) {
                                 isTestSuccess = true
-                                testResultStatus = if (isAr) "تم إرسال رسالة تجريبية بنجاح إلى حسابك في تيليجرام!" else "Test message sent successfully to your Telegram account!"
-                                val okToast = if (isAr) "الاتصال ناجح!" else "Connection successful!"
+                                testResultStatus = result.getOrNull()
+                                val okToast = if (isAr) "تم تأكيد الربط بنجاح!" else "Linked successfully!"
                                 Toast.makeText(context, okToast, Toast.LENGTH_SHORT).show()
                             } else {
                                 isTestSuccess = false
-                                val prefix = if (isAr) "فشل الاتصال: " else "Connection failed: "
+                                val prefix = if (isAr) "فشل التحقق: " else "Verification failed: "
                                 testResultStatus = prefix + (result.exceptionOrNull()?.message ?: "")
                             }
                         }
@@ -300,9 +289,9 @@ fun MowatibTelegramSettingsScreen(
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(if (isAr) "جارٍ فحص الاتصال..." else "Testing connection...")
                     } else {
-                        Icon(Icons.Outlined.NotificationsActive, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Icon(Icons.Outlined.CheckCircle, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(if (isAr) "فحص الاتصال وإرسال رسالة تجريبية" else "Test Connection & Send Message")
+                        Text(if (isAr) "فحص وتأكيد الربط" else "Verify & Test Link")
                     }
                 }
 
@@ -315,6 +304,95 @@ fun MowatibTelegramSettingsScreen(
                         color = if (isTestSuccess) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
                         modifier = Modifier.padding(horizontal = 4.dp)
                     )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Advanced Options for Developers (Collapsible)
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { isAdvancedExpanded = !isAdvancedExpanded },
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.Code,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Column {
+                                    Text(
+                                        text = if (isAr) "خيارات متقدمة (مخصص للمطورين)" else "Advanced Options (Developers)",
+                                        style = MaterialTheme.typography.titleSmall,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Text(
+                                        text = if (isAr) "استخدام توكن بوت خاص بدلاً من البوت الرسمي" else "Use custom bot token instead of official bot",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                            Icon(
+                                imageVector = if (isAdvancedExpanded) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+
+                        AnimatedVisibility(visible = isAdvancedExpanded) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 12.dp)
+                            ) {
+                                OutlinedTextField(
+                                    value = tokenInput,
+                                    onValueChange = {
+                                        tokenInput = it
+                                        updateAndSave(config.copy(botToken = it))
+                                    },
+                                    label = { Text(if (isAr) "رمز مفتاح البوت الخاص (اختياري)" else "Custom Bot Token (Optional)") },
+                                    placeholder = { Text(if (isAr) "مثال: 123456:ABC-DEF..." else "e.g. 123456:ABC-DEF...") },
+                                    leadingIcon = {
+                                        Icon(Icons.Outlined.Key, contentDescription = null)
+                                    },
+                                    trailingIcon = {
+                                        IconButton(onClick = {
+                                            clipboardManager.getText()?.text?.let { text ->
+                                                tokenInput = text
+                                                updateAndSave(config.copy(botToken = text))
+                                            }
+                                        }) {
+                                            Icon(Icons.Outlined.ContentPaste, contentDescription = if (isAr) "لصق" else "Paste")
+                                        }
+                                    },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(14.dp),
+                                    singleLine = true
+                                )
+                            }
+                        }
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(20.dp))

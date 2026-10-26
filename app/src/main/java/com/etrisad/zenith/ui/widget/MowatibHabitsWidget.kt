@@ -32,7 +32,8 @@ import androidx.glance.text.TextAlign
 import androidx.glance.text.TextStyle
 import com.etrisad.zenith.MainActivity
 import com.etrisad.zenith.R
-import com.etrisad.zenith.ui.screens.pomodoro.MowatibHabitsManager
+import com.etrisad.zenith.data.local.MowatibHabit
+import com.etrisad.zenith.data.local.MowatibHabitsManager
 
 class MowatibHabitsWidget : GlanceAppWidget() {
     override val sizeMode: SizeMode = SizeMode.Exact
@@ -72,7 +73,7 @@ class MowatibHabitsWidget : GlanceAppWidget() {
     @Composable
     private fun HabitsWidgetContent(
         context: Context,
-        habits: List<com.etrisad.zenith.ui.screens.pomodoro.MowatibHabit>,
+        habits: List<MowatibHabit>,
         isAr: Boolean
     ) {
         val size = LocalSize.current
