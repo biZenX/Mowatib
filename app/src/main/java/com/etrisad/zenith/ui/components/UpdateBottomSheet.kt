@@ -13,9 +13,22 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ListAlt
+import androidx.compose.material.icons.outlined.AddCircleOutline
 import androidx.compose.material.icons.outlined.AutoAwesome
+import androidx.compose.material.icons.outlined.BugReport
+import androidx.compose.material.icons.outlined.Check
+import androidx.compose.material.icons.outlined.CheckCircleOutline
 import androidx.compose.material.icons.outlined.Download
+import androidx.compose.material.icons.outlined.Headphones
 import androidx.compose.material.icons.outlined.History
+import androidx.compose.material.icons.outlined.Shield
+import androidx.compose.material.icons.outlined.SmartToy
+import androidx.compose.material.icons.outlined.Speed
+import androidx.compose.material.icons.outlined.TaskAlt
+import androidx.compose.material.icons.outlined.Timer
+import androidx.compose.material.icons.outlined.Translate
+import androidx.compose.material.icons.outlined.Tune
+import androidx.compose.material.icons.outlined.Widgets
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -511,14 +524,179 @@ private fun UpdateHeaderSection(
     }
 }
 
+private val EMOJI_REGEX = Regex(
+    "[\\uD83C-\\uDBFF][\\uDC00-\\uDFFF]|" +
+    "[\\u2600-\\u27BF]|" +
+    "[\\u2300-\\u23FF]|" +
+    "[\\u2B50-\\u2B55]|" +
+    "[\\u203C\\u2049\\u2139\\u2194-\\u21AA\\u25AA-\\u25FE]|" +
+    "[\\uFE00-\\uFE0F]|" +
+    "[\\u200D]"
+)
+
+fun stripEmojis(input: String): String {
+    val noEmoji = input.replace(EMOJI_REGEX, "")
+    return noEmoji.replace(Regex("\\s+"), " ").trim()
+}
+
+fun hasBilingualContent(text: String): Boolean {
+    val hasEn = text.contains("<!-- lang:en -->") || text.contains(Regex("(?im)^##+\\s+(english|\\[en\\])"))
+    val hasAr = text.contains("<!-- lang:ar -->") || text.contains(Regex("(?im)^##+\\s+(العربية|\\[ar\\])"))
+    return hasEn && hasAr
+}
+
+fun extractLocalizedContent(raw: String, targetLang: String): String {
+    if (!hasBilingualContent(raw)) return raw
+
+    if (raw.contains("<!-- lang:")) {
+        val parts = raw.split("<!-- lang:")
+        val prefix = parts.firstOrNull()?.trim() ?: ""
+        for (part in parts.drop(1)) {
+            val tag = part.substringBefore("-->").trim()
+            val body = part.substringAfter("-->", "").trim()
+            if (tag.equals(targetLang, ignoreCase = true)) {
+                return if (prefix.isNotEmpty()) "$prefix\n\n$body" else body
+            }
+        }
+    }
+
+    val lines = raw.lines()
+    val prefixLines = mutableListOf<String>()
+    var currentLang: String? = null
+    val enLines = mutableListOf<String>()
+    val arLines = mutableListOf<String>()
+
+    for (line in lines) {
+        val trimmed = line.trim()
+        if (trimmed.matches(Regex("(?im)^##+\\s+(english|\\[en\\]).*"))) {
+            currentLang = "en"
+            continue
+        } else if (trimmed.matches(Regex("(?im)^##+\\s+(العربية|\\[ar\\]).*"))) {
+            currentLang = "ar"
+            continue
+        }
+
+        if (currentLang == null) {
+            prefixLines.add(line)
+        } else if (currentLang == "en") {
+            enLines.add(line)
+        } else if (currentLang == "ar") {
+            arLines.add(line)
+        }
+    }
+
+    val selectedLines = if (targetLang == "ar") arLines else enLines
+    if (selectedLines.isNotEmpty()) {
+        val prefix = prefixLines.joinToString("\n").trim()
+        val body = selectedLines.joinToString("\n").trim()
+        return if (prefix.isNotEmpty()) "$prefix\n\n$body" else body
+    }
+    return raw
+}
+
+fun getHeaderIcon(headerText: String): ImageVector {
+    val clean = stripEmojis(headerText).lowercase()
+    return when {
+        clean.contains("telegram") || clean.contains("تليجرام") || clean.contains("تيليجرام") || clean.contains("بوت") ->
+            Icons.Outlined.SmartToy
+        clean.contains("widget") || clean.contains("ويدجت") || clean.contains("ودجت") ->
+            Icons.Outlined.Widgets
+        clean.contains("add") || clean.contains("new") || clean.contains("feature") || clean.contains("ميز") || clean.contains("اضاف") || clean.contains("إضاف") || clean.contains("جديد") ->
+            Icons.Outlined.AddCircleOutline
+        clean.contains("fix") || clean.contains("bug") || clean.contains("اصلاح") || clean.contains("إصلاح") || clean.contains("تصحيح") ->
+            Icons.Outlined.BugReport
+        clean.contains("change") || clean.contains("improve") || clean.contains("تعديل") || clean.contains("تحسين") || clean.contains("تغيير") || clean.contains("ترقي") ->
+            Icons.Outlined.Tune
+        clean.contains("security") || clean.contains("امن") || clean.contains("أمان") || clean.contains("حماي") ->
+            Icons.Outlined.Shield
+        clean.contains("perf") || clean.contains("speed") || clean.contains("سرع") || clean.contains("اداء") || clean.contains("أداء") ->
+            Icons.Outlined.Speed
+        clean.contains("focus") || clean.contains("pomodoro") || clean.contains("تركيز") || clean.contains("بومودورو") || clean.contains("وقت") ->
+            Icons.Outlined.Timer
+        clean.contains("task") || clean.contains("مهم") || clean.contains("مهام") ->
+            Icons.Outlined.TaskAlt
+        clean.contains("sound") || clean.contains("audio") || clean.contains("صوت") ->
+            Icons.Outlined.Headphones
+        else ->
+            Icons.AutoMirrored.Outlined.ListAlt
+    }
+}
+
 @Composable
 fun MarkdownBody(
     content: String,
     containerColor: Color
 ) {
-    val sections = remember(content) { parseMarkdownIntoSections(content) }
+    val isBilingual = remember(content) { hasBilingualContent(content) }
+    val defaultLang = remember {
+        val appLang = java.util.Locale.getDefault().language.lowercase()
+        if (appLang.startsWith("ar")) "ar" else "en"
+    }
+    var selectedLanguage by remember(content) { mutableStateOf(defaultLang) }
+
+    val displayContent = remember(content, selectedLanguage) {
+        if (isBilingual) {
+            extractLocalizedContent(content, selectedLanguage)
+        } else {
+            content
+        }
+    }
+
+    val sections = remember(displayContent) { parseMarkdownIntoSections(displayContent) }
 
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        if (isBilingual) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    modifier = Modifier.padding(2.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        val isAr = selectedLanguage == "ar"
+                        val isEn = selectedLanguage == "en"
+
+                        FilterChip(
+                            selected = isAr,
+                            onClick = { selectedLanguage = "ar" },
+                            label = { Text("العربية", fontWeight = if (isAr) FontWeight.Bold else FontWeight.Normal) },
+                            leadingIcon = if (isAr) {
+                                { Icon(Icons.Outlined.Check, contentDescription = null, modifier = Modifier.size(16.dp)) }
+                            } else null,
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                                selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                            ),
+                            border = null
+                        )
+
+                        FilterChip(
+                            selected = isEn,
+                            onClick = { selectedLanguage = "en" },
+                            label = { Text("English", fontWeight = if (isEn) FontWeight.Bold else FontWeight.Normal) },
+                            leadingIcon = if (isEn) {
+                                { Icon(Icons.Outlined.Check, contentDescription = null, modifier = Modifier.size(16.dp)) }
+                            } else null,
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                                selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                            ),
+                            border = null
+                        )
+                    }
+                }
+            }
+        }
+
         sections.forEach { section ->
             when (section) {
                 is MarkdownSection.Header1 -> {
@@ -586,7 +764,7 @@ fun MarkdownGroupedCard(
                             is MarkdownElement.Header2 -> {
                                 MarkdownHeaderItem(
                                     text = element.text,
-                                    icon = Icons.AutoMirrored.Outlined.ListAlt,
+                                    icon = getHeaderIcon(element.text),
                                     containerColor = MaterialTheme.colorScheme.tertiary,
                                     contentColor = MaterialTheme.colorScheme.onTertiary,
                                     style = MaterialTheme.typography.titleLarge
@@ -595,14 +773,17 @@ fun MarkdownGroupedCard(
                             is MarkdownElement.Header3 -> {
                                 MarkdownHeaderItem(
                                     text = element.text,
-                                    icon = Icons.Outlined.AutoAwesome,
+                                    icon = getHeaderIcon(element.text),
                                     containerColor = MaterialTheme.colorScheme.secondary,
                                     contentColor = MaterialTheme.colorScheme.onSecondary,
                                     style = MaterialTheme.typography.titleMedium
                                 )
                             }
                             is MarkdownElement.ListItem -> {
-                                MarkdownListItemRow(text = element.text)
+                                MarkdownListItemRow(text = element.text, isIndented = element.isIndented)
+                            }
+                            is MarkdownElement.NumberedListItem -> {
+                                MarkdownNumberedListItemRow(number = element.number, text = element.text, isIndented = element.isIndented)
                             }
                             is MarkdownElement.Text -> {
                                 Text(
@@ -615,7 +796,12 @@ fun MarkdownGroupedCard(
                             is MarkdownElement.Quote -> {
                                 MarkdownQuoteItem(text = element.text)
                             }
-                            else -> {} 
+                            is MarkdownElement.Divider -> {
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(vertical = 8.dp),
+                                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                                )
+                            }
                         }
                     }
                 }
@@ -623,7 +809,6 @@ fun MarkdownGroupedCard(
         }
     }
 }
-
 
 @Composable
 fun MarkdownHeaderItem(
@@ -661,15 +846,50 @@ fun MarkdownHeaderItem(
 }
 
 @Composable
-fun MarkdownListItemRow(text: String) {
-    Row(modifier = Modifier.padding(start = 8.dp, bottom = 4.dp, top = 4.dp)) {
+fun MarkdownListItemRow(text: String, isIndented: Boolean = false) {
+    val startPadding = if (isIndented) 24.dp else 8.dp
+    val bulletSize = if (isIndented) 5.dp else 6.dp
+    Row(modifier = Modifier.padding(start = startPadding, bottom = 4.dp, top = 4.dp)) {
         Box(
             modifier = Modifier
                 .padding(top = 8.dp)
-                .size(6.dp)
-                .background(MaterialTheme.colorScheme.primary, CircleShape)
+                .size(bulletSize)
+                .background(
+                    if (isIndented) MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
+                    else MaterialTheme.colorScheme.primary,
+                    CircleShape
+                )
         )
         Spacer(modifier = Modifier.width(12.dp))
+        Text(
+            text = parseInlineMarkdown(text),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+@Composable
+fun MarkdownNumberedListItemRow(number: String, text: String, isIndented: Boolean = false) {
+    val startPadding = if (isIndented) 24.dp else 8.dp
+    Row(
+        modifier = Modifier.padding(start = startPadding, bottom = 4.dp, top = 4.dp),
+        verticalAlignment = Alignment.Top
+    ) {
+        Surface(
+            color = MaterialTheme.colorScheme.primaryContainer,
+            shape = RoundedCornerShape(6.dp),
+            modifier = Modifier.padding(top = 2.dp)
+        ) {
+            Text(
+                text = "$number.",
+                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+        }
+        Spacer(modifier = Modifier.width(10.dp))
         Text(
             text = parseInlineMarkdown(text),
             style = MaterialTheme.typography.bodyMedium,
@@ -720,59 +940,97 @@ fun MarkdownQuoteItem(text: String) {
 
 @Composable
 fun parseInlineMarkdown(text: String): androidx.compose.ui.text.AnnotatedString {
+    val cleanText = stripEmojis(text)
     val builder = androidx.compose.ui.text.AnnotatedString.Builder()
     var i = 0
     val colorScheme = MaterialTheme.colorScheme
     val onSurface = colorScheme.onSurface
 
-    while (i < text.length) {
+    while (i < cleanText.length) {
         when {
-            text.startsWith("**", i) -> {
-                val end = text.indexOf("**", i + 2)
+            // Inline code: `code`
+            cleanText.startsWith("`", i) -> {
+                val end = cleanText.indexOf("`", i + 1)
                 if (end != -1) {
-                    builder.pushStyle(androidx.compose.ui.text.SpanStyle(fontWeight = FontWeight.Bold, color = onSurface))
-                    builder.append(text.substring(i + 2, end))
-                    builder.pop()
-                    i = end + 2
-                } else {
-                    builder.append(text[i])
-                    i++
-                }
-            }
-            text.startsWith("*", i) -> {
-                val end = text.indexOf("*", i + 1)
-                if (end != -1) {
-                    builder.pushStyle(androidx.compose.ui.text.SpanStyle(fontStyle = androidx.compose.ui.text.font.FontStyle.Italic))
-                    builder.append(text.substring(i + 1, end))
+                    val codeContent = cleanText.substring(i + 1, end)
+                    builder.pushStyle(
+                        androidx.compose.ui.text.SpanStyle(
+                            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 13.sp,
+                            background = colorScheme.surfaceContainerHighest,
+                            color = colorScheme.primary
+                        )
+                    )
+                    builder.append(" $codeContent ")
                     builder.pop()
                     i = end + 1
                 } else {
-                    builder.append(text[i])
+                    builder.append(cleanText[i])
                     i++
                 }
             }
-            text.startsWith("![", i) -> {
-                val endAlt = text.indexOf("]", i)
-                if (endAlt != -1 && text.startsWith("(", endAlt + 1)) {
-                    val endUrl = text.indexOf(")", endAlt + 1)
+            // Strikethrough: ~~text~~
+            cleanText.startsWith("~~", i) -> {
+                val end = cleanText.indexOf("~~", i + 2)
+                if (end != -1) {
+                    builder.pushStyle(androidx.compose.ui.text.SpanStyle(textDecoration = androidx.compose.ui.text.style.TextDecoration.LineThrough))
+                    builder.append(cleanText.substring(i + 2, end))
+                    builder.pop()
+                    i = end + 2
+                } else {
+                    builder.append(cleanText[i])
+                    i++
+                }
+            }
+            // Bold: **text**
+            cleanText.startsWith("**", i) -> {
+                val end = cleanText.indexOf("**", i + 2)
+                if (end != -1) {
+                    builder.pushStyle(androidx.compose.ui.text.SpanStyle(fontWeight = FontWeight.Bold, color = onSurface))
+                    builder.append(cleanText.substring(i + 2, end))
+                    builder.pop()
+                    i = end + 2
+                } else {
+                    builder.append(cleanText[i])
+                    i++
+                }
+            }
+            // Italic: *text*
+            cleanText.startsWith("*", i) -> {
+                val end = cleanText.indexOf("*", i + 1)
+                if (end != -1) {
+                    builder.pushStyle(androidx.compose.ui.text.SpanStyle(fontStyle = androidx.compose.ui.text.font.FontStyle.Italic))
+                    builder.append(cleanText.substring(i + 1, end))
+                    builder.pop()
+                    i = end + 1
+                } else {
+                    builder.append(cleanText[i])
+                    i++
+                }
+            }
+            cleanText.startsWith("![", i) -> {
+                val endAlt = cleanText.indexOf("]", i)
+                if (endAlt != -1 && cleanText.startsWith("(", endAlt + 1)) {
+                    val endUrl = cleanText.indexOf(")", endAlt + 1)
                     if (endUrl != -1) {
                         i = endUrl + 1
                     } else {
-                        builder.append(text[i])
+                        builder.append(cleanText[i])
                         i++
                     }
                 } else {
-                    builder.append(text[i])
+                    builder.append(cleanText[i])
                     i++
                 }
             }
-            text.startsWith("[", i) -> {
-                val endText = text.indexOf("]", i)
-                if (endText != -1 && text.startsWith("(", endText + 1)) {
-                    val endUrl = text.indexOf(")", endText + 1)
+            cleanText.startsWith("[", i) -> {
+                val endText = cleanText.indexOf("]", i)
+                if (endText != -1 && cleanText.startsWith("(", endText + 1)) {
+                    val endUrl = cleanText.indexOf(")", endText + 1)
                     if (endUrl != -1) {
-                        val linkText = text.substring(i + 1, endText)
-                        val url = text.substring(endText + 2, endUrl)
+                        val linkText = cleanText.substring(i + 1, endText)
+                        val url = cleanText.substring(endText + 2, endUrl)
                         builder.pushStyle(androidx.compose.ui.text.SpanStyle(
                             color = colorScheme.primary,
                             textDecoration = androidx.compose.ui.text.style.TextDecoration.Underline,
@@ -783,38 +1041,38 @@ fun parseInlineMarkdown(text: String): androidx.compose.ui.text.AnnotatedString 
                         builder.pop()
                         i = endUrl + 1
                     } else {
-                        builder.append(text[i])
+                        builder.append(cleanText[i])
                         i++
                     }
                 } else {
-                    builder.append(text[i])
+                    builder.append(cleanText[i])
                     i++
                 }
             }
-            text.startsWith("<img", i) -> {
-                val end = text.indexOf(">", i)
+            cleanText.startsWith("<img", i) -> {
+                val end = cleanText.indexOf(">", i)
                 if (end != -1) {
                     i = end + 1
                 } else {
-                    builder.append(text[i])
+                    builder.append(cleanText[i])
                     i++
                 }
             }
-            text[i] == '#' && i + 1 < text.length && text[i+1].isDigit() -> {
+            cleanText[i] == '#' && i + 1 < cleanText.length && cleanText[i+1].isDigit() -> {
                 var j = i + 1
-                while (j < text.length && text[j].isDigit()) {
+                while (j < cleanText.length && cleanText[j].isDigit()) {
                     j++
                 }
                 builder.pushStyle(androidx.compose.ui.text.SpanStyle(
                     color = colorScheme.secondary,
                     fontWeight = FontWeight.ExtraBold
                 ))
-                builder.append(text.substring(i, j))
+                builder.append(cleanText.substring(i, j))
                 builder.pop()
                 i = j
             }
             else -> {
-                builder.append(text[i])
+                builder.append(cleanText[i])
                 i++
             }
         }
@@ -832,8 +1090,10 @@ sealed class MarkdownElement {
     data class Header2(val text: String) : MarkdownElement()
     data class Header3(val text: String) : MarkdownElement()
     data class Text(val text: String) : MarkdownElement()
-    data class ListItem(val text: String) : MarkdownElement()
+    data class ListItem(val text: String, val isIndented: Boolean = false) : MarkdownElement()
+    data class NumberedListItem(val number: String, val text: String, val isIndented: Boolean = false) : MarkdownElement()
     data class Quote(val text: String) : MarkdownElement()
+    object Divider : MarkdownElement()
 }
 
 private fun parseMarkdownIntoSections(content: String): List<MarkdownSection> {
@@ -848,12 +1108,14 @@ private fun parseMarkdownIntoSections(content: String): List<MarkdownSection> {
         }
     }
 
-    lines.forEach { line ->
-        val trimmed = line.trim()
+    lines.forEach { rawLine ->
+        val trimmed = stripEmojis(rawLine.trim())
+        val isIndented = rawLine.startsWith("  ") || rawLine.startsWith("\t")
+
         when {
             trimmed.startsWith("# ") -> {
                 flushGroup()
-                result.add(MarkdownSection.Header1(trimmed.removePrefix("# ")))
+                result.add(MarkdownSection.Header1(trimmed.removePrefix("# ").trim()))
             }
             trimmed.startsWith("![") -> {
                 flushGroup()
@@ -868,19 +1130,41 @@ private fun parseMarkdownIntoSections(content: String): List<MarkdownSection> {
                 }
             }
             trimmed.startsWith("## ") -> {
-                currentGroup.add(MarkdownElement.Header2(trimmed.removePrefix("## ")))
+                val headerText = trimmed.removePrefix("## ").trim()
+                if (headerText.isNotEmpty()) {
+                    currentGroup.add(MarkdownElement.Header2(headerText))
+                }
             }
             trimmed.startsWith("### ") -> {
-                currentGroup.add(MarkdownElement.Header3(trimmed.removePrefix("### ")))
+                val headerText = trimmed.removePrefix("### ").trim()
+                if (headerText.isNotEmpty()) {
+                    currentGroup.add(MarkdownElement.Header3(headerText))
+                }
+            }
+            trimmed.matches(Regex("^[-*_]{3,}$")) -> {
+                currentGroup.add(MarkdownElement.Divider)
             }
             trimmed.startsWith("* ") || trimmed.startsWith("- ") -> {
-                currentGroup.add(MarkdownElement.ListItem(trimmed.substring(2).trim()))
+                val itemText = trimmed.substring(2).trim()
+                if (itemText.isNotEmpty()) {
+                    currentGroup.add(MarkdownElement.ListItem(itemText, isIndented = isIndented))
+                }
+            }
+            trimmed.matches(Regex("^\\d+[.)]\\s+.*")) -> {
+                val num = trimmed.substringBefore(" ").removeSuffix(".").removeSuffix(")")
+                val itemText = trimmed.substringAfter(" ").trim()
+                if (itemText.isNotEmpty()) {
+                    currentGroup.add(MarkdownElement.NumberedListItem(num, itemText, isIndented = isIndented))
+                }
             }
             trimmed.startsWith("> ") -> {
-                currentGroup.add(MarkdownElement.Quote(trimmed.removePrefix("> ").trim()))
+                val quoteText = trimmed.removePrefix("> ").trim()
+                if (quoteText.isNotEmpty()) {
+                    currentGroup.add(MarkdownElement.Quote(quoteText))
+                }
             }
             trimmed.isNotBlank() -> {
-                currentGroup.add(MarkdownElement.Text(line))
+                currentGroup.add(MarkdownElement.Text(trimmed))
             }
         }
     }

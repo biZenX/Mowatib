@@ -56,7 +56,7 @@
 
 ## Key Features
 
-### 🤖 Telegram Bot Integration & Accountability Partner
+### Telegram Bot Integration & Accountability Partner
 - **Direct Telegram Link**: Connect Mowatib to your Telegram account via Chat ID or deep link to `@MowatibAppBot`.
 - **Instant Connection Test**: Send a real-time verification message to Telegram with a single tap.
 - **Accountability Alerts**: Automatically dispatch warning messages to Telegram when a protected app limit is reached or emergency recharge is used.
@@ -64,7 +64,7 @@
 - **Focus Milestones**: Real-time notifications upon completing Pomodoro sessions and maintaining habit streaks.
 - **Custom Bot Support**: Configure your own bot token from `@BotFather` for self-hosted, private workflows.
 
-### 🧩 Material 3 Expressive Home Screen Widgets (7 Glance Widgets)
+### Material 3 Expressive Home Screen Widgets (7 Glance Widgets)
 - **MowatibFocusWidget**: Glanceable streak indicator, active shield status, and quick launch.
 - **MowatibPomodoroWidget**: Interactive timer controls (Start, Pause, Reset) directly from your launcher.
 - **MowatibTasksWidget**: Interactive daily task checklist with instant toggle completion.
@@ -73,24 +73,24 @@
 - **MowatibQuickDashboardWidget**: At-a-glance dashboard displaying daily screen time, tasks done, and habit counters.
 - **MowatibAmbientAudioWidget**: Quick play/pause control for focus soundscapes.
 
-### 🛡️ App Shields & Proactive Intervention
+### App Shields & Proactive Intervention
 - **Shield Mode**: Protect distracting applications with mindful delays, launch limits, and strict lockouts.
 - **Delay App**: Introduce customizable friction timers (5s to 60s) before opening distracting apps to break muscle memory.
 - **Mindful Gateway**: Intercept all non-whitelisted applications with a moment of mindfulness to deter compulsive opening.
 - **Floating Session HUD**: Non-intrusive floating pill indicating remaining session allowance with adjustable opacity and position.
 - **Emergency Quotas**: Configurable emergency recharge tokens for unexpected necessities without abandoning long-term limits.
 
-### 🎯 Habits, Tasks & Ambient Focus Engine
+### Habits, Tasks & Ambient Focus Engine
 - **Smart Tasks System**: Integrated checklist supporting categories (Focus, Work, Study) and persistent storage.
 - **Habit & Streak Tracker**: Daily habit ledger with automated midnight reset and streak preservation.
 - **Ambient Focus Audio**: Built-in concentration soundscapes (Rainfall, White Noise, Nature) that play without requiring internet connectivity.
 
-### 🔤 Authentic Typography & Warm Aesthetics
+### Authentic Typography & Warm Aesthetics
 - **Bundled Offline Fonts**: Fully integrated **IBM Plex Sans Arabic** (`Regular`, `Medium`, `SemiBold`, `Bold`) and **Thmanyah Sans** fonts.
 - **Warm Creamy Palette**: Earthy, soothing color scheme (`#FDFBF7` cream light theme, `#1C1B18` dark theme, `#3D5622` organic olive accents) designed to reduce eye strain.
 - **Pure Vector Drawables**: Zero dependency on platform emojis; all icons use crisp, scalable Material Vector SVGs.
 
-### ⏱️ Pomodoro, Schedules & Mindful Detox
+### Pomodoro, Schedules & Mindful Detox
 - **Pomodoro Timer**: Flexible focus/break intervals, session presets, and detailed historical statistics.
 - **Smart Focus Schedules**: Block or allow apps based on recurring calendar days and time windows.
 - **Bedtime Mode**: Automatically silence distracting notifications, wind down screen engagement, and encourage sleep.
@@ -114,7 +114,7 @@ This ensures 100% side-by-side coexistence with any previously installed package
 
 ### Download Pre-built APK
 Download the latest signed release APK directly from GitHub:
-👉 **[Download Mowatib-v2.0.0.apk](https://github.com/biZenX/Mowatib/releases/download/v2.0.0-mowatib/Mowatib-v2.0.0.apk)**
+**[Download Mowatib-v2.1.0.apk](https://github.com/biZenX/Mowatib/releases/download/v2.1.0/Mowatib-v2.1.0.apk)**
 
 ### Build from Source
 1. Clone the repository:
@@ -130,7 +130,7 @@ Download the latest signed release APK directly from GitHub:
    ```
 5. The generated APK will be located at:
    ```
-   app/build/outputs/apk/full/release/Mowatib-full-2.0.0-mowatib.apk
+   app/build/outputs/apk/full/release/Mowatib-full-2.1.0.apk
    ```
 
 ---
