@@ -93,19 +93,22 @@ object MowatibSyncManager {
 
     private suspend fun pullAndMerge(context: Context, uid: String): Result<Boolean> = withContext(Dispatchers.IO) {
         try {
+            val deviceSecret = MowatibTelegramManager(context).getDeviceSecret()
             val url = "$SYNC_URL?userId=${uid}&_t=${System.currentTimeMillis()}"
             val request = Request.Builder()
                 .url(url)
                 .addHeader("x-mowatib-device-uid", uid)
+                .addHeader("x-mowatib-device-secret", deviceSecret)
                 .get()
                 .build()
 
-            val response = httpClient.newCall(request).execute()
-            if (!response.isSuccessful) {
-                return@withContext Result.failure(Exception("HTTP ${response.code}"))
+            val (bodyStr, isOk, code) = httpClient.newCall(request).execute().use { response ->
+                Triple(response.body?.string().orEmpty(), response.isSuccessful, response.code)
+            }
+            if (!isOk) {
+                return@withContext Result.failure(Exception("HTTP $code"))
             }
 
-            val bodyStr = response.body?.string().orEmpty()
             val json = JSONObject(bodyStr)
             val dataObj = json.optJSONObject("data") ?: return@withContext Result.success(true)
             val payload = dataObj.optJSONObject("payload") ?: return@withContext Result.success(true)
@@ -129,6 +132,7 @@ object MowatibSyncManager {
 
     private suspend fun pushSnapshot(context: Context, uid: String): Result<Boolean> = withContext(Dispatchers.IO) {
         try {
+            val deviceSecret = MowatibTelegramManager(context).getDeviceSecret()
             val allTasks = MowatibTaskManager.getAllTasksForSync()
             val tasksArr = JSONArray()
             for (task in allTasks) {
@@ -171,14 +175,17 @@ object MowatibSyncManager {
                 .url(SYNC_URL)
                 .addHeader("Content-Type", "application/json")
                 .addHeader("x-mowatib-device-uid", uid)
+                .addHeader("x-mowatib-device-secret", deviceSecret)
                 .post(requestBody)
                 .build()
 
-            val response = httpClient.newCall(request).execute()
-            if (response.isSuccessful) {
+            val (isOk, code) = httpClient.newCall(request).execute().use { response ->
+                Pair(response.isSuccessful, response.code)
+            }
+            if (isOk) {
                 Result.success(true)
             } else {
-                Result.failure(Exception("HTTP ${response.code}"))
+                Result.failure(Exception("HTTP $code"))
             }
         } catch (e: Exception) {
             Result.failure(e)

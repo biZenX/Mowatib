@@ -39,6 +39,7 @@ class MowatibTelegramManager(private val context: Context) {
         private const val KEY_NOTIFY_HABITS = "telegram_notify_habits"
         private const val KEY_NOTIFY_TASKS = "telegram_notify_tasks"
         private const val KEY_UNIQUE_USER_ID = "unique_user_id"
+        private const val KEY_DEVICE_SECRET = "device_secret_token"
 
         // Default Mowatib Telegram bot username for deep linking
         const val DEFAULT_BOT_USERNAME = "mowatibot"
@@ -77,6 +78,12 @@ class MowatibTelegramManager(private val context: Context) {
             .apply()
     }
 
+    private fun String.escapeTelegramHtml(): String = this
+        .replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+        .replace("\"", "&quot;")
+
     /**
      * Send raw HTML formatted message to Telegram
      */
@@ -99,21 +106,25 @@ class MowatibTelegramManager(private val context: Context) {
             // Relay securely through Mowatib server to official @mowatibot
             try {
                 val relayUrl = "https://mowatib.com/api/telegram-notify"
+                val uid = getUniqueId()
                 val payload = JSONObject().apply {
-                    put("uid", getUniqueId())
+                    put("uid", uid)
                     put("message", text)
                 }
                 val mediaType = "application/json; charset=utf-8".toMediaType()
                 val requestBody = payload.toString().toRequestBody(mediaType)
                 val request = Request.Builder()
                     .url(relayUrl)
+                    .addHeader("x-mowatib-device-uid", uid)
+                    .addHeader("x-mowatib-device-secret", getDeviceSecret())
                     .post(requestBody)
                     .build()
-                val response = httpClient.newCall(request).execute()
-                if (response.isSuccessful) {
-                    val okMsg = if (isAr) "تم إرسال التنبيه عبر بوت مواظب الرسمي بنجاح" else "Notification sent via official Mowatib bot"
-                    return@withContext Result.success(okMsg)
+                val okMsg = httpClient.newCall(request).execute().use { response ->
+                    if (response.isSuccessful) {
+                        if (isAr) "تم إرسال التنبيه عبر بوت مواظب الرسمي بنجاح" else "Notification sent via official Mowatib bot"
+                    } else null
                 }
+                if (okMsg != null) return@withContext Result.success(okMsg)
             } catch (_: Exception) {}
             val okMsg = if (isAr) "تم إرسال التنبيه عبر بوت مواظب الرسمي" else "Notification handled via official Mowatib bot"
             return@withContext Result.success(okMsg)
@@ -134,10 +145,11 @@ class MowatibTelegramManager(private val context: Context) {
                 .post(requestBody)
                 .build()
 
-            val response = httpClient.newCall(request).execute()
-            val responseBody = response.body?.string().orEmpty()
+            val (isSuccessful, responseCode, responseBody) = httpClient.newCall(request).execute().use { response ->
+                Triple(response.isSuccessful, response.code, response.body?.string().orEmpty())
+            }
 
-            if (response.isSuccessful) {
+            if (isSuccessful) {
                 val okMsg = if (isAr) "تم إرسال الرسالة بنجاح عبر تيليجرام!" else "Message sent successfully via Telegram!"
                 Result.success(okMsg)
             } else {
@@ -145,7 +157,7 @@ class MowatibTelegramManager(private val context: Context) {
                     val json = JSONObject(responseBody)
                     json.optString("description", if (isAr) "خطأ غير معروف من تيليجرام" else "Unknown Telegram error")
                 } catch (_: Exception) {
-                    if (isAr) "رمز الخطأ: ${response.code}" else "Error code: ${response.code}"
+                    if (isAr) "رمز الخطأ: $responseCode" else "Error code: $responseCode"
                 }
                 Result.failure(Exception(errorMsg))
             }
@@ -215,8 +227,9 @@ class MowatibTelegramManager(private val context: Context) {
         if (!config.enabled || !config.notifyPomodoro) return
 
         val isAr = Locale.getDefault().language.startsWith("ar")
+        val safeTitle = taskTitle?.escapeTelegramHtml()
         val message = if (isAr) {
-            val taskDesc = if (!taskTitle.isNullOrBlank()) "\n<b>المهمة:</b> $taskTitle" else ""
+            val taskDesc = if (!safeTitle.isNullOrBlank()) "\n<b>المهمة:</b> $safeTitle" else ""
             """
                 <b>مواظب | جلسة تركيز ناجحة</b>
                 
@@ -226,7 +239,7 @@ class MowatibTelegramManager(private val context: Context) {
                 استمر في التقدم والمواظبة على أهدافك!
             """.trimIndent()
         } else {
-            val taskDesc = if (!taskTitle.isNullOrBlank()) "\n<b>Task:</b> $taskTitle" else ""
+            val taskDesc = if (!safeTitle.isNullOrBlank()) "\n<b>Task:</b> $safeTitle" else ""
             """
                 <b>Mowatib | Focus Session Completed</b>
                 
@@ -248,11 +261,12 @@ class MowatibTelegramManager(private val context: Context) {
         if (!config.enabled || !config.notifyShieldBreach) return
 
         val isAr = Locale.getDefault().language.startsWith("ar")
+        val safeApp = appName.escapeTelegramHtml()
         val message = if (isAr) {
             """
                 <b>مواظب | تنبيه انضباط ووقت الشاشة</b>
                 
-                تنبيه: تم تجاوز الحد المسموح لتطبيق <b>$appName</b> ($limitMinutes دقيقة).
+                تنبيه: تم تجاوز الحد المسموح لتطبيق <b>$safeApp</b> ($limitMinutes دقيقة).
                 تطبيق مواظب قام بتفعيل درع الحماية لمساعدتك على استعادة تركيزك.
                 
                 تذكّر: الانضباط اليوم هو حريتك وراحتك غداً.
@@ -261,7 +275,7 @@ class MowatibTelegramManager(private val context: Context) {
             """
                 <b>Mowatib | Screen Time Alert</b>
                 
-                Alert: The daily usage limit for <b>$appName</b> has been reached ($limitMinutes minutes).
+                Alert: The daily usage limit for <b>$safeApp</b> has been reached ($limitMinutes minutes).
                 Mowatib shield has been activated to help you refocus.
                 
                 Remember: Daily discipline creates tomorrow's freedom.
@@ -279,11 +293,12 @@ class MowatibTelegramManager(private val context: Context) {
         if (!config.enabled || !config.notifyHabits) return
 
         val isAr = Locale.getDefault().language.startsWith("ar")
+        val safeHabit = habitTitle.escapeTelegramHtml()
         val message = if (isAr) {
             """
                 <b>مواظب | إنجاز عادة يومية</b>
                 
-                تم تسجيل إنجاز عادة: <b>$habitTitle</b>
+                تم تسجيل إنجاز عادة: <b>$safeHabit</b>
                 <b>سلسلة الالتزام:</b> $currentStreak أيام متتالية!
                 
                 قليلٌ دائمٌ خيرٌ من كثيرٍ منقطع.
@@ -292,7 +307,7 @@ class MowatibTelegramManager(private val context: Context) {
             """
                 <b>Mowatib | Habit Completed</b>
                 
-                Habit registered: <b>$habitTitle</b>
+                Habit registered: <b>$safeHabit</b>
                 <b>Current Streak:</b> $currentStreak consecutive days!
                 
                 Consistency is the key to mastery.
@@ -310,12 +325,14 @@ class MowatibTelegramManager(private val context: Context) {
         if (!config.enabled || !config.notifyTasks) return
 
         val isAr = Locale.getDefault().language.startsWith("ar")
+        val safeTask = taskTitle.escapeTelegramHtml()
+        val safeCategory = category.escapeTelegramHtml()
         val message = if (isAr) {
             """
                 <b>مواظب | مهمة جديدة</b>
                 
-                تمت إضافة مهمة للتركيز: <b>$taskTitle</b>
-                <b>التصنيف:</b> <code>$category</code>
+                تمت إضافة مهمة للتركيز: <b>$safeTask</b>
+                <b>التصنيف:</b> <code>$safeCategory</code>
                 
                 خطوة جديدة نحو تحقيق أهدافك اليومية.
             """.trimIndent()
@@ -323,8 +340,8 @@ class MowatibTelegramManager(private val context: Context) {
             """
                 <b>Mowatib | New Focus Task</b>
                 
-                Focus task added: <b>$taskTitle</b>
-                <b>Category:</b> <code>$category</code>
+                Focus task added: <b>$safeTask</b>
+                <b>Category:</b> <code>$safeCategory</code>
                 
                 A new step toward your daily goals.
             """.trimIndent()
@@ -341,12 +358,14 @@ class MowatibTelegramManager(private val context: Context) {
         if (!config.enabled || !config.notifyTasks) return
 
         val isAr = Locale.getDefault().language.startsWith("ar")
+        val safeTask = taskTitle.escapeTelegramHtml()
+        val safeCategory = category.escapeTelegramHtml()
         val message = if (isAr) {
             """
                 <b>مواظب | إنجاز مهمة</b>
                 
-                أحسنت! أتممت بنجاح مهمة: <b>$taskTitle</b>
-                <b>التصنيف:</b> <code>$category</code>
+                أحسنت! أتممت بنجاح مهمة: <b>$safeTask</b>
+                <b>التصنيف:</b> <code>$safeCategory</code>
                 
                 المواظبة والاستمرار تصنع الفارق دوماً.
             """.trimIndent()
@@ -354,8 +373,8 @@ class MowatibTelegramManager(private val context: Context) {
             """
                 <b>Mowatib | Task Completed</b>
                 
-                Great job! Completed: <b>$taskTitle</b>
-                <b>Category:</b> <code>$category</code>
+                Great job! Completed: <b>$safeTask</b>
+                <b>Category:</b> <code>$safeCategory</code>
                 
                 Consistency and discipline always make the difference.
             """.trimIndent()
@@ -422,6 +441,18 @@ class MowatibTelegramManager(private val context: Context) {
     }
 
     /**
+     * Get or generate a persistent cryptographically secure device secret for authenticated sync
+     */
+    fun getDeviceSecret(): String {
+        var secret = prefs.getString(KEY_DEVICE_SECRET, null)
+        if (secret.isNullOrBlank()) {
+            secret = java.util.UUID.randomUUID().toString()
+            prefs.edit().putString(KEY_DEVICE_SECRET, secret).apply()
+        }
+        return secret
+    }
+
+    /**
      * Pre-register / sync device UID with Mowatib production server (mowatib.com)
      * so that the Telegram bot immediately recognizes the account when linked.
      */
@@ -431,14 +462,18 @@ class MowatibTelegramManager(private val context: Context) {
             val url = "https://mowatib.com/api/user-status?uid=$uid&_t=${System.currentTimeMillis()}"
             val request = Request.Builder()
                 .url(url)
+                .addHeader("x-mowatib-device-uid", uid)
+                .addHeader("x-mowatib-device-secret", getDeviceSecret())
                 .get()
                 .build()
-            val response = httpClient.newCall(request).execute()
-            if (response.isSuccessful) {
-                Result.success(true)
-            } else {
-                Result.failure(Exception("HTTP ${response.code}"))
+            val result = httpClient.newCall(request).execute().use { response ->
+                if (response.isSuccessful) {
+                    Result.success(true)
+                } else {
+                    Result.failure(Exception("HTTP ${response.code}"))
+                }
             }
+            result
         } catch (e: Exception) {
             Result.failure(e)
         }

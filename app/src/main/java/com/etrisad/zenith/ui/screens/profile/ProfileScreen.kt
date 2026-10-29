@@ -1950,7 +1950,8 @@ private fun renderAndShareProfile(
         }
         canvas.drawText("Tracked 100% offline with Mowatib", 64f, height - 64f, faint)
 
-        val file = File(context.cacheDir, "mowatib-profile.png")
+        val shareDir = File(context.cacheDir, "shared_images").apply { mkdirs() }
+        val file = File(shareDir, "mowatib-profile.png")
         file.outputStream().use { out -> bitmap.compress(Bitmap.CompressFormat.PNG, 100, out) }
         val uri = FileProvider.getUriForFile(
             context, "${context.packageName}.fileprovider", file
