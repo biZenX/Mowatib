@@ -36,9 +36,10 @@ class MowatibTelegramManager(private val context: Context) {
         private const val KEY_NOTIFY_SHIELD = "telegram_notify_shield"
         private const val KEY_NOTIFY_POMODORO = "telegram_notify_pomodoro"
         private const val KEY_NOTIFY_HABITS = "telegram_notify_habits"
+        private const val KEY_UNIQUE_USER_ID = "unique_user_id"
 
         // Default Mowatib Telegram bot username for deep linking
-        const val DEFAULT_BOT_USERNAME = "MowatibAppBot"
+        const val DEFAULT_BOT_USERNAME = "mowatibot"
     }
 
     private val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -91,7 +92,7 @@ class MowatibTelegramManager(private val context: Context) {
         }
 
         if (token.isBlank()) {
-            // Registered with official @MowatibAppBot
+            // Registered with official @mowatibot
             val okMsg = if (isAr) "تم إرسال التنبيه عبر بوت مواظب الرسمي" else "Notification handled via official Mowatib bot"
             return@withContext Result.success(okMsg)
         }
@@ -321,16 +322,58 @@ class MowatibTelegramManager(private val context: Context) {
     }
 
     /**
-     * Helper to open Telegram App or Web to the bot
+     * Get or generate persistent unique device identifier matching Mowatib production standard (UID-XXXX-XXXX)
      */
-    fun openTelegramBot(botUsername: String = DEFAULT_BOT_USERNAME) {
+    fun getUniqueId(): String {
+        var uid = prefs.getString(KEY_UNIQUE_USER_ID, null)
+        if (uid.isNullOrBlank()) {
+            val chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+            val random = java.security.SecureRandom()
+            val part1 = (1..4).map { chars[random.nextInt(chars.length)] }.joinToString("")
+            val part2 = (1..4).map { chars[random.nextInt(chars.length)] }.joinToString("")
+            uid = "UID-$part1-$part2"
+            prefs.edit().putString(KEY_UNIQUE_USER_ID, uid).apply()
+        }
+        return uid
+    }
+
+    /**
+     * Pre-register / sync device UID with Mowatib production server (mowatib.com)
+     * so that the Telegram bot immediately recognizes the account when linked.
+     */
+    suspend fun syncUidWithServer(): Result<Boolean> = withContext(Dispatchers.IO) {
         try {
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("tg://resolve?domain=$botUsername")).apply {
+            val uid = getUniqueId()
+            val url = "https://mowatib.com/api/user-status?uid=$uid&_t=${System.currentTimeMillis()}"
+            val request = Request.Builder()
+                .url(url)
+                .get()
+                .build()
+            val response = httpClient.newCall(request).execute()
+            if (response.isSuccessful) {
+                Result.success(true)
+            } else {
+                Result.failure(Exception("HTTP ${response.code}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Helper to open Telegram App or Web to the bot with auto-linking deep link
+     */
+    fun openTelegramBot(botUsername: String = DEFAULT_BOT_USERNAME, deepLinkParam: String? = null) {
+        val param = deepLinkParam ?: "link_${getUniqueId()}"
+        val tgUri = "tg://resolve?domain=$botUsername&start=$param"
+        val webUri = "https://t.me/$botUsername?start=$param"
+        try {
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(tgUri)).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK
             }
             context.startActivity(intent)
         } catch (_: Exception) {
-            val webIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://t.me/$botUsername")).apply {
+            val webIntent = Intent(Intent.ACTION_VIEW, Uri.parse(webUri)).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK
             }
             context.startActivity(webIntent)

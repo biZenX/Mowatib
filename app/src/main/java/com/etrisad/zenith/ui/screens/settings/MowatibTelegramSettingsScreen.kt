@@ -22,6 +22,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -43,6 +45,19 @@ fun MowatibTelegramSettingsScreen(
     val coroutineScope = rememberCoroutineScope()
     val clipboardManager = LocalClipboardManager.current
     val telegramManager = remember { MowatibTelegramManager(context) }
+    val userUid = remember { telegramManager.getUniqueId() }
+    var copiedUid by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        telegramManager.syncUidWithServer()
+    }
+
+    LaunchedEffect(copiedUid) {
+        if (copiedUid) {
+            kotlinx.coroutines.delay(2000)
+            copiedUid = false
+        }
+    }
 
     var config by remember { mutableStateOf(telegramManager.getConfig()) }
     var chatIdInput by remember { mutableStateOf(config.chatId) }
@@ -103,8 +118,10 @@ fun MowatibTelegramSettingsScreen(
                         )
                         val statusText = if (config.enabled && config.chatId.isNotBlank()) {
                             if (isAr) "متصل بالمعرّف: ${config.chatId}" else "Linked to: ${config.chatId}"
+                        } else if (config.enabled) {
+                            if (isAr) "جاهز للربط بالمعرّف: $userUid" else "Ready to link via UID: $userUid"
                         } else {
-                            if (isAr) "غير مرتبط بعد" else "Not connected yet"
+                            if (isAr) "غير مفعّل" else "Disabled"
                         }
                         Text(
                             text = statusText,
@@ -179,23 +196,75 @@ fun MowatibTelegramSettingsScreen(
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                                 Text(
-                                    text = "@MowatibAppBot",
+                                    text = "@mowatibot",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.primary
                                 )
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(10.dp))
+                        Spacer(modifier = Modifier.height(14.dp))
+                        Text(
+                            text = if (isAr) "معرّف الجهاز والحساب:" else "Device & Account ID:",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp))
+                                .padding(horizontal = 14.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = userUid,
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontFamily = FontFamily.Monospace,
+                                    letterSpacing = 1.sp
+                                ),
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            OutlinedButton(
+                                onClick = {
+                                    clipboardManager.setText(AnnotatedString(userUid))
+                                    copiedUid = true
+                                    val toastMsg = if (isAr) "تم نسخ المعرّف!" else "UID copied!"
+                                    Toast.makeText(context, toastMsg, Toast.LENGTH_SHORT).show()
+                                },
+                                shape = RoundedCornerShape(10.dp),
+                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
+                            ) {
+                                Icon(
+                                    imageVector = if (copiedUid) Icons.Outlined.Check else Icons.Outlined.ContentCopy,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = if (copiedUid) {
+                                        if (isAr) "تم النسخ" else "Copied"
+                                    } else {
+                                        if (isAr) "نسخ المعرّف" else "Copy UID"
+                                    },
+                                    style = MaterialTheme.typography.labelMedium
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(14.dp))
                         Text(
                             text = if (isAr)
-                                "١. اضغط الزر أدناه لفتح بوت مواظب في تيليجرام.\n" +
-                                "٢. اضغط زر البدء لتفعيل البوت واستلام معرّفك الرقمي.\n" +
-                                "٣. الصق المعرّف في الحقل أدناه واضغط فحص الاتصال."
+                                "١. اضغط زر «ربط مع تيليجرام» لفتح بوت مواظب والربط المباشر تلقائياً.\n" +
+                                "٢. أو انسخ المعرّف وأرسله للبوت في محادثة تيليجرام بالأمر: /link <معرفك>.\n" +
+                                "٣. لتأكيد استقبال الإشعارات على هذا الجهاز، الصق معرّف المحادثة أدناه واضغط فحص الاتصال."
                             else
-                                "1. Tap the button below to open Mowatib Bot in Telegram.\n" +
-                                "2. Tap Start to activate the bot and receive your Chat ID.\n" +
-                                "3. Paste your Chat ID below and tap Test Connection.",
+                                "1. Tap \"Link with Telegram\" to open Mowatib Bot with auto-linking.\n" +
+                                "2. Or copy your UID and send it to the bot in Telegram: /link <UID>.\n" +
+                                "3. Paste your Chat ID below and tap Verify & Test Link to confirm.",
                             style = MaterialTheme.typography.bodySmall,
                             lineHeight = 22.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -203,7 +272,12 @@ fun MowatibTelegramSettingsScreen(
 
                         Spacer(modifier = Modifier.height(14.dp))
                         Button(
-                            onClick = { telegramManager.openTelegramBot() },
+                            onClick = {
+                                coroutineScope.launch {
+                                    telegramManager.syncUidWithServer()
+                                    telegramManager.openTelegramBot()
+                                }
+                            },
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(14.dp)
                         ) {
@@ -213,7 +287,7 @@ fun MowatibTelegramSettingsScreen(
                                 modifier = Modifier.size(18.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text(if (isAr) "فتح بوت مواظب في تيليجرام" else "Open Mowatib Bot in Telegram")
+                            Text(if (isAr) "ربط مع تيليجرام (@mowatibot)" else "Link with Telegram (@mowatibot)")
                         }
                     }
                 }
