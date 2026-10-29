@@ -13,11 +13,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.etrisad.zenith.data.local.MowatibTask
 import com.etrisad.zenith.data.local.MowatibTaskManager
+import com.etrisad.zenith.data.manager.MowatibSyncManager
+import com.etrisad.zenith.data.manager.SyncStatus
+import kotlinx.coroutines.launch
 import java.util.Locale
 
 @Composable
@@ -25,8 +29,11 @@ fun MowatibTaskCard(
     modifier: Modifier = Modifier,
     containerColor: Color = MaterialTheme.colorScheme.surfaceContainerLow
 ) {
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
     val isAr = remember { Locale.getDefault().language.startsWith("ar") }
     val tasks by MowatibTaskManager.tasks.collectAsState()
+    val syncStatus by MowatibSyncManager.syncStatus.collectAsState()
     var newTaskText by remember { mutableStateOf("") }
     val selectedCategory = if (isAr) "تركيز" else "Focus"
 
@@ -58,7 +65,7 @@ fun MowatibTaskCard(
                     )
                 }
                 Spacer(modifier = Modifier.width(12.dp))
-                Column {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = if (isAr) "مهام جلسة التركيز" else "Focus Session Tasks",
                         style = MaterialTheme.typography.titleMedium,
@@ -74,6 +81,29 @@ fun MowatibTaskCard(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.primary
                     )
+                }
+                IconButton(
+                    onClick = {
+                        coroutineScope.launch {
+                            MowatibSyncManager.sync(context)
+                        }
+                    },
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    if (syncStatus == SyncStatus.SYNCING) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            strokeWidth = 2.dp,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Outlined.Sync,
+                            contentDescription = if (isAr) "مزامنة سحابية" else "Cloud Sync",
+                            tint = if (syncStatus == SyncStatus.SYNCED) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                 }
             }
 

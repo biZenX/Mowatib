@@ -22,7 +22,8 @@ data class MowatibTelegramConfig(
     val notifyDailyRecap: Boolean = true,
     val notifyShieldBreach: Boolean = true,
     val notifyPomodoro: Boolean = true,
-    val notifyHabits: Boolean = true
+    val notifyHabits: Boolean = true,
+    val notifyTasks: Boolean = true
 )
 
 class MowatibTelegramManager(private val context: Context) {
@@ -36,6 +37,7 @@ class MowatibTelegramManager(private val context: Context) {
         private const val KEY_NOTIFY_SHIELD = "telegram_notify_shield"
         private const val KEY_NOTIFY_POMODORO = "telegram_notify_pomodoro"
         private const val KEY_NOTIFY_HABITS = "telegram_notify_habits"
+        private const val KEY_NOTIFY_TASKS = "telegram_notify_tasks"
         private const val KEY_UNIQUE_USER_ID = "unique_user_id"
 
         // Default Mowatib Telegram bot username for deep linking
@@ -57,7 +59,8 @@ class MowatibTelegramManager(private val context: Context) {
             notifyDailyRecap = prefs.getBoolean(KEY_NOTIFY_DAILY, true),
             notifyShieldBreach = prefs.getBoolean(KEY_NOTIFY_SHIELD, true),
             notifyPomodoro = prefs.getBoolean(KEY_NOTIFY_POMODORO, true),
-            notifyHabits = prefs.getBoolean(KEY_NOTIFY_HABITS, true)
+            notifyHabits = prefs.getBoolean(KEY_NOTIFY_HABITS, true),
+            notifyTasks = prefs.getBoolean(KEY_NOTIFY_TASKS, true)
         )
     }
 
@@ -70,6 +73,7 @@ class MowatibTelegramManager(private val context: Context) {
             .putBoolean(KEY_NOTIFY_SHIELD, config.notifyShieldBreach)
             .putBoolean(KEY_NOTIFY_POMODORO, config.notifyPomodoro)
             .putBoolean(KEY_NOTIFY_HABITS, config.notifyHabits)
+            .putBoolean(KEY_NOTIFY_TASKS, config.notifyTasks)
             .apply()
     }
 
@@ -92,7 +96,25 @@ class MowatibTelegramManager(private val context: Context) {
         }
 
         if (token.isBlank()) {
-            // Registered with official @mowatibot
+            // Relay securely through Mowatib server to official @mowatibot
+            try {
+                val relayUrl = "https://mowatib.com/api/telegram-notify"
+                val payload = JSONObject().apply {
+                    put("uid", getUniqueId())
+                    put("message", text)
+                }
+                val mediaType = "application/json; charset=utf-8".toMediaType()
+                val requestBody = payload.toString().toRequestBody(mediaType)
+                val request = Request.Builder()
+                    .url(relayUrl)
+                    .post(requestBody)
+                    .build()
+                val response = httpClient.newCall(request).execute()
+                if (response.isSuccessful) {
+                    val okMsg = if (isAr) "تم إرسال التنبيه عبر بوت مواظب الرسمي بنجاح" else "Notification sent via official Mowatib bot"
+                    return@withContext Result.success(okMsg)
+                }
+            } catch (_: Exception) {}
             val okMsg = if (isAr) "تم إرسال التنبيه عبر بوت مواظب الرسمي" else "Notification handled via official Mowatib bot"
             return@withContext Result.success(okMsg)
         }
@@ -274,6 +296,68 @@ class MowatibTelegramManager(private val context: Context) {
                 <b>Current Streak:</b> $currentStreak consecutive days!
                 
                 Consistency is the key to mastery.
+            """.trimIndent()
+        }
+
+        sendMessage(message)
+    }
+
+    /**
+     * Send task created notification
+     */
+    suspend fun sendTaskCreated(taskTitle: String, category: String = "عام") {
+        val config = getConfig()
+        if (!config.enabled || !config.notifyTasks) return
+
+        val isAr = Locale.getDefault().language.startsWith("ar")
+        val message = if (isAr) {
+            """
+                <b>مواظب | مهمة جديدة</b>
+                
+                تمت إضافة مهمة للتركيز: <b>$taskTitle</b>
+                <b>التصنيف:</b> <code>$category</code>
+                
+                خطوة جديدة نحو تحقيق أهدافك اليومية.
+            """.trimIndent()
+        } else {
+            """
+                <b>Mowatib | New Focus Task</b>
+                
+                Focus task added: <b>$taskTitle</b>
+                <b>Category:</b> <code>$category</code>
+                
+                A new step toward your daily goals.
+            """.trimIndent()
+        }
+
+        sendMessage(message)
+    }
+
+    /**
+     * Send task completed notification
+     */
+    suspend fun sendTaskCompleted(taskTitle: String, category: String = "عام") {
+        val config = getConfig()
+        if (!config.enabled || !config.notifyTasks) return
+
+        val isAr = Locale.getDefault().language.startsWith("ar")
+        val message = if (isAr) {
+            """
+                <b>مواظب | إنجاز مهمة</b>
+                
+                أحسنت! أتممت بنجاح مهمة: <b>$taskTitle</b>
+                <b>التصنيف:</b> <code>$category</code>
+                
+                المواظبة والاستمرار تصنع الفارق دوماً.
+            """.trimIndent()
+        } else {
+            """
+                <b>Mowatib | Task Completed</b>
+                
+                Great job! Completed: <b>$taskTitle</b>
+                <b>Category:</b> <code>$category</code>
+                
+                Consistency and discipline always make the difference.
             """.trimIndent()
         }
 

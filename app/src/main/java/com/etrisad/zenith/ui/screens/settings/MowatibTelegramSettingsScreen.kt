@@ -29,8 +29,10 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.etrisad.zenith.R
+import com.etrisad.zenith.data.manager.MowatibSyncManager
 import com.etrisad.zenith.data.manager.MowatibTelegramConfig
 import com.etrisad.zenith.data.manager.MowatibTelegramManager
+import com.etrisad.zenith.data.manager.SyncStatus
 import com.etrisad.zenith.ui.components.focus.PreferenceCategory
 import com.etrisad.zenith.ui.components.focus.SettingsToggle
 import kotlinx.coroutines.launch
@@ -48,8 +50,13 @@ fun MowatibTelegramSettingsScreen(
     val userUid = remember { telegramManager.getUniqueId() }
     var copiedUid by remember { mutableStateOf(false) }
 
+    val syncStatus by MowatibSyncManager.syncStatus.collectAsState()
+    val lastSyncedAt by MowatibSyncManager.lastSyncedAt.collectAsState()
+
     LaunchedEffect(Unit) {
+        MowatibSyncManager.init(context)
         telegramManager.syncUidWithServer()
+        MowatibSyncManager.scheduleSync(context, 100L)
     }
 
     LaunchedEffect(copiedUid) {
@@ -517,8 +524,106 @@ fun MowatibTelegramSettingsScreen(
                         updateAndSave(config.copy(notifyHabits = checked))
                     },
                     icon = Icons.Outlined.CheckCircle,
+                    shape = RoundedCornerShape(6.dp)
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+                SettingsToggle(
+                    title = if (isAr) "تنبيهات إنجاز وإضافة المهام" else "Task Creation & Completion Alerts",
+                    description = if (isAr) "إرسال إشعار فوري عبر البوت عند إضافة أو إنجاز مهام التركيز" else "Instant notification via bot when tasks are added or completed",
+                    checked = config.notifyTasks,
+                    onCheckedChange = { checked ->
+                        updateAndSave(config.copy(notifyTasks = checked))
+                    },
+                    icon = Icons.Outlined.Checklist,
                     shape = RoundedCornerShape(topStart = 6.dp, topEnd = 6.dp, bottomStart = 20.dp, bottomEnd = 20.dp)
                 )
+
+                Spacer(modifier = Modifier.height(20.dp))
+                PreferenceCategory(title = if (isAr) "المزامنة السحابية (مواظب كلاود)" else "Cloud Synchronization (Mowatib Cloud)")
+
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+                    )
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.CloudSync,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = if (isAr) "المزامنة السحابية الفورية" else "Real-time Cloud Sync",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                val syncStatusDesc = when (syncStatus) {
+                                    SyncStatus.SYNCING -> if (isAr) "جارٍ المزامنة السحابية..." else "Syncing with cloud..."
+                                    SyncStatus.SYNCED -> if (isAr) "تمت المزامنة بنجاح${if (lastSyncedAt != null) " (آخر مزامنة: $lastSyncedAt)" else ""}" else "Synced successfully${if (lastSyncedAt != null) " (at $lastSyncedAt)" else ""}"
+                                    SyncStatus.OFFLINE -> if (isAr) "وضع عدم الاتصال (حفظ محلي آمن)" else "Offline mode (saved locally)"
+                                    SyncStatus.ERROR -> if (isAr) "تعذر الاتصال بالخادم" else "Server connection error"
+                                    SyncStatus.IDLE -> if (isAr) "جاهز للمزامنة" else "Ready to sync"
+                                }
+                                Text(
+                                    text = syncStatusDesc,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = if (syncStatus == SyncStatus.SYNCED) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Text(
+                            text = if (isAr)
+                                "مزامنة سحابية هجينة غير محدودة لمهامك وعاداتك وتنبيهاتك عبر خوادم Cloudflare D1 و Supabase بدون أي تكلفة تشغيلية لخدمة كافة المستخدمين."
+                            else
+                                "Unlimited hybrid zero-cost cloud sync for your tasks and habits via Cloudflare D1 and Supabase edge architecture.",
+                            style = MaterialTheme.typography.bodySmall,
+                            lineHeight = 20.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+
+                        Spacer(modifier = Modifier.height(14.dp))
+                        OutlinedButton(
+                            onClick = {
+                                coroutineScope.launch {
+                                    MowatibSyncManager.sync(context)
+                                }
+                            },
+                            enabled = syncStatus != SyncStatus.SYNCING,
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            if (syncStatus == SyncStatus.SYNCING) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(16.dp),
+                                    strokeWidth = 2.dp,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(if (isAr) "جارٍ المزامنة..." else "Syncing...")
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Outlined.Sync,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(if (isAr) "مزامنة الآن" else "Sync Now")
+                            }
+                        }
+                    }
+                }
             }
         }
     }
