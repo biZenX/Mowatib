@@ -25,11 +25,11 @@
 
 <p align="center">
   <a href="https://github.com/biZenX/Mowatib/releases/download/v2.1.0/Mowatib-v2.1.0.apk">
-    <img src="https://img.shields.io/badge/Download-Mowatib--v2.1.0.apk-2ea44f?style=for-the-badge&logo=android&logoColor=white">
+    <img src="assets/badges/download.svg" height="32" alt="Download Mowatib-v2.1.0.apk">
   </a>
   &nbsp;&nbsp;
   <a href="https://github.com/biZenX/Mowatib">
-    <img src="https://img.shields.io/badge/Repository-Mowatib-6750A4?style=for-the-badge&logo=github&logoColor=white">
+    <img src="assets/badges/repository.svg" height="32" alt="Repository Mowatib">
   </a>
 </p>
 
