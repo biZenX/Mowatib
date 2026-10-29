@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 
-class ZenithHeartbeatReceiver : BroadcastReceiver() {
+open class MowatibHeartbeatReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (com.etrisad.zenith.crash.SafeMode.isEnabled(context)) return
 
@@ -75,3 +75,8 @@ class ZenithHeartbeatReceiver : BroadcastReceiver() {
         }
     }
 }
+
+/**
+ * Backward compatibility alias for heartbeat receiver
+ */
+typealias ZenithHeartbeatReceiver = MowatibHeartbeatReceiver

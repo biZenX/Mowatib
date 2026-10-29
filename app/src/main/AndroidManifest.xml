@@ -27,7 +27,7 @@
     <uses-feature android:name="android.hardware.nfc" android:required="false" />
 
     <application
-        android:name=".ZenithApplication"
+        android:name=".MowatibApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -170,7 +170,7 @@
         </receiver>
 
         <receiver
-            android:name=".service.ZenithHeartbeatReceiver"
+            android:name=".service.MowatibHeartbeatReceiver"
             android:enabled="true"
             android:exported="false">
             <intent-filter>

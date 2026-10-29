@@ -25,6 +25,8 @@ import com.etrisad.zenith.data.local.entity.WebsiteUsageEntity
 import com.etrisad.zenith.data.local.entity.PomodoroSessionEntity
 import com.etrisad.zenith.data.local.Converters
 
+typealias MowatibDatabase = ZenithDatabase
+
 @Database(
     entities = [
         ShieldEntity::class,

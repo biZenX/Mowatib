@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="158" height="30" viewBox="0 0 158 30" fill="none">
+  <rect width="158" height="30" rx="15" fill="#34D399"/>
+  <g transform="translate(13, 5) scale(0.75)">
+    <path fill="#052e16" d="m10 3-8 14h3.6l1.7-3h5.4l1.7 3H18L10 3zm0 4.5 1.8 3.5H8.2L10 7.5z"/>
+  </g>
+  <text x="36" y="19.5" fill="#052E16" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="650" letter-spacing="-0.2px">Android Studio</text>
+</svg>

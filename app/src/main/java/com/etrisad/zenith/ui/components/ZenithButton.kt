@@ -40,10 +40,12 @@ import kotlinx.coroutines.launch
 enum class ZenithButtonType {
     Filled, Tonal, Elevated, Outlined, Text, Hold
 }
+typealias MowatibButtonType = ZenithButtonType
 
 enum class ZenithButtonSize {
     Small, Medium, Large, ExtraLarge
 }
+typealias MowatibButtonSize = ZenithButtonSize
 
 data class ZenithToggleOption(
     val text: String? = null,

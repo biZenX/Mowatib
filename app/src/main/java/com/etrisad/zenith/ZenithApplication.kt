@@ -28,7 +28,11 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
-class ZenithApplication : Application(), ImageLoaderFactory {
+/**
+ * Mowatib (مواظب) Application Context
+ * Material Design 3 Expressive Digital Wellbeing & Focus Platform
+ */
+open class MowatibApplication : Application(), ImageLoaderFactory {
 
     private var lastUiMode: Int = 0
     private var startedActivityCount = 0
@@ -44,7 +48,7 @@ class ZenithApplication : Application(), ImageLoaderFactory {
 
     val shieldRepository: ShieldRepository by lazy {
         try {
-            DbLogBuffer.d("ZenithDB", "Initializing database...")
+            DbLogBuffer.d("MowatibDB", "Initializing database...")
             val database = ZenithDatabase.getDatabase(this)
             ZenithDatabase.verifyDatabase(database)
             ShieldRepository(
@@ -57,12 +61,12 @@ class ZenithApplication : Application(), ImageLoaderFactory {
                 userPreferencesRepository
             )
         } catch (e: Exception) {
-            DbLogBuffer.e("ZenithDB", "DB_INIT_FAILED: ${e.message} - attempting destructive rebuild")
+            DbLogBuffer.e("MowatibDB", "DB_INIT_FAILED: ${e.message} - attempting destructive rebuild")
             ZenithDatabase.closeDatabase()
-            DbLogBuffer.d("ZenithDB", "Rebuilding database after failure...")
+            DbLogBuffer.d("MowatibDB", "Rebuilding database after failure...")
             val database = ZenithDatabase.getDatabase(this)
             ZenithDatabase.verifyDatabase(database)
-            DbLogBuffer.w("ZenithDB", "DB_REBUILT: Previous data may be lost after destructive rebuild")
+            DbLogBuffer.w("MowatibDB", "DB_REBUILT: Previous data may be lost after destructive rebuild")
             ShieldRepository(
                 database.shieldDao(),
                 database.scheduleDao(),
@@ -120,19 +124,19 @@ class ZenithApplication : Application(), ImageLoaderFactory {
             applicationScope.launch {
                 try {
                     val prefs = userPreferencesRepository.userPreferencesFlow.first()
-                    com.etrisad.zenith.service.UsageSyncWorker.enqueue(this@ZenithApplication)
-                    com.etrisad.zenith.worker.StreakRefreshWorker.enqueue(this@ZenithApplication)
+                    com.etrisad.zenith.service.UsageSyncWorker.enqueue(this@MowatibApplication)
+                    com.etrisad.zenith.worker.StreakRefreshWorker.enqueue(this@MowatibApplication)
                     if (prefs.dailyRecapEnabled) {
-                        com.etrisad.zenith.worker.NotificationInsightsWorker.scheduleDailyRecap(this@ZenithApplication)
+                        com.etrisad.zenith.worker.NotificationInsightsWorker.scheduleDailyRecap(this@MowatibApplication)
                     }
                     if (prefs.weeklyInsightEnabled) {
-                        com.etrisad.zenith.worker.NotificationInsightsWorker.scheduleWeeklyInsight(this@ZenithApplication)
+                        com.etrisad.zenith.worker.NotificationInsightsWorker.scheduleWeeklyInsight(this@MowatibApplication)
                     }
                     if (prefs.alarmMasterEnabled) {
-                        com.etrisad.zenith.worker.AlarmWatchdogWorker.enqueue(this@ZenithApplication)
+                        com.etrisad.zenith.worker.AlarmWatchdogWorker.enqueue(this@MowatibApplication)
                     }
                 } catch (_: Exception) {
-                    try { com.etrisad.zenith.service.UsageSyncWorker.enqueue(this@ZenithApplication) } catch (_: Exception) {}
+                    try { com.etrisad.zenith.service.UsageSyncWorker.enqueue(this@MowatibApplication) } catch (_: Exception) {}
                 }
             }
         }
@@ -147,7 +151,7 @@ class ZenithApplication : Application(), ImageLoaderFactory {
             try {
                 val prefs = userPreferencesRepository.userPreferencesFlow.first()
                 com.etrisad.zenith.service.DndStateManager.reconcileWithPrefs(
-                    this@ZenithApplication,
+                    this@MowatibApplication,
                     prefs.bedtimeEnabled,
                     prefs.bedtimeDndEnabled,
                     prefs.bedtimeStartTime,
@@ -160,11 +164,11 @@ class ZenithApplication : Application(), ImageLoaderFactory {
         applicationScope.launch {
             try {
                 kotlinx.coroutines.delay(1000)
-                AppStreakWidget().updateAll(this@ZenithApplication)
-                GlobalStreakWidget().updateAll(this@ZenithApplication)
-                TotalScreenTimeWidget().updateAll(this@ZenithApplication)
-                RemainingTargetWidget().updateAll(this@ZenithApplication)
-                PhoneFreeTimeWidget().updateAll(this@ZenithApplication)
+                AppStreakWidget().updateAll(this@MowatibApplication)
+                GlobalStreakWidget().updateAll(this@MowatibApplication)
+                TotalScreenTimeWidget().updateAll(this@MowatibApplication)
+                RemainingTargetWidget().updateAll(this@MowatibApplication)
+                PhoneFreeTimeWidget().updateAll(this@MowatibApplication)
             } catch (_: Exception) {}
         }
     }
@@ -173,9 +177,9 @@ class ZenithApplication : Application(), ImageLoaderFactory {
         return ImageLoader.Builder(this)
             .components {
                 add(com.etrisad.zenith.util.coil.AppIconMapper())
-                add(com.etrisad.zenith.util.coil.AppIconFetcher.Factory(this@ZenithApplication))
+                add(com.etrisad.zenith.util.coil.AppIconFetcher.Factory(this@MowatibApplication))
                 add(com.etrisad.zenith.util.coil.FaviconMapper())
-                add(com.etrisad.zenith.util.coil.FaviconFetcher.Factory(this@ZenithApplication))
+                add(com.etrisad.zenith.util.coil.FaviconFetcher.Factory(this@MowatibApplication))
             }
             .memoryCache {
                 MemoryCache.Builder(this)
@@ -212,11 +216,11 @@ class ZenithApplication : Application(), ImageLoaderFactory {
             applicationScope.launch {
                 try {
                     kotlinx.coroutines.delay(300)
-                    AppStreakWidget().updateAll(this@ZenithApplication)
-                    GlobalStreakWidget().updateAll(this@ZenithApplication)
-                    TotalScreenTimeWidget().updateAll(this@ZenithApplication)
-                    RemainingTargetWidget().updateAll(this@ZenithApplication)
-                    PhoneFreeTimeWidget().updateAll(this@ZenithApplication)
+                    AppStreakWidget().updateAll(this@MowatibApplication)
+                    GlobalStreakWidget().updateAll(this@MowatibApplication)
+                    TotalScreenTimeWidget().updateAll(this@MowatibApplication)
+                    RemainingTargetWidget().updateAll(this@MowatibApplication)
+                    PhoneFreeTimeWidget().updateAll(this@MowatibApplication)
                 } catch (_: Exception) {
                 }
             }
@@ -228,3 +232,8 @@ class ZenithApplication : Application(), ImageLoaderFactory {
         applicationScope.cancel()
     }
 }
+
+/**
+ * Backward compatibility alias for legacy components & workers
+ */
+typealias ZenithApplication = MowatibApplication

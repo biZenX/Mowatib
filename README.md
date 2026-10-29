@@ -10,12 +10,12 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Platform-Android-3DDC84?style=for-the-badge&logo=android&logoColor=white">&nbsp;&nbsp;
-  <img src="https://img.shields.io/badge/Language-Kotlin-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white">&nbsp;&nbsp;
-  <img src="https://img.shields.io/badge/Package-com.bizenx.mowatib-3D5622?style=for-the-badge">&nbsp;&nbsp;
-  <img src="https://img.shields.io/badge/License-GPLv3-blue?style=for-the-badge">&nbsp;&nbsp;
+  <img src="assets/badges/kotlin.svg" height="28" alt="Kotlin">&nbsp;&nbsp;
+  <img src="assets/badges/android.svg" height="28" alt="Android">&nbsp;&nbsp;
+  <img src="assets/badges/android-studio.svg" height="28" alt="Android Studio">&nbsp;&nbsp;
+  <img src="assets/badges/license.svg" height="28" alt="Licence GPLv3">&nbsp;&nbsp;
   <a href="https://github.com/biZenX/Mowatib/releases/latest">
-    <img src="https://img.shields.io/badge/Release-v2.1.0-orange?style=for-the-badge&logo=github">
+    <img src="assets/badges/version.svg" height="28" alt="Build v2.1.0">
   </a>
 </p>
 
