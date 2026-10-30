@@ -15,7 +15,7 @@
   <img src="assets/badges/android-studio.svg" height="28" alt="Android Studio">&nbsp;&nbsp;
   <img src="assets/badges/license.svg" height="28" alt="Licence GPLv3">&nbsp;&nbsp;
   <a href="https://github.com/biZenX/Mowatib/releases/latest">
-    <img src="assets/badges/version.svg" height="28" alt="Build v2.1.0">
+    <img src="assets/badges/version.svg" height="28" alt="Build v2.2.0">
   </a>
 </p>
 
@@ -24,8 +24,8 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/biZenX/Mowatib/releases/download/v2.1.0/Mowatib-v2.1.0.apk">
-    <img src="assets/badges/download.svg" height="32" alt="Download Mowatib-v2.1.0.apk">
+  <a href="https://github.com/biZenX/Mowatib/releases/download/v2.2.0/Mowatib-v2.2.0.apk">
+    <img src="assets/badges/download.svg" height="32" alt="Download Mowatib-v2.2.0.apk">
   </a>
   &nbsp;&nbsp;
   <a href="https://github.com/biZenX/Mowatib">
@@ -114,7 +114,7 @@ This ensures 100% side-by-side coexistence with any previously installed package
 
 ### Download Pre-built APK
 Download the latest signed release APK directly from GitHub:
-**[Download Mowatib-v2.1.0.apk](https://github.com/biZenX/Mowatib/releases/download/v2.1.0/Mowatib-v2.1.0.apk)**
+**[Download Mowatib-v2.2.0.apk](https://github.com/biZenX/Mowatib/releases/download/v2.2.0/Mowatib-v2.2.0.apk)**
 
 ### Build from Source
 1. Clone the repository:
@@ -130,7 +130,7 @@ Download the latest signed release APK directly from GitHub:
    ```
 5. The generated APK will be located at:
    ```
-   app/build/outputs/apk/full/release/Mowatib-full-2.1.0.apk
+   app/build/outputs/apk/full/release/Mowatib-full-2.2.0.apk
    ```
 
 ---
