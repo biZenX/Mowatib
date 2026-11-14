@@ -31,7 +31,7 @@ fun MowatibTaskCard(
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
-    val isAr = remember { Locale.getDefault().language.startsWith("ar") }
+    val isAr = com.abdulrhman.mowatib.ui.theme.LocalIsArabic.current
     val tasks by MowatibTaskManager.tasks.collectAsState()
     val syncStatus by MowatibSyncManager.syncStatus.collectAsState()
     var newTaskText by remember { mutableStateOf("") }
@@ -184,14 +184,14 @@ private fun TaskItemRow(task: MowatibTask, isAr: Boolean) {
             Spacer(modifier = Modifier.width(8.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = task.title,
+                    text = task.localizedTitle(isAr),
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = if (task.isCompleted) FontWeight.Normal else FontWeight.SemiBold,
                     textDecoration = if (task.isCompleted) TextDecoration.LineThrough else TextDecoration.None,
                     color = if (task.isCompleted) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f) else MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = task.category,
+                    text = task.localizedCategory(isAr),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.primary
                 )

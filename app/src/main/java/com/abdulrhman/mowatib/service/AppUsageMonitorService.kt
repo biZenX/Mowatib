@@ -223,12 +223,29 @@ class AppUsageMonitorService : Service() {
         }
         when (intent?.action) {
             "com.abdulrhman.mowatib.action.ENFORCE_FOCUS_LOCK" -> {
-                val fg = lastForegroundApp ?: cachedForegroundApp
+                val fg = lastForegroundApp ?: cachedForegroundApp ?: AppStateHolder.foregroundApp.value
                 if (fg != null && SharedMonitoringState.isAppBlockedByFocus(fg)) {
                     goToHomeScreen()
+                    try {
+                        val am = getSystemService(Context.ACTIVITY_SERVICE) as? android.app.ActivityManager
+                        am?.killBackgroundProcesses(fg)
+                    } catch (_: Exception) {}
                     allowedApps.remove(fg)
                     overlayActionHandler.showPomodoroPuzzle(fg, isBlocked = true)
                 }
+                try {
+                    val am = getSystemService(Context.ACTIVITY_SERVICE) as? android.app.ActivityManager
+                    if (am != null) {
+                        val runningProcs = am.runningAppProcesses ?: emptyList()
+                        for (proc in runningProcs) {
+                            for (pkg in proc.pkgList) {
+                                if (SharedMonitoringState.isAppBlockedByFocus(pkg)) {
+                                    am.killBackgroundProcesses(pkg)
+                                }
+                            }
+                        }
+                    }
+                } catch (_: Exception) {}
             }
             "SEND_TEST_NOTIFICATION" -> sendTestNotification()
             ACTION_ENSURE_CAMERA_FGS -> ensureCameraForegroundType()
@@ -1479,6 +1496,10 @@ class AppUsageMonitorService : Service() {
 
         if (SharedMonitoringState.isAppBlockedByFocus(currentApp)) {
             goToHomeScreen()
+            try {
+                val am = getSystemService(Context.ACTIVITY_SERVICE) as? android.app.ActivityManager
+                am?.killBackgroundProcesses(currentApp)
+            } catch (_: Exception) {}
             allowedApps.remove(currentApp)
             sessionUsageOverlayManager.hideHUD(currentApp, invokeOnSessionEnd = false)
             if (!InterceptOverlayManager.isShowing) {

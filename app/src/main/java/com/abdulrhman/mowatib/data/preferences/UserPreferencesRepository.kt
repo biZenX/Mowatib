@@ -103,7 +103,25 @@ enum class PerformanceLevel(val labelRes: String, val descriptionRes: String) {
     BALANCED("Balanced", "Tuned for everyday use."),
     BATTERY_SAVER("Battery Saver", "Gentler on battery with reduced background checks."),
     MAX_BATTERY("Max Battery", "Maximum battery savings with minimal background activity."),
-    CUSTOM("Custom", "Your personalized configuration.")
+    CUSTOM("Custom", "Your personalized configuration.");
+
+    fun localizedLabel(isArabic: Boolean): String = if (isArabic) when (this) {
+        MAX_RESPONSIVENESS -> "أقصى استجابة"
+        RESPONSIVE -> "سريع الاستجابة"
+        BALANCED -> "متوازن"
+        BATTERY_SAVER -> "موفر البطارية"
+        MAX_BATTERY -> "أقصى توفير للبطارية"
+        CUSTOM -> "مخصص"
+    } else labelRes
+
+    fun localizedDescription(isArabic: Boolean): String = if (isArabic) when (this) {
+        MAX_RESPONSIVENESS -> "أقصى سرعة للألعاب والمهام الحساسة للوقت."
+        RESPONSIVE -> "تجربة أكثر سرعة وسلاسة من الوضع الافتراضي."
+        BALANCED -> "مضبوط للاستخدام اليومي المعتاد."
+        BATTERY_SAVER -> "استهلاك أقل للبطارية مع تقليل الفحوصات في الخلفية."
+        MAX_BATTERY -> "أقصى توفير للطاقة مع تقليل نشاط الخلفية للحد الأدنى."
+        CUSTOM -> "إعداداتك المخصصة بالكامل."
+    } else descriptionRes
 }
 
 fun PerformanceLevel.isPreset() = this != PerformanceLevel.CUSTOM

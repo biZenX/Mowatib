@@ -293,6 +293,7 @@ class PomodoroViewModel(
                     context.startActivity(homeIntent)
                 } catch (_: Exception) {}
             }
+            com.abdulrhman.mowatib.service.MowatibService.enforceFocusLock(context)
             try {
                 val serviceIntent = Intent(context, com.abdulrhman.mowatib.service.AppUsageMonitorService::class.java).apply {
                     action = "com.abdulrhman.mowatib.action.ENFORCE_FOCUS_LOCK"

@@ -52,8 +52,8 @@ fun AppearanceSettings(
 
         Spacer(modifier = Modifier.height(4.dp))
         SettingsToggle(
-            title = "Dynamic Color",
-            description = "Apply system wallpaper colors (Android 12+)",
+            title = if (isAr) "الألوان الديناميكية" else "Dynamic Color",
+            description = if (isAr) "تطبيق ألوان خلفية النظام (أندرويد 12+)" else "Apply system wallpaper colors (Android 12+)",
             checked = preferences.dynamicColor,
             onCheckedChange = onDynamicColorChange,
             icon = Icons.Outlined.Palette,
@@ -62,8 +62,8 @@ fun AppearanceSettings(
 
         Spacer(modifier = Modifier.height(4.dp))
         SettingsToggle(
-            title = "Expressive Color Set",
-            description = "Tone down backgrounds and make containers standout",
+            title = if (isAr) "مجموعة ألوان تعبيرية" else "Expressive Color Set",
+            description = if (isAr) "تهدئة الخلفيات وإبراز الحاويات" else "Tone down backgrounds and make containers standout",
             checked = preferences.expressiveColors,
             onCheckedChange = onExpressiveColorsChange,
             icon = Icons.Outlined.Layers,
@@ -71,11 +71,11 @@ fun AppearanceSettings(
         )
 
         Spacer(modifier = Modifier.height(16.dp))
-        PreferenceCategory(title = "Layout & Navigation")
+        PreferenceCategory(title = if (isAr) "التخطيط والتنقل" else "Layout & Navigation")
 
         SettingsToggle(
-            title = "Floating Tab Bar",
-            description = "Use the new Material 3 Expressive floating navigation",
+            title = if (isAr) "شريط تبويب عائم" else "Floating Tab Bar",
+            description = if (isAr) "استخدام شريط التنقل العائم المعبّر" else "Use the new Material 3 Expressive floating navigation",
             checked = preferences.floatingTabBarEnabled,
             onCheckedChange = onFloatingTabBarEnabledChange,
             icon = Icons.Outlined.Flaky,
@@ -84,8 +84,8 @@ fun AppearanceSettings(
 
         Spacer(modifier = Modifier.height(4.dp))
         SettingsToggle(
-            title = "Header Info Button",
-            description = "Show the info button in the top bar for help about each screen",
+            title = if (isAr) "زر معلومات العنوان" else "Header Info Button",
+            description = if (isAr) "إظهار زر المعلومات في الشريط العلوي للمساعدة" else "Show the info button in the top bar for help about each screen",
             checked = preferences.headerInfoButtonEnabled,
             onCheckedChange = onHeaderInfoButtonEnabledChange,
             icon = Icons.Outlined.Info,
@@ -94,8 +94,8 @@ fun AppearanceSettings(
 
         Spacer(modifier = Modifier.height(4.dp))
         SettingsActionItem(
-            title = "Overlay Appearance",
-            summary = "Customize bottom sheet colors, opacity, and sizing",
+            title = if (isAr) "مظهر شاشة الحظر" else "Overlay Appearance",
+            summary = if (isAr) "تخصيص ألوان وشفافية وحجم شاشة الحظر" else "Customize bottom sheet colors, opacity, and sizing",
             onClick = onNavigateToOverlayAppearance,
             icon = Icons.Outlined.Style,
             shape = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp, bottomStart = 24.dp, bottomEnd = 24.dp)

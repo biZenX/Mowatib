@@ -29,7 +29,7 @@ import java.util.Locale
 
 @Composable
 fun PomodoroStatsSection(viewModel: PomodoroViewModel) {
-    val isAr = remember { Locale.getDefault().language.startsWith("ar") }
+    val isAr = com.abdulrhman.mowatib.ui.theme.LocalIsArabic.current
     val selectedRange by viewModel.pomodoroStatsRange.collectAsState()
     val offset by viewModel.pomodoroPeriodOffset.collectAsState()
     val prefs by viewModel.userPreferences.collectAsState()

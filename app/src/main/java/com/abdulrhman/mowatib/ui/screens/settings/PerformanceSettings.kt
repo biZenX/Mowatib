@@ -68,10 +68,11 @@ fun PerformanceSettings(
     onDisableTrackingStartHourChange: (Int) -> Unit = {},
     onDisableTrackingEndHourChange: (Int) -> Unit = {},
 ) {
+    val isAr = preferences.appLanguage == "ar"
     val allLevels = PerformanceLevel.values()
     var pendingBatteryLevel by remember { mutableStateOf<PerformanceLevel?>(null) }
 
-    PreferenceCategory(title = "Performance Profile")
+    PreferenceCategory(title = if (isAr) "ملف الأداء" else "Performance Profile")
 
     allLevels.forEachIndexed { index, level ->
         val isSelected = preferences.performanceLevel == level
@@ -144,7 +145,7 @@ fun PerformanceSettings(
                 }
                 Spacer(modifier = Modifier.width(16.dp))
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(text = level.labelRes,
+                    Text(text = level.localizedLabel(isAr),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold)
                     if (isCustom && isSelected) {
@@ -152,7 +153,7 @@ fun PerformanceSettings(
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant)
                     } else {
-                        Text(text = level.descriptionRes,
+                        Text(text = level.localizedDescription(isAr),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
@@ -176,16 +177,16 @@ fun PerformanceSettings(
     }
 
     Spacer(modifier = Modifier.height(8.dp))
-    Text(text = "Custom profile lets you tune every parameter manually",
+    Text(text = if (isAr) "يتيح لك الملف المخصص ضبط كل متغير يدوياً" else "Custom profile lets you tune every parameter manually",
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.padding(horizontal = 4.dp))
 
     Spacer(modifier = Modifier.height(16.dp))
-    PreferenceCategory(title = "Unused Hours")
+    PreferenceCategory(title = if (isAr) "ساعات عدم الاستخدام" else "Unused Hours")
     SettingsToggle(
-        title = "Disable Tracking at Unused Hours",
-        description = "Pause monitoring during hours you never use your phone. Works with screen-off to save battery overnight.",
+        title = if (isAr) "تعطيل التتبع في ساعات عدم الاستخدام" else "Disable Tracking at Unused Hours",
+        description = if (isAr) "إيقاف المراقبة مؤقتاً أثناء ساعات عدم استخدام الهاتف لتوفير طاقة البطارية." else "Pause monitoring during hours you never use your phone. Works with screen-off to save battery overnight.",
         checked = preferences.disableTrackingAtUnusedHours,
         onCheckedChange = onDisableTrackingAtUnusedHoursChange,
         icon = Icons.Outlined.Nightlight,
@@ -222,7 +223,7 @@ fun PerformanceSettings(
                         modifier = Modifier.padding(16.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text("Start Time", style = MaterialTheme.typography.labelLarge,
+                        Text(if (isAr) "وقت البدء" else "Start Time", style = MaterialTheme.typography.labelLarge,
                             color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
@@ -241,7 +242,7 @@ fun PerformanceSettings(
                         modifier = Modifier.padding(16.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text("End Time", style = MaterialTheme.typography.labelLarge,
+                        Text(if (isAr) "وقت الانتهاء" else "End Time", style = MaterialTheme.typography.labelLarge,
                             color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
@@ -301,6 +302,7 @@ fun PerformanceTuningPanel(
     onAccessibilityRequiredChange: (Boolean) -> Unit = {},
     preferencesRepository: UserPreferencesRepository? = null,
 ) {
+    val isAr = preferences.appLanguage == "ar"
     val scope = rememberCoroutineScope()
     var tuningExpanded by remember { mutableStateOf(selectedLevel == PerformanceLevel.CUSTOM) }
     var delayExpanded by remember { mutableStateOf(selectedLevel == PerformanceLevel.CUSTOM) }
@@ -506,11 +508,14 @@ fun PerformanceTuningPanel(
         }
     }
 
-    PreferenceCategory(title = "Instant Detection")
+    PreferenceCategory(title = if (isAr) "الكشف الفوري" else "Instant Detection")
     TuningPermissionItemRow(
-        title = "Accessibility Service",
-        description = if (hasAccessibility) "Service is active and detecting launches instantly" 
-                      else "Detect app launches instantly for peak performance",
+        title = if (isAr) "خدمة إمكانية الوصول" else "Accessibility Service",
+        description = if (hasAccessibility) {
+            if (isAr) "الخدمة نشطة وتكتشف فتح التطبيقات فورياً" else "Service is active and detecting launches instantly"
+        } else {
+            if (isAr) "اكتشاف فتح التطبيقات فورياً لأفضل أداء" else "Detect app launches instantly for peak performance"
+        },
         isGranted = hasAccessibility,
         onClick = {
             if (!preferences.bankingWarningDismissed) {
@@ -528,8 +533,8 @@ fun PerformanceTuningPanel(
     )
     Spacer(modifier = Modifier.height(4.dp))
     SettingsToggle(
-        title = "Make as Requirement",
-        description = "Require Accessibility Service to be granted for permission checks",
+        title = if (isAr) "جعلها متطلباً إلزامياً" else "Make as Requirement",
+        description = if (isAr) "اشتراط منح خدمة إمكانية الوصول لفحوصات الأذونات" else "Require Accessibility Service to be granted for permission checks",
         checked = preferences.accessibilityRequired,
         onCheckedChange = onAccessibilityRequiredChange,
         icon = Icons.Outlined.Lock,
@@ -555,7 +560,7 @@ fun PerformanceTuningPanel(
         )
     }
 
-    PreferenceCategory(title = "Custom Tuning")
+    PreferenceCategory(title = if (isAr) "الضبط المخصص" else "Custom Tuning")
 
     val tuningChevronRotation by animateFloatAsState(
         targetValue = if (tuningExpanded) 180f else 0f,

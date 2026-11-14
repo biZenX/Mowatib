@@ -73,7 +73,7 @@ fun PomodoroScreen(
     var pendingDeletePreset by remember { mutableStateOf<String?>(null) }
 
     val pomoContext = LocalContext.current
-    val isAr = java.util.Locale.getDefault().language.startsWith("ar")
+    val isAr = com.abdulrhman.mowatib.ui.theme.LocalIsArabic.current
     fun startWithPreflight() {
         when {
             !Settings.canDrawOverlays(pomoContext) -> {
@@ -563,7 +563,7 @@ fun TimeSettingsCard(
 ) {
     val middleShape = RoundedCornerShape(8.dp)
     val bottomShape = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp, bottomStart = 24.dp, bottomEnd = 24.dp)
-    val isAr = java.util.Locale.getDefault().language.startsWith("ar")
+    val isAr = com.abdulrhman.mowatib.ui.theme.LocalIsArabic.current
 
     var focusText by remember(sessionDuration) { mutableStateOf(sessionDuration.toString()) }
     var breakText by remember(breakDuration) { mutableStateOf(breakDuration.toString()) }
@@ -744,7 +744,7 @@ fun AppSelectionCard(
     val topShape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp, bottomStart = 8.dp, bottomEnd = 8.dp)
     val middleShape = RoundedCornerShape(8.dp)
     val bottomShape = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp, bottomStart = 24.dp, bottomEnd = 24.dp)
-    val isAr = java.util.Locale.getDefault().language.startsWith("ar")
+    val isAr = com.abdulrhman.mowatib.ui.theme.LocalIsArabic.current
 
     Column {
         PreferenceCategory(title = if (isAr) "حماية التطبيقات" else "App Protection")
@@ -977,7 +977,7 @@ fun PomodoroStatusProgress(
     isLongBreak: Boolean = false,
     circleSize: androidx.compose.ui.unit.Dp = 240.dp
 ) {
-    val isAr = java.util.Locale.getDefault().language.startsWith("ar")
+    val isAr = com.abdulrhman.mowatib.ui.theme.LocalIsArabic.current
     val remaining = if (isBreakActive) remainingBreakMillis else remainingSessionMillis
     val total = if (isBreakActive) totalBreakMillis else totalSessionMillis
     val progressValue = when {

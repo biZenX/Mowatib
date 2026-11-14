@@ -1,13 +1,15 @@
 package com.abdulrhman.mowatib.ui.screens.settings
 
+import android.content.Context
+import android.content.Intent
+import android.speech.tts.TextToSpeech
+import android.widget.Toast
 import androidx.compose.animation.*
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -18,8 +20,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -27,19 +27,19 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
-import com.abdulrhman.mowatib.data.local.entity.FocusType
-import com.abdulrhman.mowatib.data.local.entity.ShieldEntity
+import com.abdulrhman.mowatib.BuildConfig
+import com.abdulrhman.mowatib.crash.CrashActivity
+import com.abdulrhman.mowatib.crash.CrashStore
+import com.abdulrhman.mowatib.crash.SafeMode
 import com.abdulrhman.mowatib.data.preferences.UserPreferences
 import com.abdulrhman.mowatib.ui.components.MowatibButton
-import com.abdulrhman.mowatib.ui.screens.profile.levelForXp
 import com.abdulrhman.mowatib.ui.components.MowatibButtonSize
 import com.abdulrhman.mowatib.ui.components.MowatibButtonType
-import com.abdulrhman.mowatib.ui.components.focus.AppPickerBottomSheet
 import com.abdulrhman.mowatib.ui.components.focus.MowatibDropdown
 import com.abdulrhman.mowatib.ui.components.overlay.InterceptBottomSheet
-import com.abdulrhman.mowatib.ui.viewmodel.AppInfo
+import com.abdulrhman.mowatib.ui.theme.LocalIsArabic
 import com.abdulrhman.mowatib.ui.viewmodel.FocusUiState
-import com.abdulrhman.mowatib.util.ScreenUsageHelper
+import java.util.Locale
 
 @Composable
 fun DeveloperSettings(
@@ -57,13 +57,6 @@ fun DeveloperSettings(
     onTriggerOnboardingPermissions: () -> Unit,
     onTriggerOnboardingStats: () -> Unit,
     onTriggerOnboardingUpdate: () -> Unit,
-    onResetBedtimeStreak: () -> Unit,
-    onResetStreakRecovery: () -> Unit,
-    onUpdateAppStreak: (String, Int) -> Unit,
-    onUpdateGlobalScreenTime: (Long) -> Unit,
-    onUpdateAppScreenTime: (String, Long) -> Unit,
-    onUpdateProfileLevel: (Int) -> Unit = {},
-    onResetXpDebug: () -> Unit = {},
     onTestUsageGlimpse: () -> Unit,
     onTestGoalCallerDelayed: () -> Unit,
     onTestAlarmOverlay: () -> Unit,
@@ -76,13 +69,13 @@ fun DeveloperSettings(
     var showTtsTestSheet by remember { mutableStateOf(false) }
 
     if (preferences.developerModeEnabled) {
-        val isAr = remember { java.util.Locale.getDefault().language.startsWith("ar") }
+        val isAr = LocalIsArabic.current
         Column {
             PreferenceCategory(title = if (isAr) "معلومات وبيانات البناء" else "Build & Environment Info")
 
             SettingsActionItem(
                 title = if (isAr) "حزمة وتطبيق مواظب" else "Application Package",
-                summary = "com.abdulrhman.mowatib (v${com.abdulrhman.mowatib.BuildConfig.VERSION_NAME})",
+                summary = "com.abdulrhman.mowatib (v${BuildConfig.VERSION_NAME})",
                 onClick = {},
                 icon = Icons.Outlined.Info,
                 shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp, bottomStart = 8.dp, bottomEnd = 8.dp)
@@ -98,11 +91,11 @@ fun DeveloperSettings(
             )
 
             Spacer(modifier = Modifier.height(16.dp))
-            PreferenceCategory(title = "Database & Data")
+            PreferenceCategory(title = if (isAr) "قواعد وسجلات البيانات" else "Database & Data")
 
             SettingsToggle(
-                title = "Database Source Indicator",
-                description = "Show indicator for database records in usage graphs",
+                title = if (isAr) "مؤشر مصدر البيانات" else "Database Source Indicator",
+                description = if (isAr) "إظهار مؤشر لسجلات البيانات في رسوم الاستخدام البيانية" else "Show indicator for database records in usage graphs",
                 checked = preferences.showDatabaseIndicator,
                 onCheckedChange = onShowDatabaseIndicatorChange,
                 icon = Icons.Outlined.Storage,
@@ -111,8 +104,8 @@ fun DeveloperSettings(
 
             Spacer(modifier = Modifier.height(4.dp))
             SettingsToggle(
-                title = "Smart Repair on Refresh",
-                description = "Enable resetCarryover() when pulling to refresh on dashboard",
+                title = if (isAr) "الإصلاح الذكي عند التحديث" else "Smart Repair on Refresh",
+                description = if (isAr) "تفعيل إعادة ضبط الترحيل عند السحب للتحديث في الواجهة" else "Enable resetCarryover() when pulling to refresh on dashboard",
                 checked = preferences.smartRepairOnRefresh,
                 onCheckedChange = onSmartRepairOnRefreshChange,
                 icon = Icons.Outlined.AutoFixHigh,
@@ -121,8 +114,8 @@ fun DeveloperSettings(
 
             Spacer(modifier = Modifier.height(4.dp))
             SettingsActionItem(
-                title = "Database Records",
-                summary = "View and manage all recorded usage data",
+                title = if (isAr) "سجلات قاعدة البيانات" else "Database Records",
+                summary = if (isAr) "عرض وفحص سجلات استخدام التطبيقات المسجلة" else "View and manage all recorded usage data",
                 onClick = onNavigateToDatabaseDebug,
                 icon = Icons.Outlined.SdStorage,
                 shape = RoundedCornerShape(8.dp)
@@ -130,8 +123,8 @@ fun DeveloperSettings(
 
             Spacer(modifier = Modifier.height(4.dp))
             SettingsActionItem(
-                title = "View System Usage Fetch",
-                summary = "View 1:1 usage history duplication from system only",
+                title = if (isAr) "فحص استخدام النظام" else "View System Usage Fetch",
+                summary = if (isAr) "فحص سجلات الاستخدام المستخرجة مباشرة من نظام أندرويد" else "View 1:1 usage history duplication from system only",
                 onClick = onNavigateToSystemUsageDebug,
                 icon = Icons.Outlined.Analytics,
                 shape = RoundedCornerShape(8.dp)
@@ -139,19 +132,19 @@ fun DeveloperSettings(
 
             Spacer(modifier = Modifier.height(4.dp))
             SettingsActionItem(
-                title = "Data Repairment",
-                summary = "Fix missing or incorrect usage history",
+                title = if (isAr) "فحص وإصلاح البيانات" else "Data Repairment",
+                summary = if (isAr) "فحص سلامة سجلات الاستخدام وتصحيح الأخطاء" else "Fix missing or incorrect usage history",
                 onClick = onNavigateToDataRepairment,
                 icon = Icons.Outlined.Build,
                 shape = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp, bottomStart = 24.dp, bottomEnd = 24.dp)
             )
 
             Spacer(modifier = Modifier.height(16.dp))
-            PreferenceCategory(title = "Logs")
+            PreferenceCategory(title = if (isAr) "سجلات التشخيص الحية" else "Logs")
 
             SettingsActionItem(
-                title = "DB Log Viewer",
-                summary = "View database and goal/shield operation logs in real-time",
+                title = if (isAr) "سجل قاعدة البيانات المباشر" else "DB Log Viewer",
+                summary = if (isAr) "عرض سجل عمليات البيانات والأهداف في الوقت الفعلي" else "View database and goal/shield operation logs in real-time",
                 onClick = onShowDbLogViewer,
                 icon = Icons.Outlined.BugReport,
                 shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp, bottomStart = 8.dp, bottomEnd = 8.dp)
@@ -159,19 +152,19 @@ fun DeveloperSettings(
 
             Spacer(modifier = Modifier.height(4.dp))
             SettingsActionItem(
-                title = "Overlay Log Viewer",
-                summary = "View overlay show/hide lifecycle and detection logs in real-time",
+                title = if (isAr) "سجل الواجهات المنبثقة" else "Overlay Log Viewer",
+                summary = if (isAr) "عرض سجل ظهور وتفاعل الواجهات المنبثقة في الوقت الفعلي" else "View overlay show/hide lifecycle and detection logs in real-time",
                 onClick = onShowOverlayLogViewer,
                 icon = Icons.Outlined.Visibility,
                 shape = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp, bottomStart = 24.dp, bottomEnd = 24.dp)
             )
 
             Spacer(modifier = Modifier.height(16.dp))
-            PreferenceCategory(title = "Onboarding Triggers")
+            PreferenceCategory(title = if (isAr) "محاكاة البداية والأذونات" else "Onboarding Triggers")
 
             SettingsActionItem(
-                title = "Trigger Permission Sheet",
-                summary = "Open the initial permission onboarding sheet",
+                title = if (isAr) "إعادة فتح شاشة الأذونات" else "Trigger Permission Sheet",
+                summary = if (isAr) "فتح شاشة أذونات وصلاحيات التطبيق الأولية" else "Open the initial permission onboarding sheet",
                 onClick = onTriggerOnboardingPermissions,
                 icon = Icons.Outlined.AdminPanelSettings,
                 shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp, bottomStart = 8.dp, bottomEnd = 8.dp)
@@ -179,48 +172,30 @@ fun DeveloperSettings(
 
             Spacer(modifier = Modifier.height(4.dp))
             SettingsActionItem(
-                title = "Reset & Trigger Stats Onboarding",
-                summary = "Reset flag and show statistic experience choice",
+                title = if (isAr) "إعادة فتح شاشة الإحصائيات" else "Reset & Trigger Stats Onboarding",
+                summary = if (isAr) "إعادة تعيين خيار نمط عرض الإحصائيات الأولي" else "Reset flag and show statistic experience choice",
                 onClick = onTriggerOnboardingStats,
                 icon = Icons.Outlined.BarChart,
-                shape = RoundedCornerShape(8.dp)
+                shape = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp, bottomStart = if (BuildConfig.SHOW_UPDATES) 8.dp else 24.dp, bottomEnd = if (BuildConfig.SHOW_UPDATES) 8.dp else 24.dp)
             )
 
-            if (com.abdulrhman.mowatib.BuildConfig.SHOW_UPDATES) {
+            if (BuildConfig.SHOW_UPDATES) {
                 Spacer(modifier = Modifier.height(4.dp))
                 SettingsActionItem(
-                    title = "Reset & Trigger Update Onboarding",
-                    summary = "Reset flag and show update preference choice",
+                    title = if (isAr) "إعادة فتح شاشة التحديثات" else "Reset & Trigger Update Onboarding",
+                    summary = if (isAr) "إعادة تعيين خيار البحث التلقائي عن التحديثات" else "Reset flag and show update preference choice",
                     onClick = onTriggerOnboardingUpdate,
                     icon = Icons.Outlined.Update,
-                    shape = RoundedCornerShape(8.dp)
+                    shape = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp, bottomStart = 24.dp, bottomEnd = 24.dp)
                 )
             }
 
-            Spacer(modifier = Modifier.height(4.dp))
-            SettingsActionItem(
-                title = "Reset Bedtime Streak",
-                summary = "Reset current and best bedtime streaks to 0",
-                onClick = onResetBedtimeStreak,
-                icon = Icons.Outlined.Bedtime,
-                shape = RoundedCornerShape(8.dp)
-            )
-
-            Spacer(modifier = Modifier.height(4.dp))
-            SettingsActionItem(
-                title = "Run Streak Recovery",
-                summary = "Manually verify and restore streaks from system history",
-                onClick = onResetStreakRecovery,
-                icon = Icons.Outlined.RestartAlt,
-                shape = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp, bottomStart = 24.dp, bottomEnd = 24.dp)
-            )
-
             Spacer(modifier = Modifier.height(16.dp))
-            PreferenceCategory(title = "UI & Functional Testing")
+            PreferenceCategory(title = if (isAr) "اختبارات وتجارب الواجهات" else "UI & Functional Testing")
 
             SettingsActionItem(
-                title = "Test Goal Overlay",
-                summary = "Immediately trigger the full screen caller overlay",
+                title = if (isAr) "اختبار واجهة الحماية الكاملة" else "Test Goal Overlay",
+                summary = if (isAr) "عرض واجهة الحماية المنبثقة بكامل الشاشة فورياً" else "Immediately trigger the full screen caller overlay",
                 onClick = onTestGoalOverlay,
                 icon = Icons.Outlined.BugReport,
                 shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp, bottomStart = 8.dp, bottomEnd = 8.dp)
@@ -228,8 +203,8 @@ fun DeveloperSettings(
 
             Spacer(modifier = Modifier.height(4.dp))
             SettingsActionItem(
-                title = "Test Goal Caller (10 min)",
-                summary = "Schedule a test goal caller alarm to fire after 10 minutes (tests screen-off behavior)",
+                title = if (isAr) "اختبار منبه الهدف (بعد 10 دقائق)" else "Test Goal Caller (10 min)",
+                summary = if (isAr) "جدولة إنذار تجريبي لاختبار سلوك الشاشة المغلقة" else "Schedule a test goal caller alarm to fire after 10 minutes (tests screen-off behavior)",
                 onClick = onTestGoalCallerDelayed,
                 icon = Icons.Outlined.Alarm,
                 shape = RoundedCornerShape(8.dp)
@@ -237,8 +212,8 @@ fun DeveloperSettings(
 
             Spacer(modifier = Modifier.height(4.dp))
             SettingsActionItem(
-                title = "Test Usage Glimpse",
-                summary = "Show the 5-minute usage glimpse HUD immediately",
+                title = if (isAr) "اختبار مؤشر الاستخدام العائم" else "Test Usage Glimpse",
+                summary = if (isAr) "عرض المؤشر العائم فورياً على الشاشة" else "Show the 5-minute usage glimpse HUD immediately",
                 onClick = onTestUsageGlimpse,
                 icon = Icons.Outlined.Visibility,
                 shape = RoundedCornerShape(8.dp)
@@ -246,18 +221,18 @@ fun DeveloperSettings(
 
             Spacer(modifier = Modifier.height(4.dp))
             SettingsActionItem(
-                title = "Test Achievement Banner",
-                summary = "Queue a fake unlock and open Profile to see the in-app notification",
+                title = if (isAr) "اختبار شارة الإنجازات" else "Test Achievement Banner",
+                summary = if (isAr) "محاكاة فتح إنجاز جديد لعرض التنبيه داخل التطبيق" else "Queue a fake unlock and open Profile to see the in-app notification",
                 onClick = onTestAchievementBanner,
                 icon = Icons.Outlined.EmojiEvents,
                 shape = RoundedCornerShape(8.dp)
             )
 
-            if (com.abdulrhman.mowatib.BuildConfig.SHOW_UPDATES) {
+            if (BuildConfig.SHOW_UPDATES) {
                 Spacer(modifier = Modifier.height(4.dp))
                 SettingsActionItem(
-                    title = "Test Update Sheet",
-                    summary = "Immediately trigger the new update bottom sheet",
+                    title = if (isAr) "اختبار نافذة التحديث الجديد" else "Test Update Sheet",
+                    summary = if (isAr) "عرض نافذة التحديث الجديد التجريبية فورياً" else "Immediately trigger the new update bottom sheet",
                     onClick = onTestUpdateSheet,
                     icon = Icons.Outlined.NewReleases,
                     shape = RoundedCornerShape(8.dp)
@@ -266,26 +241,26 @@ fun DeveloperSettings(
 
             Spacer(modifier = Modifier.height(4.dp))
             SettingsActionItem(
-                title = "Test Variable Font",
-                summary = "Demo variable axes with Google Sans Flex",
+                title = if (isAr) "اختبار الخطوط المتغيرة" else "Test Variable Font",
+                summary = if (isAr) "تجربة محاور الخط المتغير وتخصيص الأوزان" else "Demo variable axes with Google Sans Flex",
                 onClick = onNavigateToFontTest,
                 icon = Icons.Outlined.FontDownload,
-                shape = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp, bottomStart = 8.dp, bottomEnd = 8.dp)
+                shape = RoundedCornerShape(8.dp)
             )
 
             Spacer(modifier = Modifier.height(4.dp))
             SettingsActionItem(
-                title = "Test Bottom Sheet Expand",
-                summary = "Interactive test for InterceptBottomSheet expand behavior",
+                title = if (isAr) "اختبار حركة القائمة السفلية" else "Test Bottom Sheet Expand",
+                summary = if (isAr) "اختبار تفاعلي لحركة توسيع وطي القوائم السفلية" else "Interactive test for InterceptBottomSheet expand behavior",
                 onClick = { showBottomSheetTest = true },
                 icon = Icons.Outlined.OpenInFull,
-                shape = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp, bottomStart = 8.dp, bottomEnd = 8.dp)
+                shape = RoundedCornerShape(8.dp)
             )
 
             Spacer(modifier = Modifier.height(4.dp))
             SettingsActionItem(
-                title = "Test TTS",
-                summary = "Test Text-to-Speech engine with custom text",
+                title = if (isAr) "اختبار القارئ الصوتي" else "Test TTS",
+                summary = if (isAr) "اختبار محرك تحويل النص إلى صوت مع نصوص مخصصة" else "Test Text-to-Speech engine with custom text",
                 onClick = { showTtsTestSheet = true },
                 icon = Icons.AutoMirrored.Outlined.VolumeUp,
                 shape = RoundedCornerShape(8.dp)
@@ -295,45 +270,43 @@ fun DeveloperSettings(
             var showTestAlarmDialog by remember { mutableStateOf(false) }
 
             SettingsActionItem(
-                title = "Test Alarm Overlay",
-                summary = "Immediately trigger the alarm full screen overlay",
+                title = if (isAr) "اختبار واجهة المنبه" else "Test Alarm Overlay",
+                summary = if (isAr) "عرض واجهة المنبه الكاملة فورياً" else "Immediately trigger the alarm full screen overlay",
                 onClick = { showTestAlarmDialog = true },
-                icon = Icons.Outlined.Alarm,
-                shape = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp, bottomStart = 8.dp, bottomEnd = 8.dp)
+                icon = Icons.Outlined.NotificationsActive,
+                shape = RoundedCornerShape(8.dp)
             )
 
             if (showTestAlarmDialog) {
-                TestAlarmBottomSheet(
-                    onDismiss = { showTestAlarmDialog = false }
+                AlertDialog(
+                    onDismissRequest = { showTestAlarmDialog = false },
+                    title = { Text(if (isAr) "اختبار واجهة المنبه" else "Test Alarm Overlay") },
+                    text = { Text(if (isAr) "سيتم عرض شاشة المنبه المنبثقة بكامل الشاشة." else "This will trigger the alarm full screen overlay.") },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            showTestAlarmDialog = false
+                            onTestAlarmOverlay()
+                        }) { Text(if (isAr) "تشغيل" else "Trigger") }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showTestAlarmDialog = false }) { Text(if (isAr) "إلغاء" else "Cancel") }
+                    }
                 )
             }
-
-            if (showTtsTestSheet) {
-                TtsTestBottomSheet(
-                    onDismiss = { showTtsTestSheet = false }
-                )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            PreferenceCategory(title = if (isAr) "تقارير الأخطاء والسلامة" else "Crash Diagnostics & Safety")
 
             val crashContext = LocalContext.current
 
             Spacer(modifier = Modifier.height(4.dp))
             SettingsActionItem(
-                title = "Open Last Crash Report",
-                summary = if (com.abdulrhman.mowatib.crash.CrashStore.hasAnyCrash(crashContext)) {
-                    "View the most recent crash caught by Mowatib"
+                title = if (isAr) "فتح آخر تقرير انهيار" else "Open Last Crash Report",
+                summary = if (CrashStore.hasAnyCrash(crashContext)) {
+                    if (isAr) "عرض تفاصيل آخر انهيار مسجل للتطبيق" else "View the most recent crash caught by Mowatib"
                 } else {
-                    "No crash has been caught yet"
+                    if (isAr) "لم يتم تسجيل أي انهيار حتى الآن" else "No crash has been caught yet"
                 },
                 onClick = {
                     crashContext.startActivity(
-                        android.content.Intent(
-                            crashContext,
-                            com.abdulrhman.mowatib.crash.CrashActivity::class.java
-                        )
+                        Intent(crashContext, CrashActivity::class.java)
                     )
                 },
                 icon = Icons.Outlined.ReportProblem,
@@ -342,11 +315,11 @@ fun DeveloperSettings(
 
             Spacer(modifier = Modifier.height(4.dp))
             SettingsActionItem(
-                title = "Restart in Safe Mode",
-                summary = "Bootstrap without loading user data; useful when the app keeps crashing",
+                title = if (isAr) "إعادة التشغيل في الوضع الآمن" else "Restart in Safe Mode",
+                summary = if (isAr) "تشغيل التطبيق دون تحميل بيانات مسبقة لمنع الانهيار" else "Bootstrap without loading user data; useful when the app keeps crashing",
                 onClick = {
-                    com.abdulrhman.mowatib.crash.SafeMode.setEnabled(crashContext, true)
-                    com.abdulrhman.mowatib.crash.SafeMode.restartApp(crashContext)
+                    SafeMode.setEnabled(crashContext, true)
+                    SafeMode.restartApp(crashContext)
                 },
                 icon = Icons.Outlined.HealthAndSafety,
                 shape = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp, bottomStart = 24.dp, bottomEnd = 24.dp)
@@ -477,26 +450,56 @@ fun DeveloperSettings(
         }
     }
 
+    if (showTtsTestSheet) {
+        val ttsContext = LocalContext.current
+        TtsTestSheet(
+            context = ttsContext,
+            onDismiss = { showTtsTestSheet = false }
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EditValueBottomSheet(
-    title: String,
-    currentValueLabel: String,
-    currentValue: String,
-    inputValueLabel: String,
-    initialValue: String,
-    onDismiss: () -> Unit,
-    onConfirm: (String) -> Unit
+private fun TtsTestSheet(
+    context: Context,
+    onDismiss: () -> Unit
 ) {
-    var inputValue by remember { mutableStateOf(initialValue) }
-    val sheetState = rememberModalBottomSheetState()
+    val isAr = LocalIsArabic.current
+    var tts by remember { mutableStateOf<TextToSpeech?>(null) }
+    var ttsStatus by remember { mutableStateOf("Initializing...") }
+    var testText by remember { mutableStateOf(if (isAr) "تنبيه مواظب: حان وقت جلسة التركيز." else "Mowatib Reminder: Focus session has begun.") }
+    var isSpeaking by remember { mutableStateOf(false) }
+
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    DisposableEffect(Unit) {
+        var localTts: TextToSpeech? = null
+        localTts = TextToSpeech(context) { status ->
+            if (status == TextToSpeech.SUCCESS) {
+                tts = localTts
+                val defaultLocale = if (isAr) Locale("ar") else Locale.getDefault()
+                val result = localTts?.setLanguage(defaultLocale)
+                ttsStatus = if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                    "Language not supported"
+                } else {
+                    "Ready (${defaultLocale.displayName})"
+                }
+            } else {
+                ttsStatus = "TTS Init Failed ($status)"
+            }
+        }
+
+        onDispose {
+            localTts?.stop()
+            localTts?.shutdown()
+        }
+    }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
     ) {
         Column(
             modifier = Modifier
@@ -505,205 +508,67 @@ fun EditValueBottomSheet(
                 .padding(bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + 24.dp)
         ) {
             Text(
-                text = title,
+                text = if (isAr) "اختبار قارئ النصوص" else "Test Text-to-Speech",
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             Surface(
                 color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                shape = RoundedCornerShape(16.dp),
+                shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Row(
-                    modifier = Modifier.padding(16.dp),
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = currentValueLabel,
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        Text(
-                            text = currentValue,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
+                    Box(
+                        modifier = Modifier
+                            .size(10.dp)
+                            .clip(CircleShape)
+                            .background(
+                                if (tts != null) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.error
+                            )
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = ttsStatus,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium
+                    )
                 }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
             OutlinedTextField(
-                value = inputValue,
-                onValueChange = { inputValue = it.filter { char -> char.isDigit() } },
-                label = { Text(inputValueLabel) },
+                value = testText,
+                onValueChange = { testText = it },
+                label = { Text(if (isAr) "النص المراد نطقه" else "Text to speak") },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
-                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                    keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
-                ),
-                singleLine = true
+                minLines = 2,
+                maxLines = 4
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Button(
-                onClick = { onConfirm(inputValue) },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                contentPadding = PaddingValues(16.dp)
-            ) {
-                Text("Update Data", fontWeight = FontWeight.Bold)
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun TestAlarmBottomSheet(
-    onDismiss: () -> Unit
-) {
-    val context = LocalContext.current
-    var mathChallengeEnabled by remember { mutableStateOf(false) }
-    var gradualVolumeEnabled by remember { mutableStateOf(false) }
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-
-    val containerColor by animateColorAsState(
-        targetValue = MaterialTheme.colorScheme.surfaceContainerHigh,
-        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
-        label = "containerColor"
-    )
-
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState,
-        containerColor = MaterialTheme.colorScheme.surface,
-        tonalElevation = 0.dp
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp)
-                .padding(bottom = 32.dp)
-                .navigationBarsPadding()
-        ) {
-            Text(
-                text = "Debug Alarm Overlay",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.ExtraBold
-            )
-            Text(
-                text = "Configure and trigger a test alarm overlay.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Surface(
-                onClick = { mathChallengeEnabled = !mathChallengeEnabled },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp, bottomStart = 4.dp, bottomEnd = 4.dp),
-                color = containerColor
-            ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Calculate,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "Math Challenge",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = "Solve a math problem to dismiss",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    Switch(
-                        checked = mathChallengeEnabled,
-                        onCheckedChange = { mathChallengeEnabled = it }
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(2.dp))
-
-            Surface(
-                onClick = { gradualVolumeEnabled = !gradualVolumeEnabled },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp, bottomStart = 24.dp, bottomEnd = 24.dp),
-                color = containerColor
-            ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Outlined.VolumeUp,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "Gradual Volume",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = "Ramp up volume over 30 seconds",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    Switch(
-                        checked = gradualVolumeEnabled,
-                        onCheckedChange = { gradualVolumeEnabled = it }
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             MowatibButton(
                 onClick = {
-                    val intent = android.content.Intent(
-                        context,
-                        com.abdulrhman.mowatib.service.AlarmOverlayActivity::class.java
-                    ).apply {
-                        putExtra(
-                            com.abdulrhman.mowatib.service.AlarmOverlayActivity.EXTRA_TEST_MATH_CHALLENGE,
-                            mathChallengeEnabled
-                        )
-                        putExtra(
-                            com.abdulrhman.mowatib.service.AlarmOverlayActivity.EXTRA_TEST_GRADUAL_VOLUME,
-                            gradualVolumeEnabled
-                        )
+                    if (tts != null && testText.isNotBlank()) {
+                        isSpeaking = true
+                        tts?.speak(testText, TextToSpeech.QUEUE_FLUSH, null, "test_utterance")
+                        isSpeaking = false
                     }
-                    context.startActivity(intent)
-                    onDismiss()
                 },
+                enabled = tts != null && testText.isNotBlank(),
                 modifier = Modifier.fillMaxWidth(),
-                text = "Test Alarm",
-                type = MowatibButtonType.Filled,
-                size = MowatibButtonSize.ExtraLarge,
+                text = if (isAr) "نطق النص الآن" else "Speak Now",
+                icon = Icons.AutoMirrored.Outlined.VolumeUp,
+                size = MowatibButtonSize.Large,
                 fillMaxWidth = true
             )
 
@@ -712,315 +577,11 @@ private fun TestAlarmBottomSheet(
             MowatibButton(
                 onClick = onDismiss,
                 modifier = Modifier.fillMaxWidth(),
-                text = "Cancel",
+                text = if (isAr) "إغلاق" else "Close",
                 type = MowatibButtonType.Outlined,
-                size = MowatibButtonSize.ExtraLarge,
+                size = MowatibButtonSize.Large,
                 fillMaxWidth = true
             )
         }
     }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun TtsTestBottomSheet(
-    onDismiss: () -> Unit
-) {
-    val context = LocalContext.current
-    var textInput by remember { mutableStateOf("Welcome to Mowatib. This is a Text-to-Speech test.") }
-    var tts by remember { mutableStateOf<android.speech.tts.TextToSpeech?>(null) }
-    var ttsStatus by remember { mutableStateOf("Initializing...") }
-    var availableLocales by remember { mutableStateOf<List<java.util.Locale>>(emptyList()) }
-    var selectedLocale by remember { mutableStateOf(java.util.Locale.getDefault()) }
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-
-    LaunchedEffect(Unit) {
-        try {
-            var engine: android.speech.tts.TextToSpeech? = null
-            engine = android.speech.tts.TextToSpeech(context) { status ->
-                if (status == android.speech.tts.TextToSpeech.SUCCESS) {
-                    engine?.let { e ->
-                        availableLocales = e.availableLanguages?.toList() ?: emptyList()
-                        selectedLocale = java.util.Locale.getDefault()
-                        val result = e.setLanguage(selectedLocale)
-                        ttsStatus = when (result) {
-                            android.speech.tts.TextToSpeech.LANG_COUNTRY_AVAILABLE -> "Ready (${selectedLocale.displayName})"
-                            android.speech.tts.TextToSpeech.LANG_AVAILABLE -> "Ready (${selectedLocale.displayName})"
-                            android.speech.tts.TextToSpeech.LANG_MISSING_DATA -> "Missing language data"
-                            android.speech.tts.TextToSpeech.LANG_NOT_SUPPORTED -> "Language not supported"
-                            else -> "Ready"
-                        }
-                    }
-                } else {
-                    ttsStatus = "TTS init failed (status: $status)"
-                }
-            }
-            tts = engine
-        } catch (e: Exception) {
-            ttsStatus = "TTS error: ${e.message}"
-        }
-    }
-
-    DisposableEffect(Unit) {
-        onDispose {
-            tts?.stop()
-            tts?.shutdown()
-        }
-    }
-
-    ModalBottomSheet(
-        onDismissRequest = {
-            tts?.stop()
-            tts?.shutdown()
-            onDismiss()
-        },
-        sheetState = sheetState,
-        containerColor = MaterialTheme.colorScheme.surface,
-        tonalElevation = 0.dp
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp)
-                .padding(bottom = 32.dp)
-                .navigationBarsPadding()
-        ) {
-            Text(
-                text = "TTS Test",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.ExtraBold
-            )
-            Text(
-                text = "Test Android Text-to-Speech engine compatibility",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Surface(
-                color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                shape = RoundedCornerShape(16.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(40.dp)
-                                .background(MaterialTheme.colorScheme.primaryContainer, CircleShape),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = if (ttsStatus.startsWith("Ready")) Icons.Outlined.CheckCircle else Icons.Outlined.Warning,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(16.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = "TTS Engine",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                text = ttsStatus,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-                    if (!ttsStatus.startsWith("Ready")) {
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Text(
-                            modifier = Modifier.padding(horizontal = 16.dp),
-                            text = "Mowatib uses your device's built-in Text-to-Speech engine. If a language is missing, consider installing Google Speech Services from the Play Store.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Surface(
-                            modifier = Modifier.padding(horizontal = 16.dp),
-                            onClick = {
-                                context.startActivity(
-                                    android.content.Intent(android.speech.tts.TextToSpeech.Engine.ACTION_CHECK_TTS_DATA)
-                                )
-                            },
-                            shape = RoundedCornerShape(12.dp),
-                            color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
-                        ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth().padding(12.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Outlined.Settings,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = "Open TTS Settings",
-                                    style = MaterialTheme.typography.labelLarge,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                            }
-                        }
-                        Spacer(modifier = Modifier.height(16.dp))
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            OutlinedTextField(
-                value = textInput,
-                onValueChange = { textInput = it },
-                label = { Text("Text to speak") },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                minLines = 3,
-                maxLines = 6
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Button(
-                    onClick = {
-                        if (textInput.isNotBlank()) {
-                            tts?.setLanguage(selectedLocale)
-                            tts?.speak(textInput, android.speech.tts.TextToSpeech.QUEUE_FLUSH, null, "tts_utterance")
-                        }
-                    },
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(16.dp),
-                    contentPadding = PaddingValues(16.dp),
-                    enabled = ttsStatus.startsWith("Ready") && textInput.isNotBlank()
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Outlined.VolumeUp,
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Speak", fontWeight = FontWeight.Bold)
-                }
-
-                OutlinedButton(
-                    onClick = {
-                        tts?.stop()
-                    },
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(16.dp),
-                    contentPadding = PaddingValues(16.dp),
-                    enabled = ttsStatus.startsWith("Ready")
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Stop,
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Stop", fontWeight = FontWeight.Medium)
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            if (availableLocales.isNotEmpty()) {
-                val localeOptions = remember(availableLocales) {
-                    availableLocales
-                        .distinctBy { it.language }
-                        .sortedBy { it.displayName }
-                        .map { it.displayName to it.toLanguageTag() }
-                }
-                Surface(
-                    color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                    shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(40.dp)
-                                .background(MaterialTheme.colorScheme.secondaryContainer, CircleShape),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Outlined.Language,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSecondaryContainer,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(16.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = "Voice Language",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                text = "Language for spoken alarm alerts",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(8.dp))
-                        MowatibDropdown(
-                            options = localeOptions,
-                            selectedOption = selectedLocale.toLanguageTag(),
-                            onOptionSelected = { tag ->
-                                val locale = java.util.Locale.forLanguageTag(tag)
-                                selectedLocale = locale
-                                tts?.setLanguage(locale)
-                                ttsStatus = "Ready (${locale.displayName})"
-                            },
-                            width = 200.dp
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            MowatibButton(
-                onClick = {
-                    tts?.stop()
-                    tts?.shutdown()
-                    onDismiss()
-                },
-                modifier = Modifier.fillMaxWidth(),
-                text = "Close",
-                type = MowatibButtonType.Outlined,
-                size = MowatibButtonSize.ExtraLarge,
-                fillMaxWidth = true
-            )
-        }
-    }
-}
-
-private fun formatMillis(millis: Long): String {
-    val totalSeconds = millis / 1000
-    val hours = totalSeconds / 3600
-    val minutes = (totalSeconds % 3600) / 60
-    return if (hours > 0) "${hours}h ${minutes}m" else "${minutes}m"
 }

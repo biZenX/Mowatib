@@ -213,7 +213,7 @@ fun SettingsScreen(
                             shape = CircleShape
                         ) {
                             Text(
-                                text = perfPreset.labelRes,
+                                text = perfPreset.localizedLabel(isAr),
                                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp),
                                 style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onTertiary,

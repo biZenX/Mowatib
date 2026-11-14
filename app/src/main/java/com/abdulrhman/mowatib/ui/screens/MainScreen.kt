@@ -1528,6 +1528,7 @@ private fun NotificationCenterSheet(
     onOpenRecent: () -> Unit,
     onDismiss: () -> Unit
 ) {
+    val isArabic = com.abdulrhman.mowatib.ui.theme.LocalIsArabic.current
     val recent = remember(achievements, pending) {
         val pendingKeys = pending.mapNotNull { event ->
             (event as? ProfileBannerEvent.Unlock)?.let { it.defId to it.tierValue }
@@ -1554,7 +1555,7 @@ private fun NotificationCenterSheet(
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = "Notifications",
+                    text = if (isArabic) "الإشعارات" else "Notifications",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Black,
                     modifier = Modifier.weight(1f)
@@ -1562,11 +1563,11 @@ private fun NotificationCenterSheet(
                 TextButton(
                     onClick = onClearAll,
                     enabled = pending.isNotEmpty()
-                ) { Text("Clear all") }
+                ) { Text(if (isArabic) "مسح الكل" else "Clear all") }
             }
             Spacer(modifier = Modifier.height(12.dp))
             Text(
-                text = "New",
+                text = if (isArabic) "جديد" else "New",
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
@@ -1574,7 +1575,7 @@ private fun NotificationCenterSheet(
             Spacer(modifier = Modifier.height(8.dp))
             if (pending.isEmpty()) {
                 Text(
-                    text = "You're all caught up",
+                    text = if (isArabic) "لا توجد إشعارات جديدة" else "You're all caught up",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -1590,12 +1591,12 @@ private fun NotificationCenterSheet(
                         val (title, subtitle) = when (event) {
                             is ProfileBannerEvent.Unlock -> {
                                 val name = def?.let { tierDisplayName(it, event.tierLevel) }
-                                    ?: "Achievement unlocked"
-                                name to "Achievement unlocked - ${prettyProfileDate(event.date)}"
+                                    ?: (if (isArabic) "تم فتح إنجاز جديد" else "Achievement unlocked")
+                                name to "${if (isArabic) "تم فتح إنجاز جديد" else "Achievement unlocked"} - ${prettyProfileDate(event.date)}"
                             }
                             is ProfileBannerEvent.Progress -> {
                                 val level = def?.let { tierCountFor(it, event.after) } ?: 0
-                                val name = def?.let { tierDisplayName(it, level) } ?: "Progress"
+                                val name = def?.let { tierDisplayName(it, level) } ?: (if (isArabic) "التقدم" else "Progress")
                                 name to "${formatProgressNumber(event.defId, event.before)} → ${
                                     formatProgressNumber(event.defId, event.after)
                                 }"
@@ -1648,7 +1649,7 @@ private fun NotificationCenterSheet(
                                 ) {
                                     Icon(
                                         imageVector = Icons.Outlined.Close,
-                                        contentDescription = "Dismiss",
+                                        contentDescription = if (isArabic) "تجاهل" else "Dismiss",
                                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                         modifier = Modifier.size(18.dp)
                                     )
@@ -1660,7 +1661,7 @@ private fun NotificationCenterSheet(
             }
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = "Earlier",
+                text = if (isArabic) "السابقة" else "Earlier",
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
@@ -1668,7 +1669,7 @@ private fun NotificationCenterSheet(
             Spacer(modifier = Modifier.height(8.dp))
             if (recent.isEmpty()) {
                 Text(
-                    text = "No earlier notifications",
+                    text = if (isArabic) "لا توجد إشعارات سابقة" else "No earlier notifications",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

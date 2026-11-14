@@ -37,7 +37,7 @@ fun MowatibHabitsCard(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val isAr = remember { Locale.getDefault().language.startsWith("ar") }
+    val isAr = com.abdulrhman.mowatib.ui.theme.LocalIsArabic.current
 
     LaunchedEffect(Unit) {
         MowatibHabitsManager.init(context)
@@ -176,7 +176,7 @@ fun MowatibHabitsCard(
                                     }
 
                                     Text(
-                                        text = habit.title,
+                                        text = habit.localizedTitle(isAr),
                                         style = MaterialTheme.typography.bodyMedium.copy(
                                             fontWeight = if (isDoneToday) FontWeight.Bold else FontWeight.Medium
                                         ),

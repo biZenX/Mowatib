@@ -1,6 +1,6 @@
 ---
 name: Feature Request
-about: Suggest an idea for Zenith
+about: Suggest an idea for Mowatib
 title: "[FEATURE] : "
 labels: enhancement
 assignees: ''

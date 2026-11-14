@@ -20,7 +20,7 @@
 </p>
 
 <p align="center">
-  <strong>Mowatib (مواظب)</strong> is an open-source, privacy-first digital wellbeing and habit-building assistant for Android, built with <strong>Material Design 3 Expressive</strong>. Through proactive friction, intelligent intervention shields, Telegram accountability bots, and comprehensive focus tools, Mowatib empowers you to break dopamine scrolling loops, cultivate deep focus, and maintain long-term personal discipline.
+  <strong>Mowatib (مواظب)</strong> is an open-source, privacy-first digital wellbeing and habit-building assistant for Android, built with <strong>Material Design 3 Expressive</strong>. Through proactive friction, intelligent intervention shields, Mowatib ID cloud synchronization, and comprehensive focus tools, Mowatib empowers you to break dopamine scrolling loops, cultivate deep focus, and maintain long-term personal discipline.
 </p>
 
 <p align="center">
@@ -56,13 +56,11 @@
 
 ## Key Features
 
-### Telegram Bot Integration & Accountability Partner
-- **Direct Telegram Link**: Connect Mowatib to your Telegram account via Chat ID or deep link to `@MowatibAppBot`.
-- **Instant Connection Test**: Send a real-time verification message to Telegram with a single tap.
-- **Accountability Alerts**: Automatically dispatch warning messages to Telegram when a protected app limit is reached or emergency recharge is used.
-- **Daily Summaries & Recaps**: Receive evening recaps of screen time, completed tasks, and streak progress directly in your Telegram inbox.
-- **Focus Milestones**: Real-time notifications upon completing Pomodoro sessions and maintaining habit streaks.
-- **Custom Bot Support**: Configure your own bot token from `@BotFather` for self-hosted, private workflows.
+### Mowatib Cloud & MCP Backend Sync
+- **Direct Mowatib ID Link**: Connect Mowatib to your cloud account via your unique Mowatib ID (`MW-XXXXXX`).
+- **Instant Connection Test**: Verify status and connection with the Mowatib synchronization server in a single tap.
+- **Cross-Device Syncing**: Synchronize habits, daily tasks, and discipline streaks seamlessly with Model Context Protocol (MCP) and cloud backends.
+- **Privacy Guaranteed**: Cryptographic device secrets ensure only authorized clients can access synced wellbeing data.
 
 ### Material 3 Expressive Home Screen Widgets (7 Glance Widgets)
 - **MowatibFocusWidget**: Glanceable streak indicator, active shield status, and quick launch.
@@ -152,7 +150,7 @@ Mowatib operates with a privacy-first architecture. All app statistics, habit hi
 - **Notification Listener (`BIND_NOTIFICATION_LISTENER_SERVICE`)**: Hides distracting notifications during active focus schedules.
 - **Ignore Battery Optimizations**: Prevents Android from terminating background focus timers.
 - **Exact Alarm (`SCHEDULE_EXACT_ALARM`)**: Ensures midnight habit resets and bedtime schedules trigger precisely.
-- **Internet (`INTERNET`)**: Used exclusively for in-app update checks and optional Telegram Bot integration. No analytics or private telemetry are ever transmitted.
+- **Internet (`INTERNET`)**: Used exclusively for in-app update checks and Mowatib Cloud & MCP sync. No analytics or private telemetry are ever transmitted.
 - **Camera / NFC (`CAMERA`, `NFC`)**: Only accessed if you explicitly configure QR code or NFC scan dismiss tasks in Pause Point.
 
 ---

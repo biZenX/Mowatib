@@ -28,7 +28,7 @@ fun AmbientSoundCard(
     containerColor: Color = MaterialTheme.colorScheme.surfaceContainerLow
 ) {
     val context = LocalContext.current
-    val isAr = remember { Locale.getDefault().language.startsWith("ar") }
+    val isAr = com.abdulrhman.mowatib.ui.theme.LocalIsArabic.current
     val currentSound by MowatibAmbientSoundManager.currentSound.collectAsState()
     val isPlaying by MowatibAmbientSoundManager.isPlaying.collectAsState()
     val volume by MowatibAmbientSoundManager.volume.collectAsState()

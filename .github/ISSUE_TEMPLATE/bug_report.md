@@ -1,6 +1,6 @@
 ---
 name: Bug Report
-about: Create a report to help us improve Zenith
+about: Create a report to help us improve Mowatib
 title: "[BUG] : "
 labels: bug
 assignees: ''
@@ -11,7 +11,7 @@ assignees: ''
 > A short summary of what is not working as expected.
 
 ### Steps to Reproduce
-1. Open Zenith
+1. Open Mowatib
 2. Go to '...'
 3. Perform '...'
 4. See error

@@ -16,6 +16,9 @@ import androidx.compose.ui.unit.dp
 import com.abdulrhman.mowatib.data.preferences.UserPreferencesRepository
 import com.abdulrhman.mowatib.ui.components.MowatibButton
 import com.abdulrhman.mowatib.ui.components.MowatibButtonType
+import com.abdulrhman.mowatib.ui.components.LanguageSwitchBar
+import com.abdulrhman.mowatib.ui.theme.LocalAppLanguage
+import com.abdulrhman.mowatib.ui.theme.LocalIsArabic
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -34,6 +37,11 @@ fun OnboardingStatsBottomSheet(
         containerColor = MaterialTheme.colorScheme.surface
     ) {
         OnboardingStatsContent(
+            onLanguageSelected = { lang ->
+                scope.launch {
+                    repository.setAppLanguage(lang)
+                }
+            },
             onSelection = { useSystemUsage ->
                 scope.launch {
                     repository.setPreferSystemUsageHistory(useSystemUsage)
@@ -55,10 +63,12 @@ fun OnboardingStatsBottomSheet(
 
 @Composable
 fun OnboardingStatsContent(
+    onLanguageSelected: (String) -> Unit = {},
     onSelection: (Boolean) -> Unit,
     onSkip: () -> Unit
 ) {
-    val isAr = remember { java.util.Locale.getDefault().language.startsWith("ar") }
+    val isAr = LocalIsArabic.current
+    val currentLang = LocalAppLanguage.current
 
     Column(
         modifier = Modifier
@@ -68,6 +78,12 @@ fun OnboardingStatsContent(
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        LanguageSwitchBar(
+            currentLanguage = currentLang,
+            onLanguageSelected = onLanguageSelected
+        )
+        Spacer(modifier = Modifier.height(20.dp))
+
         Icon(
             Icons.Outlined.BarChart,
             contentDescription = null,

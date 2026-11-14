@@ -534,9 +534,15 @@ fun CloseAppTextButton(
     size: MowatibButtonSize = MowatibButtonSize.ExtraLarge,
     isWebsite: Boolean = false
 ) {
+    val isAr = com.abdulrhman.mowatib.ui.theme.LocalIsArabic.current
+    val label = if (isWebsite) {
+        if (isAr) "إغلاق الموقع" else "Quit Web"
+    } else {
+        if (isAr) "إغلاق التطبيق" else "Close App"
+    }
     MowatibButton(
         onClick = onCloseApp,
-        text = if (isWebsite) "Quit Web" else "Close App",
+        text = label,
         type = MowatibButtonType.Text,
         contentColor = MaterialTheme.colorScheme.error,
         backgroundProgressProvider = autoKickProgress,

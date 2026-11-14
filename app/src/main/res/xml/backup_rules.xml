@@ -2,7 +2,6 @@
 <full-backup-content>
     <include domain="sharedpref" path="mowatib_tasks_prefs.xml"/>
     <include domain="sharedpref" path="mowatib_habits_prefs.xml"/>
-    <include domain="sharedpref" path="mowatib_telegram_prefs.xml"/>
     <include domain="sharedpref" path="mowatib_sync_prefs.xml"/>
     <include domain="file" path="datastore/settings.preferences_pb"/>
     <include domain="file" path="datastore/runtime_state.preferences_pb"/>

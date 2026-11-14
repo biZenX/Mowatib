@@ -20,7 +20,14 @@ data class MowatibHabit(
     val streak: Int,
     val lastCompletedDate: String,
     val colorHex: String = "#3D5622"
-)
+) {
+    fun localizedTitle(isArabic: Boolean): String = when (id) {
+        "1" -> if (isArabic) "ورد القرآن اليومي وتدبره" else "Daily Focus & Mindfulness"
+        "2" -> if (isArabic) "جلسة تركيز عميق ومواظبة" else "Deep Work Session"
+        "3" -> if (isArabic) "قراءة وتطوير الذات 20 دقيقة" else "Reading & Learning 20m"
+        else -> title
+    }
+}
 
 object MowatibHabitsManager {
     private const val PREFS_NAME = "mowatib_habits_prefs"

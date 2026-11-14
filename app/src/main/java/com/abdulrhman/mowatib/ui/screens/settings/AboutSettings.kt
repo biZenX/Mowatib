@@ -47,7 +47,7 @@ fun AboutSettings(
 ) {
     val context = LocalContext.current
     val versionName = BuildConfig.VERSION_NAME
-    val isAr = java.util.Locale.getDefault().language.startsWith("ar")
+    val isAr = com.abdulrhman.mowatib.ui.theme.LocalIsArabic.current
 
     Column {
         PreferenceCategory(title = if (isAr) "حول التطبيق" else "About")
@@ -147,6 +147,7 @@ fun AppInfoCard(
 ) {
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
+    val isAr = com.abdulrhman.mowatib.ui.theme.LocalIsArabic.current
     var clickCount by remember { mutableIntStateOf(0) }
     
     val logoShape = remember {
@@ -170,11 +171,11 @@ fun AppInfoCard(
                     if (clickCount >= 3) {
                         onDeveloperModeChange(true)
                         haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
-                        Toast.makeText(context, "Developer mode enabled!", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, if (isAr) "تم تفعيل وضع المطور!" else "Developer mode enabled!", Toast.LENGTH_SHORT).show()
                         clickCount = 0
                     } else {
                         val remaining = 3 - clickCount
-                        Toast.makeText(context, "Tap $remaining more times for Developer Mode", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, if (isAr) "اضغط $remaining مرات إضافية لتفعيل وضع المطور" else "Tap $remaining more times for Developer Mode", Toast.LENGTH_SHORT).show()
                     }
                 }
             },
@@ -239,6 +240,7 @@ fun DeveloperCard(
     onWhatsAppClick: () -> Unit,
     shape: Shape
 ) {
+    val isAr = com.abdulrhman.mowatib.ui.theme.LocalIsArabic.current
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = shape,
@@ -265,7 +267,7 @@ fun DeveloperCard(
             
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = if (java.util.Locale.getDefault().language.startsWith("ar")) "تطوير: $name" else "Developed by $name",
+                    text = if (isAr) "تطوير: $name" else "Developed by $name",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )

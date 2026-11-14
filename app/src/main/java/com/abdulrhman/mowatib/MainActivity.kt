@@ -120,7 +120,9 @@ class MainActivity : ComponentActivity() {
             }
 
             androidx.compose.runtime.CompositionLocalProvider(
-                androidx.compose.ui.platform.LocalLayoutDirection provides layoutDirection
+                androidx.compose.ui.platform.LocalLayoutDirection provides layoutDirection,
+                com.abdulrhman.mowatib.ui.theme.LocalAppLanguage provides appearance.appLanguage,
+                com.abdulrhman.mowatib.ui.theme.LocalIsArabic provides isArabic
             ) {
                 MowatibTheme(
                     darkTheme = darkTheme,

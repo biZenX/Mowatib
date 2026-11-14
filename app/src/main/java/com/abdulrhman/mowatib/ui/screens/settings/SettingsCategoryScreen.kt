@@ -330,53 +330,6 @@ fun SettingsCategoryScreen(
                                 navController.popBackStack(Screen.Settings.route, false)
                             }
                         },
-                        onResetBedtimeStreak = { coroutineScope.launch { preferencesRepository.resetBedtimeStreak() } },
-                        onResetStreakRecovery = {
-                            coroutineScope.launch {
-                                try {
-                                    preferencesRepository.runManualStreakRecovery(app.shieldRepository)
-                                    Toast.makeText(context, "Streak recovery completed successfully!", Toast.LENGTH_SHORT).show()
-                                } catch (e: Exception) {
-                                    Toast.makeText(context, "Recovery failed: ${e.message}", Toast.LENGTH_SHORT).show()
-                                }
-                            }
-                        },
-                        onUpdateAppStreak = { pkg, streak ->
-                            coroutineScope.launch {
-                                val shield = app.shieldRepository.getShieldByPackageName(pkg)
-                                if (shield != null) {
-                                    app.shieldRepository.updateShield(shield.copy(currentStreak = streak, bestStreak = maxOf(shield.bestStreak, streak), lastStreakUpdateTimestamp = System.currentTimeMillis()))
-                                }
-                            }
-                        },
-                        onUpdateGlobalScreenTime = { time ->
-                            coroutineScope.launch {
-                                val todayStr = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(java.util.Date())
-                                preferencesRepository.setLastKnownDailyUsage(time, todayStr)
-                            }
-                        },
-                        onUpdateAppScreenTime = { pkg, time ->
-                            coroutineScope.launch {
-                                val todayStr = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(java.util.Date())
-                                app.shieldRepository.insertDailyUsage(com.abdulrhman.mowatib.data.local.entity.DailyUsageEntity(packageName = pkg, date = todayStr, usageTimeMillis = time))
-                            }
-                        },
-                        onUpdateProfileLevel = { level ->
-                            coroutineScope.launch {
-                                preferencesRepository.setUserXpTotal(xpForLevel(level))
-                                Toast.makeText(context, "Profile XP set to level $level (achievements frozen)", Toast.LENGTH_SHORT).show()
-                            }
-                        },
-                        onResetXpDebug = {
-                            coroutineScope.launch {
-                                val restored = preferencesRepository.clearXpDebugOverride()
-                                Toast.makeText(
-                                    context,
-                                    if (restored) "Pre-debug XP restored" else "No XP override active",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            }
-                        },
                         onTestGoalCallerDelayed = {
                             try {
                                 val alarmManager = context.getSystemService(android.content.Context.ALARM_SERVICE) as android.app.AlarmManager

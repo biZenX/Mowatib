@@ -5,11 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2026-11-14
+
+### Added
+- Add **Mowatib Cloud & MCP Sync Architecture** (`MowatibSyncManager` and `MowatibSyncSettingsScreen`): Native synchronization using unique Mowatib ID (`MW-XXXXXX`), device authentication tokens, and MCP endpoint integration.
+- Add first-class Arabic language support with instant language switcher at app startup/onboarding and in settings.
+- Add strict 100% language purity enforcement: pure Arabic or pure English without mixed-language strings.
+- Add forceful app closure and background process termination during active Focus/Pomodoro sessions.
+- Add developer mode hardening: restricted to safe read-only diagnostics and system log inspection.
+- Add refined Mowatib emerald palette (`#173E37` and `#1B5549`) for all launcher mipmaps and vector branding.
+- Add harmonious typography tuning with balanced weights for IBM Plex Sans Arabic and Thmanyah.
+
+### Changed
+- Complete author identity set to `abdulrhman` / `عبدالرحمن` (`abdelrhmanBit@proton.me`).
+- Complete eradication of all legacy signatures, Room schemas, and obsolete bot tokens.
+
 ## [2.1.0] - 2026-10-26
 
 ### Added
-- Add **Official Telegram Bot Linking** (`@MowatibAppBot`): Seamless one-tap connection without requiring custom bot creation or developer tokens.
-- Add optional **Advanced Developer Mode** for custom self-hosted Telegram Bot Tokens.
+- Add **Mowatib Cloud Sync Architecture**: Seamless synchronization with Mowatib Cloud backend and MCP tools.
 - Add full multilingual translations for the top 12 world languages (Arabic, English, Chinese, Hindi, Spanish, French, Bengali, Portuguese, Russian, Urdu, Indonesian, German).
 - Add 7 Android Glance home screen widgets with Material 3 Expressive shapes:
   - `MowatibFocusWidget`: Real-time streak tracking, current focus state, and quick launch.
@@ -30,8 +44,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Change `applicationId` to `com.abdulrhman.mowatib` to eliminate package conflicts and allow seamless side-by-side installation.
 - Change internal broadcast actions and authorities from `com.abdulrhman.mowatib.action.*` to `com.abdulrhman.mowatib.action.*`.
 - Change default system font to Google Sans Flex (`FontOption.GOOGLE_SANS_FLEX`) for harmonious typography.
-- Deeply optimize and re-architect Pomodoro, Habits, Tasks, Ambient Sounds, and Telegram integration to natively match Mowatib's core design language.
-- Eliminate all hardcoded English strings and toasts across Pomodoro, Habits, Tasks, Ambient Audio, and Telegram settings.
+- Deeply optimize and re-architect Pomodoro, Habits, Tasks, Ambient Sounds, and Sync integration to natively match Mowatib's core design language.
+- Eliminate all hardcoded English strings and toasts across Pomodoro, Habits, Tasks, Ambient Audio, and Sync settings.
 
 ### Fixed
 - Fix language mismatch and bidirectional text rendering issues when switching between Arabic and other languages.
@@ -47,11 +61,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.0.0] - 2026-10-24
 
 ### Added
-- Add **Telegram Bot Integration** (`MowatibTelegramManager` and `MowatibTelegramSettingsScreen`) allowing real-time synchronization between the app and Telegram.
-- Add deep linking to Telegram bots (`@MowatibAppBot` and `@userinfobot`) to retrieve Chat IDs in a single tap.
-- Add instant connection tester that dispatches verification messages to Telegram directly via Bot API.
-- Add automated Telegram notification triggers for habit completions, Pomodoro sessions, daily recaps, and screen time limit breaches (accountability partner mode).
-- Add support for custom self-hosted Bot Tokens via `@BotFather`.
+- Add **Mowatib Cloud Integration** (`MowatibSyncManager` and `MowatibSyncSettingsScreen`) allowing real-time synchronization between the app and backend.
+- Add instant connection tester that dispatches verification pings to backend.
+- Add automated notification triggers for habit completions, Pomodoro sessions, daily recaps, and screen time limit breaches (accountability partner mode).
+- Add support for custom self-hosted endpoints.
 - Add 7 Android Glance home screen widgets with Material 3 Expressive shapes:
   - `MowatibFocusWidget`: Real-time streak tracking, current focus state, and quick launch.
   - `MowatibPomodoroWidget`: Interactive focus timer with direct start/pause controls.
@@ -66,14 +79,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add bundled offline font family **IBM Plex Sans Arabic** (Regular, Medium, SemiBold, Bold) in `res/font/`.
 - Add bundled offline font family **Thmanyah Sans** (Regular, Medium, Bold).
 - Add Material Vector Drawables (SVGs / XML vectors) replacing all Unicode chat emojis:
-  - `ic_telegram`, `ic_fire_department_outlined`, `ic_timer`, `ic_bolt`, `ic_phone_android`, `ic_star`, `ic_task_alt`, `ic_radio_button_unchecked`, `ic_spa`, `ic_headphones`, `ic_auto_awesome`, `ic_play_arrow`, `ic_pause`.
+  - `ic_cloud_sync`, `ic_fire_department_outlined`, `ic_timer`, `ic_bolt`, `ic_phone_android`, `ic_star`, `ic_task_alt`, `ic_radio_button_unchecked`, `ic_spa`, `ic_headphones`, `ic_auto_awesome`, `ic_play_arrow`, `ic_pause`.
 
 ### Changed
 - Change `applicationId` to `com.abdulrhman.mowatib` to eliminate package conflicts and allow seamless side-by-side installation with legacy packages.
 - Change internal broadcast actions and authorities from `com.abdulrhman.mowatib.action.*` to `com.abdulrhman.mowatib.action.*`.
 - Change default system font to IBM Plex Sans Arabic for native RTL Arabic and Latin typographical balance.
 - Overhaul color palette to warm Mowatib creamy tones (`#FDFBF7` light, `#1C1B18` dark) with earthy olive accents (`#3D5622` and `#D2E3B8`).
-- Update all metadata, descriptions, app branding, screenshots, and store assets to reflect Mowatib by biZenX.
+- Update all metadata, descriptions, app branding, screenshots, and store assets to reflect Mowatib by abdulrhman.
 
 ### Fixed
 - Fix application collision preventing installation when previous versions were installed on the same device.

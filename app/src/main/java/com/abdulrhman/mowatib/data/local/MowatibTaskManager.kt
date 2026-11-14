@@ -27,12 +27,25 @@ data class MowatibTask(
     val isCompleted: Boolean = false,
     val dueDate: String? = null,
     val dueTime: String? = null,
-    val category: String = "عام",
+    val category: String = "General",
     val position: Int = 0,
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: String = currentIsoTime(),
     val deletedAt: String? = null
-)
+) {
+    fun localizedTitle(isArabic: Boolean): String = when (id) {
+        "1" -> if (isArabic) "جلسة تركيز أولى" else "First Focus Session"
+        "2" -> if (isArabic) "مراجعة العادات اليومية والإنتاجية" else "Review Daily Habits & Productivity"
+        else -> title
+    }
+
+    fun localizedCategory(isArabic: Boolean): String = when (category.lowercase()) {
+        "تركيز", "focus" -> if (isArabic) "تركيز" else "Focus"
+        "إنتاجية", "productivity" -> if (isArabic) "إنتاجية" else "Productivity"
+        "عام", "general" -> if (isArabic) "عام" else "General"
+        else -> category
+    }
+}
 
 private fun currentIsoTime(): String {
     val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US)

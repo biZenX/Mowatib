@@ -12,6 +12,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 import com.abdulrhman.mowatib.data.preferences.FontOption
+import androidx.compose.runtime.compositionLocalOf
+
+val LocalAppLanguage = compositionLocalOf { "ar" }
+val LocalIsArabic = compositionLocalOf { true }
 
 private val DarkColorScheme = darkColorScheme(
     primary = PrimaryDark,

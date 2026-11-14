@@ -241,6 +241,7 @@ fun ThemeSelector(
     onThemeChange: (ThemeConfig) -> Unit,
     shape: Shape = RoundedCornerShape(24.dp)
 ) {
+    val isArabic = com.abdulrhman.mowatib.ui.theme.LocalIsArabic.current
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = shape,
@@ -271,7 +272,7 @@ fun ThemeSelector(
                 }
                 Spacer(modifier = Modifier.width(16.dp))
                 Text(
-                    text = "Theme Mode",
+                    text = if (isArabic) "نمط المظهر" else "Theme Mode",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
                     modifier = Modifier.weight(1f)
@@ -280,11 +281,19 @@ fun ThemeSelector(
             
             Spacer(modifier = Modifier.height(16.dp))
             
-            val themeOptions = listOf(
-                ThemeConfig.FOLLOW_SYSTEM to "System",
-                ThemeConfig.LIGHT to "Light",
-                ThemeConfig.DARK to "Dark"
-            )
+            val themeOptions = if (isArabic) {
+                listOf(
+                    ThemeConfig.FOLLOW_SYSTEM to "تلقائي",
+                    ThemeConfig.LIGHT to "فاتح",
+                    ThemeConfig.DARK to "داكن"
+                )
+            } else {
+                listOf(
+                    ThemeConfig.FOLLOW_SYSTEM to "System",
+                    ThemeConfig.LIGHT to "Light",
+                    ThemeConfig.DARK to "Dark"
+                )
+            }
 
             MowatibToggleButtonGroup(
                 options = themeOptions.map { MowatibToggleOption(text = it.second) },
@@ -304,6 +313,7 @@ fun FontSelector(
     onCustomizeGSFlex: () -> Unit,
     shape: Shape = RoundedCornerShape(24.dp)
 ) {
+    val isArabic = com.abdulrhman.mowatib.ui.theme.LocalIsArabic.current
     Card(
         modifier = Modifier.fillMaxWidth().animateContentSize(),
         shape = shape,
@@ -334,7 +344,7 @@ fun FontSelector(
                 }
                 Spacer(modifier = Modifier.width(16.dp))
                 Text(
-                    text = "Font Style",
+                    text = if (isArabic) "نوع الخط" else "Font Style",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
                     modifier = Modifier.weight(1f)
@@ -343,7 +353,6 @@ fun FontSelector(
             
             Spacer(modifier = Modifier.height(16.dp))
             
-            val isArabic = java.util.Locale.getDefault().language.startsWith("ar")
             val fontOptions = if (isArabic) {
                 listOf(
                     FontOption.GOOGLE_SANS_FLEX to "GS Flex",
@@ -404,7 +413,7 @@ fun FontSelector(
                 MowatibButton(
                     onClick = onCustomizeGSFlex,
                     modifier = Modifier.fillMaxWidth(),
-                    text = "Customize GS Flex Variations",
+                    text = if (isArabic) "تخصيص متغيرات GS Flex" else "Customize GS Flex Variations",
                     icon = Icons.Outlined.SettingsSuggest,
                     type = MowatibButtonType.Outlined,
                     size = MowatibButtonSize.Large

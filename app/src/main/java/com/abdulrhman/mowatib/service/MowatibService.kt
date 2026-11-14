@@ -88,16 +88,60 @@ class MowatibService : AccessibilityService() {
             set(value) { field = value; AppStateHolder.isAccessibilityServiceRunning.value = value }
         @Volatile
         var lastEventTime = 0L
+        @Volatile
         private var instance: MowatibService? = null
         const val BEDTIME_CHANNEL_ID = "mowatib_bedtime_channel"
         const val WIND_DOWN_NOTIFICATION_ID = 2006
+
+        fun enforceFocusLock(context: Context) {
+            val inst = instance
+            if (inst != null) {
+                inst.enforceFocusLockInternal()
+            } else {
+                try {
+                    val intent = Intent(context, MowatibService::class.java).apply {
+                        action = "com.abdulrhman.mowatib.action.ENFORCE_FOCUS_LOCK"
+                    }
+                    context.startService(intent)
+                } catch (_: Exception) {}
+            }
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (intent?.action == "com.abdulrhman.mowatib.action.REFRESH_DATA") {
-            refreshService()
+        when (intent?.action) {
+            "com.abdulrhman.mowatib.action.REFRESH_DATA" -> refreshService()
+            "com.abdulrhman.mowatib.action.ENFORCE_FOCUS_LOCK" -> enforceFocusLockInternal()
         }
         return START_NOT_STICKY
+    }
+
+    private fun enforceFocusLockInternal() {
+        val fg = lastForegroundApp ?: AppStateHolder.foregroundApp.value
+        if (fg != null && SharedMonitoringState.isAppBlockedByFocus(fg)) {
+            OverlayLogBuffer.d("Mowatib_HPC", "Focus session active: Force-closing blocked foreground app $fg")
+            performGlobalAction(GLOBAL_ACTION_HOME)
+            goToHomeScreen()
+            try {
+                val am = getSystemService(Context.ACTIVITY_SERVICE) as? android.app.ActivityManager
+                am?.killBackgroundProcesses(fg)
+            } catch (_: Exception) {}
+            lastForegroundApp = null
+            overlayActionHandler.showPomodoroPuzzle(fg, isBlocked = true)
+        }
+        try {
+            val am = getSystemService(Context.ACTIVITY_SERVICE) as? android.app.ActivityManager
+            if (am != null) {
+                val runningProcs = am.runningAppProcesses ?: emptyList()
+                for (proc in runningProcs) {
+                    for (pkg in proc.pkgList) {
+                        if (SharedMonitoringState.isAppBlockedByFocus(pkg)) {
+                            am.killBackgroundProcesses(pkg)
+                        }
+                    }
+                }
+            }
+        } catch (_: Exception) {}
     }
 
     private fun refreshService() {
@@ -711,6 +755,11 @@ class MowatibService : AccessibilityService() {
             OverlayLogBuffer.d("Mowatib_HPC", "Focus session active: Force-closing blocked app $currentApp")
             performGlobalAction(GLOBAL_ACTION_HOME)
             goToHomeScreen()
+            try {
+                val am = getSystemService(Context.ACTIVITY_SERVICE) as? android.app.ActivityManager
+                am?.killBackgroundProcesses(currentApp)
+            } catch (_: Exception) {}
+            lastForegroundApp = null
             overlayActionHandler.showPomodoroPuzzle(currentApp, isBlocked = true)
             return
         }
@@ -1586,6 +1635,7 @@ class MowatibService : AccessibilityService() {
 
     override fun onDestroy() {
         super.onDestroy()
+        instance = null
         isServiceRunning = false
         bypassCheckRunnable?.let { mainHandler.removeCallbacks(it) }
         bypassCheckRunnable = null

@@ -133,7 +133,7 @@ fun MowatibHeader(
                 label = "TitleOffset"
             )
 
-            val isAr = java.util.Locale.getDefault().language.startsWith("ar")
+            val isAr = com.abdulrhman.mowatib.ui.theme.LocalIsArabic.current
             val title = when {
                 isHome -> "home_header"
                 currentRoute == Screen.Focus.route -> if (isAr) "التركيز" else "Focus"

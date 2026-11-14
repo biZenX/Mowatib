@@ -328,8 +328,9 @@ private fun ShieldAfterContent(
 
         Spacer(modifier = Modifier.height(12.dp))
 
+        val isAr = com.abdulrhman.mowatib.ui.theme.LocalIsArabic.current
         Text(
-            text = "Mindful Pause",
+            text = if (isAr) "وقفة واعية" else "Mindful Pause",
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.primary,
             fontWeight = FontWeight.Bold
@@ -356,7 +357,7 @@ private fun ShieldAfterContent(
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = "How long do you want to use it?",
+            text = if (isAr) "كم المدة التي تريد استخدام التطبيق فيها؟" else "How long do you want to use it?",
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
             textAlign = TextAlign.Center
@@ -422,8 +423,9 @@ private fun GoalAfterContent(
 
         Spacer(modifier = Modifier.height(12.dp))
 
+        val isAr = com.abdulrhman.mowatib.ui.theme.LocalIsArabic.current
         Text(
-            text = "Goal Pursuit",
+            text = if (isAr) "السعي نحو الهدف" else "Goal Pursuit",
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.primary,
             fontWeight = FontWeight.Bold
@@ -451,7 +453,7 @@ private fun GoalAfterContent(
 
         MowatibButton(
             onClick = onGoalDismiss,
-            text = "Got it, let's continue",
+            text = if (isAr) "حسناً، فلنستمر" else "Got it, let's continue",
             icon = Icons.Outlined.Check,
             fillMaxWidth = true
         )
@@ -464,6 +466,7 @@ private fun GoalAfterContent(
 
 @Composable
 private fun BreakStartedContent(onComplete: () -> Unit) {
+    val isAr = com.abdulrhman.mowatib.ui.theme.LocalIsArabic.current
     LaunchedEffect(Unit) {
         delay(1500)
         onComplete()
@@ -475,13 +478,13 @@ private fun BreakStartedContent(onComplete: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            "Break Started",
+            if (isAr) "بدأت فترة الاستراحة" else "Break Started",
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            "Your allowed apps are now accessible.",
+            if (isAr) "تطبيقاتك المسموحة متاحة الآن للاستخدام." else "Your allowed apps are now accessible.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(horizontal = 16.dp)
@@ -491,6 +494,7 @@ private fun BreakStartedContent(onComplete: () -> Unit) {
 
 @Composable
 private fun BlockedAfterContent(appName: String, onCloseApp: () -> Unit) {
+    val isAr = com.abdulrhman.mowatib.ui.theme.LocalIsArabic.current
     val autoKickProgress = remember { Animatable(0f) }
 
     LaunchedEffect(Unit) {
@@ -529,13 +533,13 @@ private fun BlockedAfterContent(appName: String, onCloseApp: () -> Unit) {
         }
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            "Stay Focused",
+            if (isAr) "حافظ على تركيزك" else "Stay Focused",
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            "$appName is blocked during your Pomodoro session.",
+            if (isAr) "تطبيق $appName محظور أثناء جلسة التركيز." else "$appName is blocked during your focus session.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(horizontal = 16.dp)

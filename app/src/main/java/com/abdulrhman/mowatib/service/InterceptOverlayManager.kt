@@ -983,40 +983,48 @@ class InterceptOverlayManager(
                     else -> androidx.compose.foundation.isSystemInDarkTheme()
                 }
 
-                MowatibTheme(
-                    darkTheme = darkTheme,
-                    fontOption = userPrefs?.fontOption ?: com.abdulrhman.mowatib.data.preferences.FontOption.SYSTEM,
-                    dynamicColor = userPrefs?.dynamicColor ?: true,
-                    expressiveColors = userPrefs?.expressiveColors ?: false,
-                    gsFlexSettings = userPrefs?.gsFlexSettings ?: GSFlexSettings()
+                val isAr = userPrefs?.appLanguage != "en"
+                val layoutDir = if (isAr) androidx.compose.ui.unit.LayoutDirection.Rtl else androidx.compose.ui.unit.LayoutDirection.Ltr
+                androidx.compose.runtime.CompositionLocalProvider(
+                    androidx.compose.ui.platform.LocalLayoutDirection provides layoutDir,
+                    com.abdulrhman.mowatib.ui.theme.LocalAppLanguage provides (userPrefs?.appLanguage ?: "ar"),
+                    com.abdulrhman.mowatib.ui.theme.LocalIsArabic provides isAr
                 ) {
-                    Box(modifier = Modifier.fillMaxSize()) {
-                        PomodoroPuzzleContent(
-                            userPreferences = userPrefs,
-                            afterContentType = afterContentType,
-                            skipPuzzle = skipPuzzle,
-                            packageName = packageName,
-                            appName = appName,
-                            shield = shield,
-                            totalUsageToday = totalUsageToday,
-                            totalGlobalUsageToday = totalGlobalUsageToday,
-                            onAllowUse = { minutes, isEmergency ->
-                                onAllowUse(minutes, isEmergency)
-                                hideOverlay()
-                            },
-                            onGoalDismiss = {
-                                onGoalDismiss()
-                                hideOverlay()
-                            },
-                            onComplete = {
-                                onComplete()
-                                hideOverlay()
-                            },
-                            onCloseApp = {
-                                onCloseApp()
-                                hideOverlay()
-                            }
-                        )
+                    MowatibTheme(
+                        darkTheme = darkTheme,
+                        fontOption = userPrefs?.fontOption ?: com.abdulrhman.mowatib.data.preferences.FontOption.SYSTEM,
+                        dynamicColor = userPrefs?.dynamicColor ?: true,
+                        expressiveColors = userPrefs?.expressiveColors ?: false,
+                        gsFlexSettings = userPrefs?.gsFlexSettings ?: GSFlexSettings()
+                    ) {
+                        Box(modifier = Modifier.fillMaxSize()) {
+                            PomodoroPuzzleContent(
+                                userPreferences = userPrefs,
+                                afterContentType = afterContentType,
+                                skipPuzzle = skipPuzzle,
+                                packageName = packageName,
+                                appName = appName,
+                                shield = shield,
+                                totalUsageToday = totalUsageToday,
+                                totalGlobalUsageToday = totalGlobalUsageToday,
+                                onAllowUse = { minutes, isEmergency ->
+                                    onAllowUse(minutes, isEmergency)
+                                    hideOverlay()
+                                },
+                                onGoalDismiss = {
+                                    onGoalDismiss()
+                                    hideOverlay()
+                                },
+                                onComplete = {
+                                    onComplete()
+                                    hideOverlay()
+                                },
+                                onCloseApp = {
+                                    onCloseApp()
+                                    hideOverlay()
+                                }
+                            )
+                        }
                     }
                 }
             }
