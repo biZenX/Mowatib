@@ -16,8 +16,8 @@ android {
         applicationId = "com.abdulrhman.mowatib"
         minSdk = 30
         targetSdk = 36
-        versionCode = 22
-        versionName = "2.2.0"
+        versionCode = 1
+        versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
