@@ -6,7 +6,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:src="@drawable/widget_preview_cookie"
-        android:tint="@color/zenith_secondary_container" />
+        android:tint="@color/mowatib_secondary_container" />
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -22,21 +22,21 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:src="@drawable/widget_preview_sunny"
-                android:tint="@color/zenith_primary" />
+                android:tint="@color/mowatib_primary" />
 
             <ImageView
                 android:layout_width="22dp"
                 android:layout_height="22dp"
                 android:layout_gravity="center"
                 android:src="@drawable/ic_fire_department_outlined"
-                android:tint="@color/zenith_primary_container" />
+                android:tint="@color/mowatib_primary_container" />
         </FrameLayout>
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="7"
-            android:textColor="@color/zenith_primary"
+            android:textColor="@color/mowatib_primary"
             android:textSize="32sp"
             android:includeFontPadding="false"
             android:textStyle="bold" />
@@ -52,7 +52,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:src="@drawable/widget_preview_circle"
-            android:tint="@color/zenith_tertiary" />
+            android:tint="@color/mowatib_tertiary" />
 
         <LinearLayout
             android:layout_width="wrap_content"
@@ -65,13 +65,13 @@
                 android:layout_width="10dp"
                 android:layout_height="10dp"
                 android:src="@drawable/ic_crown"
-                android:tint="@color/zenith_on_tertiary" />
+                android:tint="@color/mowatib_on_tertiary" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="30"
-                android:textColor="@color/zenith_on_tertiary"
+                android:textColor="@color/mowatib_on_tertiary"
                 android:textSize="10sp"
                 android:includeFontPadding="false"
                 android:textStyle="bold" />

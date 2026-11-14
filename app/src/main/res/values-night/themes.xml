@@ -2,6 +2,6 @@
     <style name="Theme.App.Starting" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">?android:attr/colorBackground</item>
         <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
-        <item name="postSplashScreenTheme">@style/Theme.Zenith</item>
+        <item name="postSplashScreenTheme">@style/Theme.Mowatib</item>
     </style>
 </resources>

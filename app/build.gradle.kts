@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.etrisad.zenith"
+    namespace = "com.abdulrhman.mowatib"
     compileSdk {
         version = release(36) {
             minorApiLevel = 1
@@ -13,7 +13,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.bizenx.mowatib"
+        applicationId = "com.abdulrhman.mowatib"
         minSdk = 30
         targetSdk = 36
         versionCode = 22

@@ -20,15 +20,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `MowatibQuickDashboardWidget`: Glanceable summary of screen time, tasks, and habit streaks.
   - `MowatibAmbientAudioWidget`: Quick toggle for ambient concentration audio.
 - Add Smart Tasks management system (`MowatibTaskManager` and `MowatibTaskCard`) with category tagging, persistence, and completion tracking.
-- Add Habit & Streak tracking engine (`com.etrisad.zenith.data.local.MowatibHabitsManager` and `MowatibHabitsCard`) with streak counts and automated daily resets.
+- Add Habit & Streak tracking engine (`com.abdulrhman.mowatib.data.local.MowatibHabitsManager` and `MowatibHabitsCard`) with streak counts and automated daily resets.
 - Add Ambient Focus Audio engine (`MowatibAmbientSoundManager` and `AmbientSoundCard`) for concentration soundscapes.
 - Add Material Vector Drawables (SVGs / XML vectors) replacing all Unicode chat emojis.
 
 ### Changed
 - Bump `versionCode` to `21` and `versionName` to `2.1.0` to guarantee smooth, conflict-free upgrades on user devices.
 - Refactor version comparator in `GitHubUpdateManager` to sanitize tag suffixes and guarantee reliable in-app update checks.
-- Change `applicationId` to `com.bizenx.mowatib` to eliminate package conflicts and allow seamless side-by-side installation.
-- Change internal broadcast actions and authorities from `com.etrisad.zenith.action.*` to `com.bizenx.mowatib.action.*`.
+- Change `applicationId` to `com.abdulrhman.mowatib` to eliminate package conflicts and allow seamless side-by-side installation.
+- Change internal broadcast actions and authorities from `com.abdulrhman.mowatib.action.*` to `com.abdulrhman.mowatib.action.*`.
 - Change default system font to Google Sans Flex (`FontOption.GOOGLE_SANS_FLEX`) for harmonious typography.
 - Deeply optimize and re-architect Pomodoro, Habits, Tasks, Ambient Sounds, and Telegram integration to natively match Mowatib's core design language.
 - Eliminate all hardcoded English strings and toasts across Pomodoro, Habits, Tasks, Ambient Audio, and Telegram settings.
@@ -41,7 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix missing Glance widget imports and unresolved references for daily screen time sync.
 
 ### Security
-- Isolate `FileProvider` authority to `com.bizenx.mowatib.fileprovider`.
+- Isolate `FileProvider` authority to `com.abdulrhman.mowatib.fileprovider`.
 - Restrict internal broadcast receivers to explicit Mowatib action namespaces.
 
 ## [2.0.0] - 2026-10-24
@@ -69,21 +69,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `ic_telegram`, `ic_fire_department_outlined`, `ic_timer`, `ic_bolt`, `ic_phone_android`, `ic_star`, `ic_task_alt`, `ic_radio_button_unchecked`, `ic_spa`, `ic_headphones`, `ic_auto_awesome`, `ic_play_arrow`, `ic_pause`.
 
 ### Changed
-- Change `applicationId` to `com.bizenx.mowatib` to eliminate package conflicts and allow seamless side-by-side installation with legacy packages.
-- Change internal broadcast actions and authorities from `com.etrisad.zenith.action.*` to `com.bizenx.mowatib.action.*`.
+- Change `applicationId` to `com.abdulrhman.mowatib` to eliminate package conflicts and allow seamless side-by-side installation with legacy packages.
+- Change internal broadcast actions and authorities from `com.abdulrhman.mowatib.action.*` to `com.abdulrhman.mowatib.action.*`.
 - Change default system font to IBM Plex Sans Arabic for native RTL Arabic and Latin typographical balance.
 - Overhaul color palette to warm Mowatib creamy tones (`#FDFBF7` light, `#1C1B18` dark) with earthy olive accents (`#3D5622` and `#D2E3B8`).
 - Update all metadata, descriptions, app branding, screenshots, and store assets to reflect Mowatib by biZenX.
 
 ### Fixed
-- Fix application collision preventing installation when Zenith was installed on the same device.
+- Fix application collision preventing installation when previous versions were installed on the same device.
 - Fix broken Arabic text layout and bidirectional glyph reversal in mixed-language labels.
 - Fix font selector dropdown crash and missing font weight definitions.
 - Fix unresolved references in Glance widgets for daily usage data synchronization.
 - Fix UI inconsistent text rendering across varying Android OS versions.
 
 ### Security
-- Isolate `FileProvider` authority to `com.bizenx.mowatib.fileprovider` to prevent intent interception by third-party packages.
+- Isolate `FileProvider` authority to `com.abdulrhman.mowatib.fileprovider` to prevent intent interception by third-party packages.
 - Restrict internal broadcast receivers to explicit Mowatib action namespaces.
 - Remove external Ko-fi donation hooks, telemetry, and unverified external links.
 

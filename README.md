@@ -104,7 +104,7 @@
 
 Mowatib uses the unique application ID:
 ```
-com.bizenx.mowatib
+com.abdulrhman.mowatib
 ```
 This ensures 100% side-by-side coexistence with any previously installed packages. You can install Mowatib safely without removing existing apps or encountering package collision errors.
 
@@ -159,7 +159,7 @@ Mowatib operates with a privacy-first architecture. All app statistics, habit hi
 
 ## Author & Maintainer
 
-- **[biZenX](https://github.com/biZenX)** — Maintainer & Lead Developer of Mowatib.
+- **[abdulrhman](https://github.com/biZenX)** (عبدالرحمن) — Lead Developer of Mowatib. Contact: abdelrhmanBit@proton.me
 
 ---
 

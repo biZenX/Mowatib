@@ -7,24 +7,24 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-    <color name="zenith_primary">#4D568D</color>
-    <color name="zenith_on_primary">#FFFFFF</color>
-    <color name="zenith_primary_container">#DEE0FF</color>
-    <color name="zenith_on_primary_container">#06114E</color>
+    <color name="mowatib_primary">#3D5622</color>
+    <color name="mowatib_on_primary">#FFFFFF</color>
+    <color name="mowatib_primary_container">#DCE7C8</color>
+    <color name="mowatib_on_primary_container">#354E16</color>
 
-    <color name="zenith_secondary">#5B5D72</color>
-    <color name="zenith_on_secondary">#FFFFFF</color>
-    <color name="zenith_secondary_container">#E0E1F9</color>
-    <color name="zenith_on_secondary_container">#181A2C</color>
+    <color name="mowatib_secondary">#5A6348</color>
+    <color name="mowatib_on_secondary">#FFFFFF</color>
+    <color name="mowatib_secondary_container">#DEE5C8</color>
+    <color name="mowatib_on_secondary_container">#171E0B</color>
 
-    <color name="zenith_tertiary">#77536D</color>
-    <color name="zenith_on_tertiary">#FFFFFF</color>
-    <color name="zenith_tertiary_container">#FFD7F1</color>
-    <color name="zenith_on_tertiary_container">#2D1228</color>
+    <color name="mowatib_tertiary">#D4B24C</color>
+    <color name="mowatib_on_tertiary">#33270A</color>
+    <color name="mowatib_tertiary_container">#F0F4CC</color>
+    <color name="mowatib_on_tertiary_container">#283400</color>
 
-    <color name="zenith_background">#FBF8FF</color>
-    <color name="zenith_surface">#FBF8FF</color>
-    <color name="zenith_surface_variant">#E3E1EC</color>
-    <color name="zenith_on_surface">#1B1B21</color>
-    <color name="zenith_on_surface_variant">#46464F</color>
+    <color name="mowatib_background">#F9FAEF</color>
+    <color name="mowatib_surface">#F9FAEF</color>
+    <color name="mowatib_surface_variant">#EEEFE3</color>
+    <color name="mowatib_on_surface">#1A1C16</color>
+    <color name="mowatib_on_surface_variant">#44483D</color>
 </resources>

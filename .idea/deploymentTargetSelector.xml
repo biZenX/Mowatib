@@ -24,7 +24,7 @@
         </DropdownSelection>
         <DialogSelection />
       </SelectionState>
-      <SelectionState runConfigName="ZenithButtonPreview">
+      <SelectionState runConfigName="MowatibButtonPreview">
         <option name="selectionMode" value="DROPDOWN" />
         <DropdownSelection timestamp="2026-05-12T12:32:47.154940500Z">
           <Target type="DEFAULT_BOOT">
