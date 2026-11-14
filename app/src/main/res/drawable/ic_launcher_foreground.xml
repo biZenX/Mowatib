@@ -13,28 +13,28 @@
         android:translateY="4">
         <!-- Left & Right Rails -->
         <path
-            android:fillColor="#97C472"
+            android:fillColor="#4ADE80"
             android:pathData="M22,20 C22,17.79 23.79,16 26,16 L26,16 C28.21,16 30,17.79 30,20 L30,80 C30,82.21 28.21,84 26,84 L26,84 C23.79,84 22,82.21 22,80 Z" />
         <path
-            android:fillColor="#97C472"
+            android:fillColor="#4ADE80"
             android:pathData="M70,20 C70,17.79 71.79,16 74,16 L74,16 C76.21,16 78,17.79 78,20 L78,80 C78,82.21 76.21,84 74,84 L74,84 C71.79,84 70,82.21 70,80 Z" />
 
         <!-- Progressive Rungs with Opacity Velocity -->
         <path
-            android:fillColor="#97C472"
+            android:fillColor="#4ADE80"
             android:fillAlpha="0.45"
             android:pathData="M28,69.5 C28,67.57 29.57,66 31.5,66 L68.5,66 C70.43,66 72,67.57 72,69.5 L72,69.5 C72,71.43 70.43,73 68.5,73 L31.5,73 C29.57,73 28,71.43 28,69.5 Z" />
         <path
-            android:fillColor="#97C472"
+            android:fillColor="#4ADE80"
             android:fillAlpha="0.75"
             android:pathData="M28,52 C28,49.79 29.79,48 32,48 L68,48 C70.21,48 72,49.79 72,52 L72,52 C72,54.21 70.21,56 68,56 L32,56 C29.79,56 28,54.21 28,52 Z" />
         <path
-            android:fillColor="#97C472"
+            android:fillColor="#4ADE80"
             android:pathData="M28,34.5 C28,32.01 30.01,30 32.5,30 L67.5,30 C69.99,30 72,32.01 72,34.5 L72,34.5 C72,36.99 69.99,39 67.5,39 L32.5,39 C30.01,39 28,36.99 28,34.5 Z" />
 
         <!-- Top Focus Peak Dot -->
         <path
-            android:fillColor="#97C472"
+            android:fillColor="#4ADE80"
             android:pathData="M50,15m-5.5,0a5.5,5.5 0,1,1 11,0a5.5,5.5 0,1,1 -11,0" />
         <path
             android:fillColor="#FFFFFF"
